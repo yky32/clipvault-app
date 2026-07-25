@@ -1,9 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/apple_search_field.dart';
+import '../../../../core/widgets/copied_hud.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
@@ -39,20 +44,21 @@ class _VaultPageState extends State<VaultPage> {
     String title,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => CupertinoAlertDialog(
         title: Text(l10n.deleteConfirmTitle),
-        content: Text(l10n.deleteConfirmBody(title)),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.deleteConfirmBody(title)),
+        ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(l10n.cancel),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l10n.delete),
           ),
@@ -60,6 +66,7 @@ class _VaultPageState extends State<VaultPage> {
       ),
     );
     if (confirmed == true && context.mounted) {
+      HapticFeedback.mediumImpact();
       context.read<VaultBloc>().add(VaultItemDeleted(itemId));
     }
   }
@@ -71,48 +78,38 @@ class _VaultPageState extends State<VaultPage> {
     bool isPinned,
   ) {
     final l10n = AppLocalizations.of(context);
-    showModalBottomSheet<void>(
+    showCupertinoModalPopup<void>(
       context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit_rounded),
-              title: Text(l10n.editItem),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push('/vault/item/$itemId');
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                isPinned
-                    ? Icons.push_pin_outlined
-                    : Icons.push_pin_rounded,
-              ),
-              title: Text(isPinned ? 'Unpin' : l10n.pinItem),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.read<VaultBloc>().add(VaultItemPinToggled(itemId));
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.delete_outline_rounded,
-                color: Theme.of(ctx).colorScheme.error,
-              ),
-              title: Text(
-                l10n.delete,
-                style: TextStyle(color: Theme.of(ctx).colorScheme.error),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmDelete(context, itemId, title);
-              },
-            ),
-          ],
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(title),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.push('/vault/item/$itemId');
+            },
+            child: Text(l10n.editItem),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<VaultBloc>().add(VaultItemPinToggled(itemId));
+            },
+            child: Text(isPinned ? 'Unpin' : l10n.pinItem),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _confirmDelete(context, itemId, title);
+            },
+            child: Text(l10n.delete),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
         ),
       ),
     );
@@ -122,6 +119,7 @@ class _VaultPageState extends State<VaultPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return BlocListener<VaultBloc, VaultState>(
       listenWhen: (prev, next) =>
@@ -130,189 +128,200 @@ class _VaultPageState extends State<VaultPage> {
       listener: (context, state) {
         final title = state.lastCopiedTitle;
         if (title == null) return;
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle_rounded, color: Colors.white),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(l10n.copied(title))),
-                ],
-              ),
-              duration: const Duration(milliseconds: 1200),
-              backgroundColor: AppColors.primary,
-            ),
-          );
+        CopiedHud.show(context, message: l10n.copied(title));
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.vaultTitle),
-          actions: [
-            BlocBuilder<VaultBloc, VaultState>(
-              buildWhen: (p, n) => p.viewMode != n.viewMode,
-              builder: (context, state) {
-                final isGrid = state.viewMode == VaultViewMode.grid;
-                return IconButton(
-                  tooltip: isGrid ? l10n.viewList : l10n.viewGrid,
-                  onPressed: () =>
-                      context.read<VaultBloc>().add(const VaultViewModeToggled()),
-                  icon: Icon(
-                    isGrid
-                        ? Icons.view_list_rounded
-                        : Icons.grid_view_rounded,
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              tooltip: l10n.settingsTitle,
-              onPressed: () => context.push('/vault/settings'),
-              icon: const Icon(Icons.settings_outlined),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => context.push('/vault/item/new'),
-          child: const Icon(Icons.add_rounded),
+        backgroundColor: AppColors.groupedBackground(context),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: AppShadows.fab(context),
+          ),
+          child: FloatingActionButton(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.push('/vault/item/new');
+            },
+            elevation: 0,
+            highlightElevation: 0,
+            child: const Icon(CupertinoIcons.add, size: 28),
+          ),
         ),
         body: BlocBuilder<VaultBloc, VaultState>(
           builder: (context, state) {
             if (state.status == VaultStatus.loading ||
                 state.status == VaultStatus.initial) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CupertinoActivityIndicator());
             }
 
-            if (state.items.isEmpty) {
-              return VaultEmptyState(
-                onAdd: () => context.push('/vault/item/new'),
-              );
-            }
-
+            final isEmpty = state.items.isEmpty;
             final isGrid = state.viewMode == VaultViewMode.grid;
             final filtered = state.filteredItems;
 
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (q) =>
-                        context.read<VaultBloc>().add(VaultSearchChanged(q)),
-                    decoration: InputDecoration(
-                      hintText: l10n.searchHint,
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: state.searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded),
-                              onPressed: () {
-                                _searchController.clear();
-                                context
-                                    .read<VaultBloc>()
-                                    .add(const VaultSearchChanged(''));
-                              },
-                            )
-                          : null,
-                    ),
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                CupertinoSliverNavigationBar(
+                  backgroundColor:
+                      AppColors.groupedBackground(context).withValues(alpha: 0.92),
+                  border: null,
+                  largeTitle: Text(l10n.vaultTitle),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.only(right: 4),
+                        minimumSize: Size.zero,
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          context
+                              .read<VaultBloc>()
+                              .add(const VaultViewModeToggled());
+                        },
+                        child: Icon(
+                          isGrid
+                              ? CupertinoIcons.list_bullet
+                              : CupertinoIcons.square_grid_2x2,
+                          size: 22,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        onPressed: () => context.push('/vault/settings'),
+                        child: const Icon(
+                          CupertinoIcons.gear,
+                          size: 22,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (state.categories.isNotEmpty)
-                  SizedBox(
-                    height: 42,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        _FilterChip(
-                          label: l10n.filterAll,
-                          selected: state.selectedCategoryId == null,
-                          onTap: () => context.read<VaultBloc>().add(
-                                const VaultCategoryFilterChanged(null),
-                              ),
-                        ),
-                        ...state.categories.map(
-                          (c) => Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: _FilterChip(
-                              label: c.name,
-                              selected: state.selectedCategoryId == c.id,
-                              onTap: () => context.read<VaultBloc>().add(
-                                    VaultCategoryFilterChanged(c.id),
-                                  ),
-                            ),
-                          ),
-                        ),
-                      ],
+                if (!isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                      child: AppleSearchField(
+                        controller: _searchController,
+                        hintText: l10n.searchHint,
+                        onChanged: (q) => context
+                            .read<VaultBloc>()
+                            .add(VaultSearchChanged(q)),
+                        onClear: () => context
+                            .read<VaultBloc>()
+                            .add(const VaultSearchChanged('')),
+                      ),
                     ),
                   ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: filtered.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No matches',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.5),
+                if (!isEmpty && state.categories.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 36,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        physics: const BouncingScrollPhysics(),
+                        children: [
+                          _SegmentChip(
+                            label: l10n.filterAll,
+                            selected: state.selectedCategoryId == null,
+                            onTap: () => context.read<VaultBloc>().add(
+                                  const VaultCategoryFilterChanged(null),
+                                ),
+                          ),
+                          ...state.categories.map(
+                            (c) => Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: _SegmentChip(
+                                label: c.name,
+                                selected: state.selectedCategoryId == c.id,
+                                onTap: () => context.read<VaultBloc>().add(
+                                      VaultCategoryFilterChanged(c.id),
+                                    ),
+                              ),
                             ),
                           ),
-                        )
-                      : isGrid
-                          ? GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 1.35,
-                              ),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final item = filtered[index];
-                                return ClipItemCard(
-                                  item: item,
-                                  compact: true,
-                                  categoryName:
-                                      _categoryName(state, item.categoryId),
-                                  onTap: () => context
-                                      .read<VaultBloc>()
-                                      .add(VaultItemCopied(item.id)),
-                                  onLongPress: () => _showItemActions(
-                                    context,
-                                    item.id,
-                                    item.title,
-                                    item.isPinned,
-                                  ),
-                                );
-                              },
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                              itemCount: filtered.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                final item = filtered[index];
-                                return ClipItemCard(
-                                  item: item,
-                                  categoryName:
-                                      _categoryName(state, item.categoryId),
-                                  onTap: () => context
-                                      .read<VaultBloc>()
-                                      .add(VaultItemCopied(item.id)),
-                                  onLongPress: () => _showItemActions(
-                                    context,
-                                    item.id,
-                                    item.title,
-                                    item.isPinned,
-                                  ),
-                                );
-                              },
+                        ],
+                      ),
+                    ),
+                  ),
+                if (isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VaultEmptyState(
+                      onAdd: () => context.push('/vault/item/new'),
+                    ),
+                  )
+                else if (filtered.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'No matches',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: AppColors.secondaryLabel(context),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (isGrid)
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 100 + bottomInset),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.2,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = filtered[index];
+                          return ClipItemCard(
+                            item: item,
+                            compact: true,
+                            categoryName:
+                                _categoryName(state, item.categoryId),
+                            onTap: () => context
+                                .read<VaultBloc>()
+                                .add(VaultItemCopied(item.id)),
+                            onLongPress: () => _showItemActions(
+                              context,
+                              item.id,
+                              item.title,
+                              item.isPinned,
                             ),
-                ),
+                          );
+                        },
+                        childCount: filtered.length,
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 100 + bottomInset),
+                    sliver: SliverToBoxAdapter(
+                      child: ClipItemGroupedList(
+                        items: filtered,
+                        categoryNameOf: (item) =>
+                            _categoryName(state, item.categoryId),
+                        onTap: (item) => context
+                            .read<VaultBloc>()
+                            .add(VaultItemCopied(item.id)),
+                        onLongPress: (item) => _showItemActions(
+                          context,
+                          item.id,
+                          item.title,
+                          item.isPinned,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -322,8 +331,8 @@ class _VaultPageState extends State<VaultPage> {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
+class _SegmentChip extends StatelessWidget {
+  const _SegmentChip({
     required this.label,
     required this.selected,
     required this.onTap,
@@ -335,33 +344,31 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: selected
-          ? theme.colorScheme.primary
-          : AppColors.cardBackground(context),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected
-                  ? theme.colorScheme.primary
-                  : theme.dividerTheme.color ?? theme.dividerColor,
-            ),
-          ),
-          child: Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: selected
-                  ? Colors.white
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w600,
-            ),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : AppColors.cardBackground(context),
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Satoshi',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.08,
+            color: selected
+                ? Colors.white
+                : AppColors.secondaryLabel(context).withValues(alpha: 0.95),
           ),
         ),
       ),

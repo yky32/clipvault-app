@@ -24,6 +24,12 @@ class ClipVaultApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeController.themeMode,
+            // Prefer iOS-like scroll/physics & transitions app-wide.
+            scrollBehavior: const MaterialScrollBehavior().copyWith(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+            ),
             localeResolutionCallback: (deviceLocale, supported) {
               if (deviceLocale != null && deviceLocale.languageCode == 'zh') {
                 return const Locale('zh');

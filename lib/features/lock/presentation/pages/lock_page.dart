@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
@@ -36,8 +38,10 @@ class _LockPageState extends State<LockPage> {
 
     if (!mounted) return;
     if (ok) {
+      HapticFeedback.lightImpact();
       context.go('/vault');
     } else {
+      HapticFeedback.heavyImpact();
       setState(() {
         _busy = false;
         _error = l10n.unlockFailed;
@@ -51,10 +55,11 @@ class _LockPageState extends State<LockPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppColors.groupedBackground(context),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(36),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -62,28 +67,31 @@ class _LockPageState extends State<LockPage> {
                   width: 88,
                   height: 88,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.lock_rounded,
-                    size: 40,
+                    CupertinoIcons.lock_fill,
+                    size: 36,
                     color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 28),
                 Text(
                   l10n.unlockTitle,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    letterSpacing: -0.4,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   l10n.unlockSubtitle,
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: AppColors.secondaryLabel(context),
+                    fontSize: 16,
                   ),
                 ),
                 if (_error != null) ...[
@@ -92,22 +100,26 @@ class _LockPageState extends State<LockPage> {
                     _error!,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
+                      color: AppColors.error,
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
-                FilledButton.icon(
-                  onPressed: _busy ? null : _unlock,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.fingerprint_rounded),
-                  label: Text(l10n.unlockButton),
-                ),
+                const SizedBox(height: 36),
+                if (_busy)
+                  const CupertinoActivityIndicator()
+                else
+                  CupertinoButton.filled(
+                    onPressed: _unlock,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(CupertinoIcons.lock_open_fill, size: 18),
+                        const SizedBox(width: 8),
+                        Text(l10n.unlockButton),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

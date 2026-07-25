@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
@@ -21,19 +23,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (offerBiometric) {
       final can = await AppBootstrap.authService.canCheckBiometrics();
       if (can && mounted) {
-        final enable = await showDialog<bool>(
+        final enable = await showCupertinoDialog<bool>(
           context: context,
           builder: (ctx) {
             final l10n = AppLocalizations.of(ctx);
-            return AlertDialog(
+            return CupertinoAlertDialog(
               title: Text(l10n.enableBiometrics),
-              content: Text(l10n.biometricLockSubtitle),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(l10n.biometricLockSubtitle),
+              ),
               actions: [
-                TextButton(
+                CupertinoDialogAction(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(l10n.notNow),
                 ),
-                FilledButton(
+                CupertinoDialogAction(
+                  isDefaultAction: true,
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text(l10n.enableBiometrics),
                 ),
@@ -66,34 +72,46 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final pages = [
       _OnboardSlide(
-        icon: Icons.touch_app_rounded,
+        icon: CupertinoIcons.doc_on_clipboard_fill,
+        color: const Color(0xFF007AFF),
         title: l10n.onboardingTitle1,
         body: l10n.onboardingBody1,
       ),
       _OnboardSlide(
-        icon: Icons.shield_rounded,
+        icon: CupertinoIcons.lock_shield_fill,
+        color: AppColors.primary,
         title: l10n.onboardingTitle2,
         body: l10n.onboardingBody2,
       ),
       _OnboardSlide(
-        icon: Icons.fingerprint_rounded,
+        icon: CupertinoIcons.hand_raised_fill,
+        color: const Color(0xFF5856D6),
         title: l10n.onboardingTitle3,
         body: l10n.onboardingBody3,
       ),
     ];
 
     return Scaffold(
+      backgroundColor: AppColors.groupedBackground(context),
       body: SafeArea(
         child: Column(
           children: [
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => _finish(),
-                child: Text(l10n.skip),
+              child: CupertinoButton(
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  _finish();
+                },
+                child: Text(
+                  l10n.skip,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
             Expanded(
@@ -109,26 +127,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
               children: List.generate(
                 pages.length,
                 (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _index == i ? 22 : 8,
-                  height: 8,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                  width: _index == i ? 8 : 7,
+                  height: _index == i ? 8 : 7,
                   decoration: BoxDecoration(
                     color: _index == i
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.primary.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(8),
+                        ? AppColors.primary
+                        : AppColors.tertiaryLabel(context),
+                    shape: BoxShape.circle,
                   ),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
               child: FilledButton(
                 onPressed: () {
+                  HapticFeedback.selectionClick();
                   if (_index < pages.length - 1) {
                     _controller.nextPage(
-                      duration: const Duration(milliseconds: 280),
+                      duration: const Duration(milliseconds: 320),
                       curve: Curves.easeOutCubic,
                     );
                   } else {
@@ -150,11 +170,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
 class _OnboardSlide extends StatelessWidget {
   const _OnboardSlide({
     required this.icon,
+    required this.color,
     required this.title,
     required this.body,
   });
 
   final IconData icon;
+  final Color color;
   final String title;
   final String body;
 
@@ -162,25 +184,27 @@ class _OnboardSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 36),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 104,
-            height: 104,
+            width: 96,
+            height: 96,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(28),
             ),
-            child: Icon(icon, size: 48, color: AppColors.primary),
+            child: Icon(icon, size: 44, color: color),
           ),
-          const SizedBox(height: 36),
+          const SizedBox(height: 40),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.displayMedium?.copyWith(
+              fontSize: 28,
               fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 12),
@@ -188,8 +212,9 @@ class _OnboardSlide extends StatelessWidget {
             body,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+              color: AppColors.secondaryLabel(context),
               height: 1.45,
+              fontSize: 17,
             ),
           ),
         ],

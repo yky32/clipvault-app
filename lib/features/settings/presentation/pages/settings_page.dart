@@ -1,10 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/services/settings_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_controller.dart';
+import '../../../../core/widgets/copied_hud.dart';
+import '../../../../core/widgets/ios_group.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -33,9 +37,20 @@ class _SettingsPageState extends State<SettingsPage> {
       final can = await AppBootstrap.authService.canCheckBiometrics();
       if (!can) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Biometrics / device lock not available'),
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Unavailable'),
+            content: const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('Biometrics / device lock is not available.'),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
         return;
@@ -46,7 +61,91 @@ class _SettingsPageState extends State<SettingsPage> {
       if (!ok) return;
     }
     await SettingsService.instance.setBiometricLockEnabled(value);
+    HapticFeedback.selectionClick();
     setState(() => _biometric = value);
+  }
+
+  Future<void> _pickTheme(ThemeController controller) async {
+    final l10n = AppLocalizations.of(context);
+    final mode = await showCupertinoModalPopup<ThemeMode>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(l10n.themeMode),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, ThemeMode.system),
+            child: Text(l10n.themeSystem),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, ThemeMode.light),
+            child: Text(l10n.themeLight),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, ThemeMode.dark),
+            child: Text(l10n.themeDark),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+    if (mode != null) {
+      await controller.setThemeMode(mode);
+      setState(() {});
+    }
+  }
+
+  Future<void> _pickClipboardTimeout() async {
+    final l10n = AppLocalizations.of(context);
+    final value = await showCupertinoModalPopup<int>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(l10n.clipboardAutoClear),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 0),
+            child: Text(l10n.clipboardNever),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 15),
+            child: const Text('15 seconds'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 30),
+            child: const Text('30 seconds'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 60),
+            child: const Text('60 seconds'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+    if (value != null) {
+      await SettingsService.instance.setClipboardClearSeconds(value);
+      setState(() => _clipboardSeconds = value);
+    }
+  }
+
+  String _themeLabel(ThemeMode mode, AppLocalizations l10n) {
+    return switch (mode) {
+      ThemeMode.light => l10n.themeLight,
+      ThemeMode.dark => l10n.themeDark,
+      ThemeMode.system => l10n.themeSystem,
+    };
+  }
+
+  String _clipboardLabel(AppLocalizations l10n) {
+    if (_clipboardSeconds == 0) return l10n.clipboardNever;
+    return '${_clipboardSeconds}s';
   }
 
   @override
@@ -55,139 +154,188 @@ class _SettingsPageState extends State<SettingsPage> {
     final themeController = ThemeScope.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          _SectionHeader(l10n.settingsSecurity),
-          SwitchListTile.adaptive(
-            title: Text(l10n.biometricLock),
-            subtitle: Text(l10n.biometricLockSubtitle),
-            value: _biometric,
-            onChanged: _toggleBiometric,
-          ),
-          const Divider(height: 24),
-          _SectionHeader(l10n.settingsAppearance),
-          ListTile(
-            title: Text(l10n.themeMode),
-            subtitle: Text(
-              switch (themeController.themeMode) {
-                ThemeMode.light => l10n.themeLight,
-                ThemeMode.dark => l10n.themeDark,
-                ThemeMode.system => l10n.themeSystem,
-              },
+      backgroundColor: AppColors.groupedBackground(context),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          CupertinoSliverNavigationBar(
+            backgroundColor:
+                AppColors.groupedBackground(context).withValues(alpha: 0.92),
+            border: null,
+            largeTitle: Text(l10n.settingsTitle),
+            leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              onPressed: () => context.pop(),
+              child: const Icon(
+                CupertinoIcons.back,
+                color: AppColors.primary,
+              ),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () async {
-              final mode = await showModalBottomSheet<ThemeMode>(
-                context: context,
-                showDragHandle: true,
-                builder: (ctx) => SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        title: Text(l10n.themeSystem),
-                        onTap: () => Navigator.pop(ctx, ThemeMode.system),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                IosGroup(
+                  header: l10n.settingsSecurity,
+                  footer: l10n.biometricLockSubtitle,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.biometricLock,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.lock_shield_fill,
+                        color: const Color(0xFF007AFF),
                       ),
-                      ListTile(
-                        title: Text(l10n.themeLight),
-                        onTap: () => Navigator.pop(ctx, ThemeMode.light),
+                      trailing: CupertinoSwitch(
+                        value: _biometric,
+                        activeTrackColor: AppColors.success,
+                        onChanged: _toggleBiometric,
                       ),
-                      ListTile(
-                        title: Text(l10n.themeDark),
-                        onTap: () => Navigator.pop(ctx, ThemeMode.dark),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.settingsAppearance,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.themeMode,
+                      leading: const _LeadingIcon(
+                        icon: CupertinoIcons.moon_stars_fill,
+                        color: Color(0xFF5856D6),
                       ),
-                    ],
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _themeLabel(themeController.themeMode, l10n),
+                            style: TextStyle(
+                              fontFamily: 'Satoshi',
+                              fontSize: 17,
+                              color: AppColors.secondaryLabel(context),
+                            ),
+                          ),
+                          const IosChevron(),
+                        ],
+                      ),
+                      onTap: () => _pickTheme(themeController),
+                    ),
+                    IosGroupTile(
+                      title: l10n.defaultView,
+                      leading: const _LeadingIcon(
+                        icon: CupertinoIcons.rectangle_grid_2x2_fill,
+                        color: Color(0xFFAF52DE),
+                      ),
+                      trailing: CupertinoSlidingSegmentedControl<VaultViewMode>(
+                        groupValue: _viewMode,
+                        children: {
+                          VaultViewMode.list: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              l10n.viewList,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          VaultViewMode.grid: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              l10n.viewGrid,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        },
+                        onValueChanged: (mode) async {
+                          if (mode == null) return;
+                          HapticFeedback.selectionClick();
+                          await SettingsService.instance
+                              .setDefaultViewMode(mode);
+                          setState(() => _viewMode = mode);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.settingsClipboard,
+                  footer: l10n.clipboardAutoClearSubtitle,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.clipboardAutoClear,
+                      leading: const _LeadingIcon(
+                        icon: CupertinoIcons.doc_on_clipboard_fill,
+                        color: Color(0xFFFF9500),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _clipboardLabel(l10n),
+                            style: TextStyle(
+                              fontFamily: 'Satoshi',
+                              fontSize: 17,
+                              color: AppColors.secondaryLabel(context),
+                            ),
+                          ),
+                          const IosChevron(),
+                        ],
+                      ),
+                      onTap: _pickClipboardTimeout,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.settingsData,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.exportPlain,
+                      leading: const _LeadingIcon(
+                        icon: CupertinoIcons.share_solid,
+                        color: Color(0xFF34C759),
+                      ),
+                      trailing: const IosChevron(),
+                      onTap: () async {
+                        final text = await AppBootstrap.clipItemRepository
+                            .exportPlainText();
+                        await Clipboard.setData(ClipboardData(text: text));
+                        if (!context.mounted) return;
+                        HapticFeedback.lightImpact();
+                        CopiedHud.show(
+                          context,
+                          message: l10n.copied('export'),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 36),
+                Text(
+                  'ClipVault',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Satoshi',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondaryLabel(context),
                   ),
                 ),
-              );
-              if (mode != null) await themeController.setThemeMode(mode);
-              setState(() {});
-            },
-          ),
-          ListTile(
-            title: Text(l10n.defaultView),
-            subtitle: Text(
-              _viewMode == VaultViewMode.grid
-                  ? l10n.viewGrid
-                  : l10n.viewList,
-            ),
-            trailing: SegmentedButton<VaultViewMode>(
-              segments: [
-                ButtonSegment(
-                  value: VaultViewMode.list,
-                  icon: const Icon(Icons.view_list_rounded, size: 18),
-                  label: Text(l10n.viewList),
-                ),
-                ButtonSegment(
-                  value: VaultViewMode.grid,
-                  icon: const Icon(Icons.grid_view_rounded, size: 18),
-                  label: Text(l10n.viewGrid),
-                ),
-              ],
-              selected: {_viewMode},
-              onSelectionChanged: (set) async {
-                final mode = set.first;
-                await SettingsService.instance.setDefaultViewMode(mode);
-                setState(() => _viewMode = mode);
-              },
-            ),
-          ),
-          const Divider(height: 24),
-          _SectionHeader(l10n.settingsClipboard),
-          ListTile(
-            title: Text(l10n.clipboardAutoClear),
-            subtitle: Text(l10n.clipboardAutoClearSubtitle),
-            trailing: DropdownButton<int>(
-              value: _clipboardSeconds,
-              underline: const SizedBox.shrink(),
-              items: [
-                DropdownMenuItem(value: 0, child: Text(l10n.clipboardNever)),
-                const DropdownMenuItem(value: 15, child: Text('15s')),
-                const DropdownMenuItem(value: 30, child: Text('30s')),
-                const DropdownMenuItem(value: 60, child: Text('60s')),
-              ],
-              onChanged: (v) async {
-                if (v == null) return;
-                await SettingsService.instance.setClipboardClearSeconds(v);
-                setState(() => _clipboardSeconds = v);
-              },
-            ),
-          ),
-          const Divider(height: 24),
-          _SectionHeader(l10n.settingsData),
-          ListTile(
-            leading: const Icon(Icons.ios_share_rounded),
-            title: Text(l10n.exportPlain),
-            onTap: () async {
-              final text =
-                  await AppBootstrap.clipItemRepository.exportPlainText();
-              await Clipboard.setData(ClipboardData(text: text));
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.copied('export'))),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'ClipVault v1.0.0 · Local-only · AES-256',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.45),
+                const SizedBox(height: 4),
+                Text(
+                  'v1.0.0 · Local-only · AES-256',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Satoshi',
+                    fontSize: 12,
+                    color: AppColors.tertiaryLabel(context),
                   ),
+                ),
+                const SizedBox(height: 48),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Done'),
           ),
         ],
       ),
@@ -195,22 +343,22 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
-  final String title;
+class _LeadingIcon extends StatelessWidget {
+  const _LeadingIcon({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        title.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(7),
       ),
+      child: Icon(icon, size: 17, color: Colors.white),
     );
   }
 }

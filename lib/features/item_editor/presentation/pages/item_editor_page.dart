@@ -1,9 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/models/clip_item.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/ios_group.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../vault/bloc/vault_bloc.dart';
 
@@ -58,6 +62,7 @@ class _ItemEditorPageState extends State<ItemEditorPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    HapticFeedback.lightImpact();
 
     try {
       String? categoryId;
@@ -99,78 +104,220 @@ class _ItemEditorPageState extends State<ItemEditorPage> {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isNew ? l10n.addItem : l10n.editItem),
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              TextFormField(
-                controller: _titleController,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: l10n.titleLabel,
-                  hintText: l10n.titleHint,
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _valueController,
-                obscureText: _obscureValue,
-                minLines: _obscureValue ? 1 : 3,
-                maxLines: _obscureValue ? 1 : 6,
-                decoration: InputDecoration(
-                  labelText: l10n.valueLabel,
-                  hintText: l10n.valueHint,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureValue
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscureValue = !_obscureValue),
+      backgroundColor: AppColors.groupedBackground(context),
+      body: Form(
+        key: _formKey,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            CupertinoSliverNavigationBar(
+              backgroundColor:
+                  AppColors.groupedBackground(context).withValues(alpha: 0.92),
+              border: null,
+              largeTitle: Text(widget.isNew ? l10n.addItem : l10n.editItem),
+              leading: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                onPressed: () => context.pop(),
+                child: Text(
+                  l10n.cancel,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? l10n.requiredField : null,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _categoryController,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: l10n.categoryLabel,
-                  hintText: l10n.categoryHint,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.pinItem),
-                value: _isPinned,
-                onChanged: (v) => setState(() => _isPinned = v),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
                 onPressed: _saving ? null : _save,
                 child: _saving
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(l10n.save),
+                    ? const CupertinoActivityIndicator()
+                    : Text(
+                        l10n.save,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
-            ],
-          ),
+            ),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  IosGroup(
+                    children: [
+                      _FieldRow(
+                        label: l10n.titleLabel,
+                        child: TextFormField(
+                          controller: _titleController,
+                          textInputAction: TextInputAction.next,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          decoration: InputDecoration(
+                            hintText: l10n.titleHint,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? l10n.requiredField
+                              : null,
+                        ),
+                      ),
+                      _FieldRow(
+                        label: l10n.valueLabel,
+                        alignTop: true,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _valueController,
+                                obscureText: _obscureValue,
+                                minLines: _obscureValue ? 1 : 3,
+                                maxLines: _obscureValue ? 1 : 6,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                decoration: InputDecoration(
+                                  hintText: l10n.valueHint,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  filled: false,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                validator: (v) => (v == null || v.isEmpty)
+                                    ? l10n.requiredField
+                                    : null,
+                              ),
+                            ),
+                            CupertinoButton(
+                              padding: const EdgeInsets.only(left: 8),
+                              minimumSize: Size.zero,
+                              onPressed: () => setState(
+                                () => _obscureValue = !_obscureValue,
+                              ),
+                              child: Icon(
+                                _obscureValue
+                                    ? CupertinoIcons.eye
+                                    : CupertinoIcons.eye_slash,
+                                size: 20,
+                                color: AppColors.secondaryLabel(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _FieldRow(
+                        label: l10n.categoryLabel,
+                        child: TextFormField(
+                          controller: _categoryController,
+                          textInputAction: TextInputAction.done,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          decoration: InputDecoration(
+                            hintText: l10n.categoryHint,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  IosGroup(
+                    children: [
+                      IosGroupTile(
+                        title: l10n.pinItem,
+                        leading: const _LeadingIcon(
+                          icon: CupertinoIcons.pin_fill,
+                          color: Color(0xFFFF9500),
+                        ),
+                        trailing: CupertinoSwitch(
+                          value: _isPinned,
+                          activeTrackColor: AppColors.success,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            setState(() => _isPinned = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _FieldRow extends StatelessWidget {
+  const _FieldRow({
+    required this.label,
+    required this.child,
+    this.alignTop = false,
+  });
+
+  final String label;
+  final Widget child;
+  final bool alignTop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment:
+            alignTop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Padding(
+              padding: EdgeInsets.only(top: alignTop ? 2 : 0),
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeadingIcon extends StatelessWidget {
+  const _LeadingIcon({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Icon(icon, size: 16, color: Colors.white),
     );
   }
 }
