@@ -47,7 +47,7 @@ lib/
 ## Run
 
 ```bash
-cd ~/git/yky/clipvault-app
+cd ~/Documents/Development/Git/yky/clipvault-app
 flutter pub get
 flutter run
 ```
