@@ -1,0 +1,65 @@
+name: clipvault
+description: "ClipVault — private one-tap vault for storing values and copying to clipboard."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Local storage
+  hive_ce: ^2.15.1
+  hive_ce_flutter: ^2.3.3
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.3.5
+  path_provider: ^2.1.5
+
+  # Security
+  local_auth: ^2.3.0
+  encrypt: ^5.0.3
+  crypto: ^3.0.6
+
+  # Utils
+  uuid: ^4.5.1
+  intl: any
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  fonts:
+    - family: Satoshi
+      fonts:
+        - asset: assets/fonts/Satoshi-Light.otf
+          weight: 300
+        - asset: assets/fonts/Satoshi-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Satoshi-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Satoshi-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Satoshi-Black.otf
+          weight: 900
+
+  assets:
+    - assets/fonts/
