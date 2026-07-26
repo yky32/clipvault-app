@@ -10,6 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/apple_search_field.dart';
 import '../../../../core/widgets/copied_hud.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../item_editor/presentation/bottom_sheets/item_editor_bottom_sheet.dart';
 import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
@@ -86,7 +87,7 @@ class _VaultPageState extends State<VaultPage> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(ctx);
-              context.push('/vault/item/$itemId');
+              ItemEditorBottomSheet.show(context, itemId: itemId);
             },
             child: Text(l10n.editItem),
           ),
@@ -140,7 +141,7 @@ class _VaultPageState extends State<VaultPage> {
           child: FloatingActionButton(
             onPressed: () {
               HapticFeedback.selectionClick();
-              context.push('/vault/item/new');
+              ItemEditorBottomSheet.show(context);
             },
             elevation: 0,
             highlightElevation: 0,
@@ -158,171 +159,209 @@ class _VaultPageState extends State<VaultPage> {
             final isGrid = state.viewMode == VaultViewMode.grid;
             final filtered = state.filteredItems;
 
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                CupertinoSliverNavigationBar(
-                  backgroundColor:
-                      AppColors.groupedBackground(context).withValues(alpha: 0.92),
-                  border: null,
-                  largeTitle: Text(l10n.vaultTitle),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CupertinoButton(
-                        padding: const EdgeInsets.only(right: 4),
-                        minimumSize: Size.zero,
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          context
-                              .read<VaultBloc>()
-                              .add(const VaultViewModeToggled());
-                        },
-                        child: Icon(
-                          isGrid
-                              ? CupertinoIcons.list_bullet
-                              : CupertinoIcons.square_grid_2x2,
-                          size: 22,
-                          color: AppColors.primary,
+            return SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Title + actions on the same row
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 6, 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.vaultTitle,
+                            style: theme.textTheme.displayMedium?.copyWith(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.37,
+                              height: 1.1,
+                            ),
+                          ),
                         ),
-                      ),
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        onPressed: () => context.push('/vault/settings'),
-                        child: const Icon(
-                          CupertinoIcons.gear,
-                          size: 22,
-                          color: AppColors.primary,
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          minimumSize: Size.zero,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            context
+                                .read<VaultBloc>()
+                                .add(const VaultViewModeToggled());
+                          },
+                          child: Icon(
+                            isGrid
+                                ? CupertinoIcons.list_bullet
+                                : CupertinoIcons.square_grid_2x2,
+                            size: 22,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-                      child: AppleSearchField(
-                        controller: _searchController,
-                        hintText: l10n.searchHint,
-                        onChanged: (q) => context
-                            .read<VaultBloc>()
-                            .add(VaultSearchChanged(q)),
-                        onClear: () => context
-                            .read<VaultBloc>()
-                            .add(const VaultSearchChanged('')),
-                      ),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          minimumSize: Size.zero,
+                          onPressed: () => context.push('/vault/settings'),
+                          child: const Icon(
+                            CupertinoIcons.gear,
+                            size: 22,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                if (!isEmpty && state.categories.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 36,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          _SegmentChip(
-                            label: l10n.filterAll,
-                            selected: state.selectedCategoryId == null,
-                            onTap: () => context.read<VaultBloc>().add(
-                                  const VaultCategoryFilterChanged(null),
-                                ),
-                          ),
-                          ...state.categories.map(
-                            (c) => Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: _SegmentChip(
-                                label: c.name,
-                                selected: state.selectedCategoryId == c.id,
-                                onTap: () => context.read<VaultBloc>().add(
-                                      VaultCategoryFilterChanged(c.id),
-                                    ),
+                  Expanded(
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      slivers: [
+                        if (!isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                              child: AppleSearchField(
+                                controller: _searchController,
+                                hintText: l10n.searchHint,
+                                onChanged: (q) => context
+                                    .read<VaultBloc>()
+                                    .add(VaultSearchChanged(q)),
+                                onClear: () => context
+                                    .read<VaultBloc>()
+                                    .add(const VaultSearchChanged('')),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: VaultEmptyState(
-                      onAdd: () => context.push('/vault/item/new'),
-                    ),
-                  )
-                else if (filtered.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        'No matches',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: AppColors.secondaryLabel(context),
-                        ),
-                      ),
-                    ),
-                  )
-                else if (isGrid)
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(16, 12, 16, 100 + bottomInset),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.2,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final item = filtered[index];
-                          return ClipItemCard(
-                            item: item,
-                            compact: true,
-                            categoryName:
-                                _categoryName(state, item.categoryId),
-                            onTap: () => context
-                                .read<VaultBloc>()
-                                .add(VaultItemCopied(item.id)),
-                            onLongPress: () => _showItemActions(
-                              context,
-                              item.id,
-                              item.title,
-                              item.isPinned,
+                        if (!isEmpty && state.categories.isNotEmpty)
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: 36,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                physics: const BouncingScrollPhysics(),
+                                children: [
+                                  _SegmentChip(
+                                    label: l10n.filterAll,
+                                    selected: state.selectedCategoryId == null,
+                                    onTap: () => context.read<VaultBloc>().add(
+                                          const VaultCategoryFilterChanged(
+                                            null,
+                                          ),
+                                        ),
+                                  ),
+                                  ...state.categories.map(
+                                    (c) => Padding(
+                                      padding: const EdgeInsets.only(left: 8),
+                                      child: _SegmentChip(
+                                        label: c.name,
+                                        selected:
+                                            state.selectedCategoryId == c.id,
+                                        onTap: () =>
+                                            context.read<VaultBloc>().add(
+                                                  VaultCategoryFilterChanged(
+                                                    c.id,
+                                                  ),
+                                                ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                        childCount: filtered.length,
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(16, 12, 16, 100 + bottomInset),
-                    sliver: SliverToBoxAdapter(
-                      child: ClipItemGroupedList(
-                        items: filtered,
-                        categoryNameOf: (item) =>
-                            _categoryName(state, item.categoryId),
-                        onTap: (item) => context
-                            .read<VaultBloc>()
-                            .add(VaultItemCopied(item.id)),
-                        onLongPress: (item) => _showItemActions(
-                          context,
-                          item.id,
-                          item.title,
-                          item.isPinned,
-                        ),
-                      ),
+                          ),
+                        if (isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: VaultEmptyState(
+                              onAdd: () => ItemEditorBottomSheet.show(context),
+                            ),
+                          )
+                        else if (filtered.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Text(
+                                'No matches',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.secondaryLabel(context),
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (isGrid)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              16,
+                              12,
+                              16,
+                              100 + bottomInset,
+                            ),
+                            sliver: SliverGrid(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.2,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final item = filtered[index];
+                                  return ClipItemCard(
+                                    item: item,
+                                    compact: true,
+                                    categoryName: _categoryName(
+                                      state,
+                                      item.categoryId,
+                                    ),
+                                    onTap: () => context
+                                        .read<VaultBloc>()
+                                        .add(VaultItemCopied(item.id)),
+                                    onLongPress: () => _showItemActions(
+                                      context,
+                                      item.id,
+                                      item.title,
+                                      item.isPinned,
+                                    ),
+                                  );
+                                },
+                                childCount: filtered.length,
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              16,
+                              12,
+                              16,
+                              100 + bottomInset,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: ClipItemGroupedList(
+                                items: filtered,
+                                categoryNameOf: (item) =>
+                                    _categoryName(state, item.categoryId),
+                                onTap: (item) => context
+                                    .read<VaultBloc>()
+                                    .add(VaultItemCopied(item.id)),
+                                onLongPress: (item) => _showItemActions(
+                                  context,
+                                  item.id,
+                                  item.title,
+                                  item.isPinned,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                ],
+              ),
             );
           },
         ),

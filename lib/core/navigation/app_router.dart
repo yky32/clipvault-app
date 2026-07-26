@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/item_editor/presentation/pages/item_editor_page.dart';
 import '../../features/lock/presentation/pages/lock_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -53,14 +52,8 @@ class AppRouter {
             name: 'vault',
             builder: (_, __) => const VaultPage(),
             routes: [
-              GoRoute(
-                path: 'item/:id',
-                name: 'itemEditor',
-                builder: (context, state) {
-                  final id = state.pathParameters['id'];
-                  return ItemEditorPage(itemId: id == 'new' ? null : id);
-                },
-              ),
+              // User input (add/edit item) → bottom sheet, not a route page
+              // (Triftly pattern via ItemEditorBottomSheet.show)
               GoRoute(
                 path: 'settings',
                 name: 'settings',

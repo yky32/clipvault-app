@@ -9,6 +9,7 @@ class IosGroup extends StatelessWidget {
     required this.children,
     this.header,
     this.footer,
+    this.inset = true,
     super.key,
   });
 
@@ -16,12 +17,16 @@ class IosGroup extends StatelessWidget {
   final String? header;
   final String? footer;
 
+  /// When false, skips outer horizontal inset (use inside sheets that
+  /// already pad via [SheetScaffold]).
+  final bool inset;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: EdgeInsets.symmetric(horizontal: inset ? AppSpacing.lg : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -37,12 +37,22 @@ lib/
     services/               # encryption, repos, auth, clipboard, settings
   features/
     vault/                  # home list/grid + one-tap copy
-    item_editor/            # create / edit
+    item_editor/            # create / edit via bottom sheet (Triftly pattern)
     settings/               # security, theme, clipboard
     onboarding/             # first-launch
     lock/                   # biometric gate
   l10n/                     # ARB files
 ```
+
+## Input pattern
+
+User input (add / edit item) opens a **modal bottom sheet** — same approach as Triftly (`TriftlyBottomSheet` + `SheetScaffold`):
+
+```dart
+ItemEditorBottomSheet.show(context);           // create
+ItemEditorBottomSheet.show(context, itemId: id); // edit
+```
+
 
 ## Run
 
