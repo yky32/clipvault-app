@@ -38,19 +38,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final pages = [
       _OnboardSlide(
         icon: CupertinoIcons.doc_on_clipboard_fill,
-        color: const Color(0xFF007AFF),
+        color: AppColors.primary,
         title: l10n.onboardingTitle1,
         body: l10n.onboardingBody1,
       ),
       _OnboardSlide(
         icon: CupertinoIcons.lock_shield_fill,
-        color: AppColors.primary,
+        color: AppColors.accentDark,
         title: l10n.onboardingTitle2,
         body: l10n.onboardingBody2,
       ),
       _OnboardSlide(
         icon: CupertinoIcons.hand_raised_fill,
-        color: const Color(0xFF5856D6),
+        color: AppColors.iconView,
         title: l10n.onboardingTitle3,
         body: l10n.onboardingBody3,
       ),

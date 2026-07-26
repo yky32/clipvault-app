@@ -1,48 +1,72 @@
 import 'package:flutter/material.dart';
 
-/// Apple-inspired system palette with a calm teal accent (trustworthy vault).
+/// Higgs Brand palette **02 — 灰白 + 橘红**
+///
+/// 60% 暖灰 · 30% 暖白 · 10% 橘红
+/// Feel: 俐落、有力量、现代. Accent only on focal UI (CTA / FAB / copy).
 class AppColors {
   AppColors._();
 
-  // Brand — soft system teal (iOS-adjacent, not generic Material purple)
-  static const primary = Color(0xFF0A7C72);
-  static const primaryLight = Color(0xFF14A89A);
-  static const primaryDark = Color(0xFF06665E);
-  static const primaryMuted = Color(0xFFE6F6F4);
+  // ── Palette 02 tokens ──────────────────────────────────────────
+  /// 60% — 暖灰色 (page / large surfaces)
+  static const warmGrey = Color(0xFFE4E2DD);
 
-  // Light — systemGroupedBackground / systemBackground
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceDim = Color(0xFFF2F2F7); // systemGroupedBackground
-  static const surfaceCard = Color(0xFFFFFFFF);
-  static const surfaceElevated = Color(0xFFFFFFFF);
-  static const fill = Color(0xFF787880); // systemFill base
-  static const fillTertiary = Color(0x1F767680); // ~12% systemFill
+  /// 30% — 暖白色 (cards / elevated panels)
+  static const warmWhite = Color(0xFFF8F6F0);
 
-  // Dark — elevated system greys
-  static const surfaceDark = Color(0xFF000000);
-  static const surfaceDimDark = Color(0xFF1C1C1E); // secondarySystemBackground
-  static const surfaceCardDark = Color(0xFF2C2C2E); // secondarySystemGrouped
-  static const surfaceElevatedDark = Color(0xFF3A3A3C);
-  static const fillDark = Color(0xFF8E8E93);
+  /// 10% — 橘红色 (memory point / CTA)
+  static const accent = Color(0xFFC85F42);
 
-  // Label colors (iOS hierarchy)
-  static const textPrimary = Color(0xFF000000);
-  static const textSecondary = Color(0xFF3C3C43); // secondaryLabel ~60%
-  static const textTertiary = Color(0xFF3C3C43); // tertiary via alpha
-  static const textPrimaryDark = Color(0xFFFFFFFF);
-  static const textSecondaryDark = Color(0xFFEBEBF5);
-  static const textTertiaryDark = Color(0xFFEBEBF5);
+  static const accentLight = Color(0xFFD97A60);
+  static const accentDark = Color(0xFFA84A32);
+  static const accentMuted = Color(0xFFF3E4DF); // soft wash of 橘红
+
+  // Brand aliases (used across the app)
+  static const primary = accent;
+  static const primaryLight = accentLight;
+  static const primaryDark = accentDark;
+  static const primaryMuted = accentMuted;
+
+  // Surface — light (Higgs 02)
+  static const surface = warmWhite; // cards, sheets
+  static const surfaceDim = warmGrey; // page / grouped bg
+  static const surfaceCard = warmWhite;
+  static const surfaceElevated = Color(0xFFFAF8F4);
+  static const fill = Color(0xFF78746E);
+  static const fillTertiary = Color(0x1F78746E);
+
+  // Surface — dark (warm charcoal counterpart)
+  static const surfaceDark = Color(0xFF141311);
+  static const surfaceDimDark = Color(0xFF1C1B19);
+  static const surfaceCardDark = Color(0xFF2A2825);
+  static const surfaceElevatedDark = Color(0xFF35322E);
+  static const fillDark = Color(0xFFA39E96);
+
+  // Labels — slightly warm neutrals
+  static const textPrimary = Color(0xFF1A1816);
+  static const textSecondary = Color(0xFF5C574F);
+  static const textTertiary = Color(0xFF5C574F);
+  static const textPrimaryDark = Color(0xFFF8F6F0);
+  static const textSecondaryDark = Color(0xFFE8E4DC);
+  static const textTertiaryDark = Color(0xFFE8E4DC);
 
   // Separators
-  static const separator = Color(0xFFC6C6C8);
-  static const separatorDark = Color(0xFF38383A);
-  static const border = Color(0xFFD1D1D6);
-  static const borderDark = Color(0xFF38383A);
+  static const separator = Color(0xFFD0CDC6);
+  static const separatorDark = Color(0xFF3D3A35);
+  static const border = Color(0xFFD8D4CC);
+  static const borderDark = Color(0xFF3D3A35);
 
-  // Status
-  static const success = Color(0xFF34C759); // systemGreen
-  static const warning = Color(0xFFFF9500); // systemOrange
-  static const error = Color(0xFFFF3B30); // systemRed
+  // Status (keep system-readable; warning/error near accent family)
+  static const success = Color(0xFF5A8F62);
+  static const warning = Color(0xFFC8893A);
+  static const error = Color(0xFFC44B3C);
+
+  // Settings leading icon tiles (harmonized with 02)
+  static const iconSecurity = Color(0xFFC85F42);
+  static const iconTheme = Color(0xFF6B6560);
+  static const iconView = Color(0xFF8A7568);
+  static const iconClipboard = Color(0xFFA84A32);
+  static const iconExport = Color(0xFF5A8F62);
 
   static Color label(BuildContext context, {double opacity = 1}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -54,14 +78,14 @@ class AppColors {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark
         ? textSecondaryDark.withValues(alpha: 0.6)
-        : textSecondary.withValues(alpha: 0.6);
+        : textSecondary.withValues(alpha: 0.72);
   }
 
   static Color tertiaryLabel(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark
-        ? textTertiaryDark.withValues(alpha: 0.3)
-        : textTertiary.withValues(alpha: 0.3);
+        ? textTertiaryDark.withValues(alpha: 0.35)
+        : textTertiary.withValues(alpha: 0.4);
   }
 
   static Color cardBackground(BuildContext context) {
@@ -77,22 +101,19 @@ class AppColors {
   }
 
   static Color groupedBackground(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark
-        ? surfaceDark
-        : surfaceDim;
+    return pageBackground(context);
   }
 
   static Color hairline(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark
-        ? separatorDark.withValues(alpha: 0.65)
-        : separator.withValues(alpha: 0.65);
+        ? separatorDark.withValues(alpha: 0.7)
+        : separator.withValues(alpha: 0.85);
   }
 
   static Color searchFill(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark
-        ? const Color(0xFF1C1C1E)
-        : const Color(0xFFE3E3E8);
+    // Sit between 60% grey and 30% white — quiet, not cold system grey.
+    return isDark ? const Color(0xFF2A2825) : const Color(0xFFD9D6D0);
   }
 }

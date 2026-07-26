@@ -249,7 +249,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF9500),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: const Icon(
@@ -260,7 +260,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                 ),
                 trailing: CupertinoSwitch(
                   value: _isPinned,
-                  activeTrackColor: AppColors.success,
+                  activeTrackColor: AppColors.primary,
                   onChanged: (v) {
                     HapticFeedback.selectionClick();
                     setState(() => _isPinned = v);

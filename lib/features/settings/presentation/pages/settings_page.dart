@@ -186,13 +186,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     IosGroupTile(
                       title: l10n.biometricLock,
-                      leading: _LeadingIcon(
+                      leading: const _LeadingIcon(
                         icon: CupertinoIcons.lock_shield_fill,
-                        color: const Color(0xFF007AFF),
+                        color: AppColors.iconSecurity,
                       ),
                       trailing: CupertinoSwitch(
                         value: _biometric,
-                        activeTrackColor: AppColors.success,
+                        activeTrackColor: AppColors.primary,
                         onChanged: _toggleBiometric,
                       ),
                     ),
@@ -206,7 +206,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: l10n.themeMode,
                       leading: const _LeadingIcon(
                         icon: CupertinoIcons.moon_stars_fill,
-                        color: Color(0xFF5856D6),
+                        color: AppColors.iconTheme,
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -228,7 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: l10n.defaultView,
                       leading: const _LeadingIcon(
                         icon: CupertinoIcons.rectangle_grid_2x2_fill,
-                        color: Color(0xFFAF52DE),
+                        color: AppColors.iconView,
                       ),
                       trailing: CupertinoSlidingSegmentedControl<VaultViewMode>(
                         groupValue: _viewMode,
@@ -268,7 +268,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: l10n.clipboardAutoClear,
                       leading: const _LeadingIcon(
                         icon: CupertinoIcons.doc_on_clipboard_fill,
-                        color: Color(0xFFFF9500),
+                        color: AppColors.iconClipboard,
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -296,7 +296,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: l10n.exportPlain,
                       leading: const _LeadingIcon(
                         icon: CupertinoIcons.share_solid,
-                        color: Color(0xFF34C759),
+                        color: AppColors.iconExport,
                       ),
                       trailing: const IosChevron(),
                       onTap: () async {

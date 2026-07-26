@@ -30,7 +30,7 @@ class AppTheme {
       onError: Colors.white,
       surfaceContainerHighest: isDark
           ? AppColors.surfaceElevatedDark
-          : const Color(0xFFE5E5EA),
+          : AppColors.warmGrey,
     );
 
     final textTheme = _textTheme(onSurface, secondary, isDark);
@@ -116,7 +116,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.surfaceCardDark : Colors.white,
+        fillColor: isDark ? AppColors.surfaceCardDark : AppColors.warmWhite,
         border: OutlineInputBorder(
           borderRadius: AppRadii.control,
           borderSide: BorderSide.none,
@@ -184,10 +184,11 @@ class AppTheme {
           return Colors.white;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.success;
+          // Accent only when on — keeps 10% 橘红 disciplined.
+          if (states.contains(WidgetState.selected)) return AppColors.primary;
           return isDark
-              ? const Color(0xFF39393D)
-              : const Color(0xFFE9E9EB);
+              ? const Color(0xFF3D3A35)
+              : const Color(0xFFD0CDC6);
         }),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
@@ -204,17 +205,19 @@ class AppTheme {
         elevation: 0,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? AppColors.surfaceDimDark : Colors.white,
+        backgroundColor:
+            isDark ? AppColors.surfaceDimDark : AppColors.warmWhite,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: AppRadii.sheet),
         showDragHandle: true,
         dragHandleColor: isDark
             ? Colors.white.withValues(alpha: 0.25)
-            : Colors.black.withValues(alpha: 0.18),
+            : Colors.black.withValues(alpha: 0.16),
         dragHandleSize: const Size(36, 5),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? AppColors.surfaceCardDark : Colors.white,
+        backgroundColor:
+            isDark ? AppColors.surfaceCardDark : AppColors.warmWhite,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         titleTextStyle: TextStyle(

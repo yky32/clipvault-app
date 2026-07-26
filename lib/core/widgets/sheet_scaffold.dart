@@ -164,7 +164,7 @@ class SheetScaffold extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(maxHeight: maxHeight),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDimDark : AppColors.surfaceDim,
+          color: isDark ? AppColors.surfaceDimDark : AppColors.warmWhite,
           borderRadius: AppRadii.sheet,
         ),
         clipBehavior: Clip.antiAlias,
