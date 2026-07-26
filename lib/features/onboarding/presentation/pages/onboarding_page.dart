@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -19,45 +18,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _controller = PageController();
   int _index = 0;
 
-  Future<void> _finish({bool offerBiometric = false}) async {
-    if (offerBiometric) {
-      final can = await AppBootstrap.authService.canCheckBiometrics();
-      if (can && mounted) {
-        final enable = await showCupertinoDialog<bool>(
-          context: context,
-          builder: (ctx) {
-            final l10n = AppLocalizations.of(ctx);
-            return CupertinoAlertDialog(
-              title: Text(l10n.enableBiometrics),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(l10n.biometricLockSubtitle),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(l10n.notNow),
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(l10n.enableBiometrics),
-                ),
-              ],
-            );
-          },
-        );
-        if (enable == true) {
-          final ok = await AppBootstrap.authService.authenticate(
-            reason: 'Enable app lock for ClipVault',
-          );
-          if (ok) {
-            await SettingsService.instance.setBiometricLockEnabled(true);
-          }
-        }
-      }
-    }
-
+  /// Finish onboarding and go straight to the vault.
+  /// App lock is never forced here — only via Settings toggle.
+  Future<void> _finish() async {
     await SettingsService.instance.setOnboardingDone(true);
     if (!mounted) return;
     context.go('/vault');
@@ -152,7 +115,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       curve: Curves.easeOutCubic,
                     );
                   } else {
-                    _finish(offerBiometric: true);
+                    _finish();
                   }
                 },
                 child: Text(

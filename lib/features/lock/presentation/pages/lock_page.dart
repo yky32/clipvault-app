@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 
+/// Shown only when Settings → App lock is ON.
+/// Never appears by default.
 class LockPage extends StatefulWidget {
   const LockPage({super.key});
 
@@ -21,11 +24,23 @@ class _LockPageState extends State<LockPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _unlock());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!SettingsService.instance.biometricLockEnabled) {
+        if (mounted) context.go('/vault');
+        return;
+      }
+      // Prompt once when lock is intentionally enabled.
+      _unlock();
+    });
   }
 
   Future<void> _unlock() async {
     if (_busy) return;
+    if (!SettingsService.instance.biometricLockEnabled) {
+      if (mounted) context.go('/vault');
+      return;
+    }
+
     setState(() {
       _busy = true;
       _error = null;

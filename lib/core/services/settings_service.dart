@@ -7,7 +7,8 @@ class SettingsService {
   static final SettingsService instance = SettingsService._();
 
   static const _onboardingKey = 'onboarding_done';
-  static const _biometricKey = 'biometric_lock';
+  /// Opt-in only via Settings. New key so older onboarding-forced values are ignored.
+  static const _biometricKey = 'app_lock_enabled';
   static const _viewModeKey = 'default_view';
   static const _clipboardClearKey = 'clipboard_clear_seconds';
   static const _localeKey = 'locale_code';
@@ -16,6 +17,10 @@ class SettingsService {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    // Drop legacy key that may have been set during forced onboarding prompt.
+    if (_prefs.containsKey('biometric_lock')) {
+      await _prefs.remove('biometric_lock');
+    }
   }
 
   bool get onboardingDone => _prefs.getBool(_onboardingKey) ?? false;
@@ -23,6 +28,7 @@ class SettingsService {
   Future<void> setOnboardingDone(bool value) =>
       _prefs.setBool(_onboardingKey, value);
 
+  /// Always defaults to **false**. Only Settings can turn this on.
   bool get biometricLockEnabled => _prefs.getBool(_biometricKey) ?? false;
 
   Future<void> setBiometricLockEnabled(bool value) =>

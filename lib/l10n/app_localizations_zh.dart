@@ -166,7 +166,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingTitle3 => '準備就緒';
 
   @override
-  String get onboardingBody3 => '可選的生物辨識鎖定，守護你的保險庫。';
+  String get onboardingBody3 => '立刻開始儲存內容。可隨時在「設定」中開啟應用程式鎖定。';
 
   @override
   String get getStarted => '開始使用';

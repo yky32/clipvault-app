@@ -171,7 +171,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingBody3 =>
-      'Optional app lock with biometrics keeps your vault secure.';
+      'Start storing values right away. You can turn on app lock anytime in Settings.';
 
   @override
   String get getStarted => 'Get started';

@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingBody3.
   ///
   /// In en, this message translates to:
-  /// **'Optional app lock with biometrics keeps your vault secure.'**
+  /// **'Start storing values right away. You can turn on app lock anytime in Settings.'**
   String get onboardingBody3;
 
   /// No description provided for @getStarted.

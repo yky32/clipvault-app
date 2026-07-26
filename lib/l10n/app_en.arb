@@ -61,7 +61,7 @@
   "onboardingTitle2": "Private by default",
   "onboardingBody2": "Everything stays on your device. Values are encrypted at rest.",
   "onboardingTitle3": "Ready when you are",
-  "onboardingBody3": "Optional app lock with biometrics keeps your vault secure.",
+  "onboardingBody3": "Start storing values right away. You can turn on app lock anytime in Settings.",
   "getStarted": "Get started",
   "next": "Next",
   "skip": "Skip",
