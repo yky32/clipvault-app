@@ -62,20 +62,40 @@ flutter pub get
 flutter run
 ```
 
-## MVP status (skeleton)
+## TestFlight (Fastlane — same pattern as Depozio / Triftly)
+
+```bash
+cd ios
+bundle install
+bundle exec fastlane ios upload_testflight
+# or interactive:
+./fastlane/fastlane_menu.sh
+```
+
+Details: [ios/fastlane/README.md](./ios/fastlane/README.md)
+
+## Security notes (MVP)
+
+- **Values** encrypted at rest (AES-256); key in Keychain / secure storage
+- **Titles / metadata** are not encrypted
+- App lock is **opt-in**; when enabled, vault re-locks after background
+- Plain-text export requires confirm (+ biometrics if lock is on)
+
+## MVP status
 
 - [x] Create / edit / delete items
 - [x] One-tap copy + haptic + toast
 - [x] Search by title
-- [x] Category filter (free-text category on item)
+- [x] Category filter
 - [x] Pin to top
-- [x] Grid / List view
+- [x] Grid / List view + last used
 - [x] AES-256 values at rest
-- [x] Biometric app lock
+- [x] Biometric app lock + re-lock on resume
 - [x] Theme: System / Light / Dark
 - [x] Clipboard auto-clear
-- [x] Plain-text export (clipboard)
+- [x] Plain-text export (confirm + re-auth)
 - [x] Onboarding
 - [x] en + zh l10n
+- [x] Fastlane → TestFlight
 - [ ] Encrypted export file
 - [ ] iCloud sync (Phase 2)

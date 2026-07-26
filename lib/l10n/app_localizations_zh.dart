@@ -303,6 +303,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportComingSoon => '匯出功能將於未來版本提供。';
 
   @override
+  String get exportConfirmTitle => '匯出所有內容？';
+
+  @override
+  String get exportConfirmBody => '保險庫內的所有值會以純文字複製到剪貼簿。任何能存取此裝置剪貼簿的人都能讀取。確定繼續？';
+
+  @override
+  String get exportConfirmAction => '匯出';
+
+  @override
+  String get exportAuthReason => '確認以匯出保險庫內容';
+
+  @override
+  String get exportCancelled => '已取消匯出';
+
+  @override
   String get onboardingTitle1 => '一鍵複製';
 
   @override

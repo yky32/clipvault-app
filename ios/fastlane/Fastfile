@@ -1,0 +1,574 @@
+# clipVAuLt Fastlane — patterned after Depozio / Triftly (local Flutter + TestFlight).
+# Fastfile lives in ios/fastlane/; project root is ../..
+
+FASTLANE_DIR = File.dirname(__FILE__)
+IOS_DIR = File.expand_path("..", FASTLANE_DIR)
+PROJECT_ROOT = File.expand_path("..", IOS_DIR)
+
+APP_IDENTIFIER = "com.yky.clipvault"
+APP_NAME = "clipVAuLt"
+TEAM_ID = ENV["FASTLANE_TEAM_ID"] || "59S8HHXTXU"
+APPLE_ID = ENV["FASTLANE_USER"] || "wayneyu.dev@gmail.com"
+
+def path_for_system_ruby
+  "/usr/bin:/usr/local/bin:#{ENV['PATH']}"
+end
+
+def gem_home_for_bundle
+  home = ENV["HOME"] || ENV["USERPROFILE"] || Dir.home
+  "#{home}/.gem/ruby/#{RbConfig::CONFIG['ruby_version']}"
+end
+
+def gem_path_for_bundle
+  "#{gem_home_for_bundle}:/Library/Ruby/Gems/2.6.0"
+end
+
+def find_pod_command
+  possible_paths = [
+    "/Library/Ruby/Gems/2.6.0/bin/pod",
+    "/usr/local/bin/pod",
+    "/opt/homebrew/bin/pod"
+  ]
+  possible_paths.each do |path|
+    return path if File.exist?(path)
+  end
+  pod_path = `which pod 2>/dev/null`.strip
+  return pod_path unless pod_path.empty?
+
+  "pod"
+end
+
+def run_pod_install
+  install_script = File.join(IOS_DIR, "install_gems_and_pods.sh")
+  if File.executable?(install_script) && ENV["CI"] != "true"
+    UI.message("Running pod install via install_gems_and_pods.sh (rbenv Ruby 2.6)...")
+    begin
+      home = ENV["HOME"] || Dir.home
+      sh(
+        "cd #{PROJECT_ROOT} && env HOME=\"#{home}\" LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 " \
+        "#{install_script}",
+        log: true
+      )
+      UI.success("✅ pod install completed (via install_gems_and_pods.sh)")
+      return true
+    rescue => script_ex
+      UI.important("⚠️  install script failed: #{script_ex.message}")
+    end
+  end
+
+  UI.message("Running pod install (trying bundle exec first)...")
+  ruby_bin = RbConfig.ruby
+  begin
+    gem_home = gem_home_for_bundle
+    gem_path = gem_path_for_bundle
+    sh(
+      "cd #{IOS_DIR} && env PATH=\"#{path_for_system_ruby}\" " \
+      "GEM_HOME=\"#{gem_home}\" GEM_PATH=\"#{gem_path}\" " \
+      "#{ruby_bin} -S bundle exec pod install --repo-update",
+      log: true
+    )
+    UI.success("✅ pod install completed (bundle exec)")
+    return true
+  rescue => ex
+    UI.important("⚠️  bundle exec pod failed: #{ex.message}")
+    UI.important("Trying system pod...")
+    pod_cmd = find_pod_command
+    begin
+      system_path = "/usr/bin:#{ENV['PATH']}"
+      sh(
+        "cd #{IOS_DIR} && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u BUNDLE_PATH " \
+        "PATH=\"#{system_path}\" #{pod_cmd} install --repo-update",
+        log: true
+      )
+      UI.success("✅ pod install completed (system pod)")
+      return false
+    rescue => sys_ex
+      UI.important("⚠️  system pod also failed: #{sys_ex.message}")
+      pods_lock = File.join(IOS_DIR, "Pods", "Manifest.lock")
+      if File.exist?(pods_lock)
+        UI.important("Continuing (Pods/Manifest.lock exists).")
+        return true
+      end
+      UI.user_error!(
+        "Pod install failed. From project root: ./ios/install_gems_and_pods.sh"
+      )
+    end
+  end
+end
+
+def ensure_pod_wrapper_for_flutter
+  wrapper_dir = File.join(IOS_DIR, ".pod_wrapper")
+  FileUtils.mkdir_p(wrapper_dir)
+  wrapper_script = File.join(wrapper_dir, "pod")
+  gem_home = gem_home_for_bundle
+  gem_path = gem_path_for_bundle
+  script_content = <<~BASH
+    #!/bin/bash
+    export PATH="/usr/bin:/usr/local/bin:$PATH"
+    export GEM_HOME="#{gem_home}"
+    export GEM_PATH="#{gem_path}"
+    cd #{IOS_DIR.inspect} && bundle exec pod "$@"
+  BASH
+  need_write = !File.exist?(wrapper_script) || File.read(wrapper_script) != script_content
+  if need_write
+    File.write(wrapper_script, script_content)
+    File.chmod(0755, wrapper_script)
+    UI.message("Created pod wrapper at #{wrapper_script}")
+  end
+  wrapper_dir
+end
+
+# Optional App Store Connect API key (CI / non-interactive). Local Apple ID 2FA also works.
+def app_store_connect_api_key_params
+  key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
+  issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"]
+  key_content = ENV["APP_STORE_CONNECT_API_KEY_CONTENT"]
+  return nil if key_id.to_s.empty? || issuer_id.to_s.empty? || key_content.to_s.empty?
+
+  { key_id: key_id, issuer_id: issuer_id, key_content: key_content }
+end
+
+def build_app_store_connect_api_key
+  params = app_store_connect_api_key_params
+  return nil unless params
+
+  key_path = File.join(Dir.home, ".appstoreconnect", "api_key.p8")
+  if File.exist?(key_path)
+    app_store_connect_api_key(
+      key_id: params[:key_id],
+      issuer_id: params[:issuer_id],
+      key_filepath: key_path
+    )
+  else
+    app_store_connect_api_key(
+      key_id: params[:key_id],
+      issuer_id: params[:issuer_id],
+      key_content: params[:key_content],
+      is_key_content_base64: ENV["APP_STORE_CONNECT_API_KEY_IS_BASE64"] == "true"
+    )
+  end
+end
+
+def increment_build_number_in_pubspec
+  pubspec_path = File.join(PROJECT_ROOT, "pubspec.yaml")
+  unless File.exist?(pubspec_path)
+    UI.user_error!("❌ pubspec.yaml not found at #{pubspec_path}")
+  end
+
+  content = File.read(pubspec_path)
+  version_match = content.match(/^version:\s*(\d+\.\d+\.\d+)\+(\d+)/)
+  unless version_match
+    UI.user_error!("❌ Could not parse version from pubspec.yaml. Expected: version: 1.0.0+1")
+  end
+
+  version_name = version_match[1]
+  current_build = version_match[2].to_i
+  new_build = current_build + 1
+
+  UI.message("📦 Incrementing build number: #{current_build} → #{new_build}")
+  new_content = content.gsub(
+    /^version:\s*\d+\.\d+\.\d+\+\d+/,
+    "version: #{version_name}+#{new_build}"
+  )
+  File.write(pubspec_path, new_content)
+  UI.success("✅ Build number updated to #{new_build}")
+  new_build
+end
+
+def generate_release_notes
+  begin
+    unless system("cd #{PROJECT_ROOT} && git rev-parse --git-dir > /dev/null 2>&1")
+      return "[Feature: Manual build]\n[Build time: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}]"
+    end
+
+    commit_output = `cd #{PROJECT_ROOT} && git log -10 --pretty=format:"%H|%s" --no-merges`.strip
+    valid_commits = []
+    commit_output.split("\n").each do |line|
+      next if line.empty?
+
+      parts = line.split("|", 2)
+      next if parts.length < 2
+
+      commit_msg = parts[1].strip
+      next if commit_msg.include?("Auto-increment build number") ||
+              commit_msg.include?("chore: Auto-increment")
+
+      cleaned = commit_msg.length > 150 ? commit_msg[0..150] : commit_msg
+      valid_commits << cleaned unless cleaned.empty?
+      break if valid_commits.length >= 3
+    end
+
+    valid_commits = ["Manual build"] if valid_commits.empty?
+    build_time = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+    parts = valid_commits.each_with_index.map { |msg, i| "[Feature #{i + 1}: #{msg}]" }
+    parts << "[Build time: #{build_time}]"
+    notes = parts.join("\n")
+    UI.message("📝 Release notes:\n#{notes}")
+    notes
+  rescue => ex
+    UI.important("⚠️  Failed to generate release notes: #{ex.message}")
+    "[Feature: Manual build]\n[Build time: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}]"
+  end
+end
+
+def commit_and_push_build_number(new_build_number)
+  UI.message("📝 Committing build number change...")
+  begin
+    unless system("cd #{PROJECT_ROOT} && git rev-parse --git-dir > /dev/null 2>&1")
+      UI.important("⚠️  Not a git repository, skipping commit")
+      return
+    end
+
+    git_status = `cd #{PROJECT_ROOT} && git status --porcelain pubspec.yaml`.strip
+    if git_status.empty?
+      UI.important("ℹ️  No changes to pubspec.yaml, skipping commit")
+      return
+    end
+
+    sh("cd #{PROJECT_ROOT} && git add pubspec.yaml")
+    sh(
+      "cd #{PROJECT_ROOT} && git commit " \
+      "-m 'chore: Auto-increment build number to #{new_build_number}' " \
+      "-m 'Build number automatically incremented by Fastfile' " \
+      "-m 'Updated to 1.0.0+#{new_build_number}'"
+    )
+    UI.success("✅ Build number change committed")
+
+    UI.message("🚀 Pushing to remote repository...")
+    sh("cd #{PROJECT_ROOT} && git push")
+    UI.success("✅ Build number change pushed to remote")
+  rescue => ex
+    UI.important("⚠️  Failed to commit/push build number: #{ex.message}")
+    UI.important("   You may need to commit and push manually")
+  end
+end
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build iOS app for development (Debug)"
+  lane :build_debug do
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+    run_pod_install
+    sh(
+      "cd #{PROJECT_ROOT} && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u BUNDLE_PATH " \
+      "flutter build ios --debug --no-codesign"
+    )
+    UI.success("✅ iOS Debug build completed!")
+  end
+
+  desc "Build iOS app for release (no codesign)"
+  lane :build_release do
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+    run_pod_install
+    sh(
+      "cd #{PROJECT_ROOT} && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u BUNDLE_PATH " \
+      "flutter build ios --release --no-codesign"
+    )
+    UI.success("✅ iOS Release build completed!")
+  end
+
+  desc "Build iOS app and create IPA (requires code signing)"
+  desc "Options: export_method — development | ad-hoc | app-store | enterprise (default: development)"
+  lane :build_ipa do |options|
+    export_method = options[:export_method] || "development"
+
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+
+    UI.message("Ensuring bundle is up to date (ios/Gemfile)...")
+    begin
+      gem_home = gem_home_for_bundle
+      sh(
+        "cd #{IOS_DIR} && env PATH=\"#{path_for_system_ruby}\" " \
+        "GEM_HOME=\"#{gem_home}\" GEM_PATH=\"#{gem_home}\" bundle install",
+        log: true
+      )
+    rescue => ex
+      UI.important("⚠️  bundle install had an issue: #{ex.message}")
+    end
+
+    bundle_pod_ok = run_pod_install
+
+    if bundle_pod_ok
+      pod_wrapper_dir = ensure_pod_wrapper_for_flutter
+      build_path = "#{pod_wrapper_dir}:#{ENV['PATH']}"
+    else
+      pod_cmd = find_pod_command
+      pod_dir = (pod_cmd && pod_cmd.to_s.start_with?("/")) ? File.dirname(pod_cmd) : ""
+      build_path = pod_dir.empty? ? ENV["PATH"] : "/usr/bin:#{pod_dir}:#{ENV['PATH']}"
+    end
+
+    sh("cd #{PROJECT_ROOT} && PATH=#{build_path} flutter build ios --release")
+
+    export_opts = {
+      method: export_method,
+      signingStyle: "automatic",
+      teamID: TEAM_ID
+    }
+
+    if export_method == "app-store"
+      UI.message("📦 Ensuring App Store provisioning profile is available...")
+      begin
+        get_provisioning_profile(
+          app_identifier: APP_IDENTIFIER,
+          adhoc: false,
+          username: APPLE_ID,
+          team_id: TEAM_ID
+        )
+        UI.success("✅ Provisioning profile ready")
+      rescue => ex
+        UI.important("⚠️  Could not fetch profile (run setup_appstore_signing if needed): #{ex.message}")
+      end
+    end
+
+    build_app(
+      workspace: "#{IOS_DIR}/Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: export_method,
+      output_directory: "#{PROJECT_ROOT}/build/ios/ipa",
+      export_options: export_opts
+    )
+
+    UI.success("✅ IPA created successfully!")
+    UI.message("📦 IPA location: #{PROJECT_ROOT}/build/ios/ipa/")
+  end
+
+  desc "Build IPA and upload to TestFlight (auto build number + release notes)"
+  desc "Options: skip_build:true — upload existing IPA only"
+  lane :upload_testflight do |options|
+    skip_build = options[:skip_build] || false
+    api_key = build_app_store_connect_api_key
+
+    unless skip_build
+      UI.important("🔢 Auto-incrementing build number...")
+      new_build_number = increment_build_number_in_pubspec
+      commit_and_push_build_number(new_build_number)
+      UI.important("")
+
+      UI.important("📦 Building IPA for App Store / TestFlight...")
+      build_success = false
+      retry_count = 0
+      max_retries = 1
+
+      begin
+        build_ipa(export_method: "app-store")
+        build_success = true
+      rescue => ex
+        error_msg = ex.message
+        is_signing_error = error_msg.include?("provisioning profile") ||
+                           error_msg.include?("certificate") ||
+                           error_msg.include?("signing") ||
+                           error_msg.include?("CodeSign") ||
+                           error_msg.include?("packaging")
+
+        if is_signing_error && retry_count < max_retries
+          retry_count += 1
+          UI.important("🔧 Code signing issue — running setup_appstore_signing then retry...")
+          begin
+            setup_appstore_signing
+            build_ipa(export_method: "app-store")
+            build_success = true
+          rescue => setup_ex
+            UI.error("❌ Automatic certificate setup failed: #{setup_ex.message}")
+            UI.error("   open ios/Runner.xcworkspace → Signing & Capabilities → team #{TEAM_ID}")
+            UI.error("   Or: bundle exec fastlane ios setup_appstore_signing")
+            raise
+          end
+        else
+          UI.error("❌ Failed to build IPA: #{error_msg}")
+          raise
+        end
+      end
+
+      UI.user_error!("Failed to build IPA for App Store") unless build_success
+    end
+
+    ipa_path = "#{PROJECT_ROOT}/build/ios/ipa/Runner.ipa"
+    unless File.exist?(ipa_path)
+      UI.user_error!(
+        "❌ IPA not found at #{ipa_path}. Build first or omit skip_build."
+      )
+    end
+
+    UI.message("🚀 Uploading to TestFlight...")
+    ENV["PILOT_APP_IDENTIFIER"] = APP_IDENTIFIER
+    ENV.delete("SIGH_APP_IDENTIFIER")
+
+    begin
+      ipa_bundle_id = FastlaneCore::IpaFileAnalyser.fetch_app_identifier(ipa_path)
+      UI.message("📋 IPA bundle ID: #{ipa_bundle_id || 'nil'}")
+      if ipa_bundle_id && ipa_bundle_id != APP_IDENTIFIER
+        UI.user_error!("IPA bundle ID #{ipa_bundle_id} != #{APP_IDENTIFIER}")
+      end
+    rescue => ex
+      UI.important("⚠️  Could not read IPA bundle ID: #{ex.message}")
+    end
+
+    release_notes = generate_release_notes
+    UI.message("📝 TestFlight release notes:\n#{release_notes}\n")
+
+    pilot_opts = {
+      ipa: ipa_path,
+      app_identifier: APP_IDENTIFIER,
+      skip_waiting_for_build_processing: false,
+      skip_submission: true,
+      distribute_external: false,
+      notify_external_testers: false,
+      changelog: release_notes,
+      localized_build_info: {
+        "en-US" => { whats_new: release_notes }
+      }
+    }
+    pilot_opts[:api_key] = api_key if api_key
+
+    begin
+      upload_to_testflight(pilot_opts)
+      UI.success("✅ Successfully uploaded to TestFlight!")
+      UI.message("📱 Check App Store Connect for build processing status")
+    rescue => ex
+      error_msg = ex.message
+      if error_msg.include?("Couldn't find app") || error_msg.include?("not found on the account")
+        UI.important("🔧 App not found — creating in App Store Connect...")
+        create_app
+        upload_to_testflight(pilot_opts)
+        UI.success("✅ Successfully uploaded to TestFlight!")
+      else
+        UI.error("❌ Failed to upload to TestFlight: #{error_msg}")
+        raise
+      end
+    end
+  end
+
+  desc "Create app in App Store Connect + Developer Portal"
+  lane :create_app do
+    UI.message("📱 Creating #{APP_NAME} (#{APP_IDENTIFIER}) in App Store Connect...")
+    begin
+      produce(
+        username: APPLE_ID,
+        app_identifier: APP_IDENTIFIER,
+        app_name: APP_NAME,
+        team_id: TEAM_ID,
+        skip_itc: false,
+        skip_devcenter: false
+      )
+      UI.success("✅ App created!")
+    rescue => ex
+      error_msg = ex.message
+      if error_msg.include?("already exists") || error_msg.include?("already registered")
+        UI.important("ℹ️  App already exists — OK to upload")
+      else
+        UI.error("❌ Failed to create app: #{error_msg}")
+        UI.error("   Manual: https://appstoreconnect.apple.com → New App")
+        UI.error("   Bundle ID: #{APP_IDENTIFIER}")
+        raise
+      end
+    end
+  end
+
+  desc "Setup App Store distribution certificate + provisioning profile"
+  lane :setup_appstore_signing do
+    UI.message("🔧 Setting up App Store distribution signing for #{APP_IDENTIFIER}...")
+    begin
+      get_certificates(
+        development: false,
+        username: APPLE_ID,
+        team_id: TEAM_ID
+      )
+      get_provisioning_profile(
+        app_identifier: APP_IDENTIFIER,
+        username: APPLE_ID,
+        team_id: TEAM_ID
+      )
+      UI.success("✅ Certificates and profiles ready!")
+    rescue => ex
+      UI.important("⚠️  Automatic setup failed: #{ex.message}")
+      UI.important("   open ios/Runner.xcworkspace → Signing & Capabilities")
+      UI.important("   Enable Automatic signing, team #{TEAM_ID}")
+      raise
+    end
+  end
+
+  desc "Increment build number in Xcode project only"
+  lane :increment_build do
+    increment_build_number(xcodeproj: "#{IOS_DIR}/Runner.xcodeproj")
+    UI.success("✅ Build number incremented!")
+  end
+
+  desc "Clean iOS build artifacts"
+  lane :clean do
+    sh("cd #{PROJECT_ROOT} && flutter clean")
+    sh("cd #{IOS_DIR} && rm -rf Pods Podfile.lock")
+    begin
+      sh(
+        "cd #{IOS_DIR} && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u BUNDLE_PATH " \
+        "#{find_pod_command} install",
+        log: false
+      )
+    rescue => _ex
+      # optional
+    end
+    UI.success("✅ Clean completed!")
+  end
+end
+
+platform :android do
+  desc "Build Android debug APK"
+  lane :build_debug do
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+    sh("cd #{PROJECT_ROOT} && flutter build apk --debug")
+    UI.success("✅ Android Debug APK built")
+    UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/flutter-apk/app-debug.apk")
+  end
+
+  desc "Build Android release APK"
+  lane :build_release_apk do
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+    sh("cd #{PROJECT_ROOT} && flutter build apk --release")
+    UI.success("✅ Android Release APK built")
+    UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/flutter-apk/app-release.apk")
+  end
+
+  desc "Build Android release App Bundle"
+  lane :build_release_bundle do
+    sh("cd #{PROJECT_ROOT} && flutter pub get")
+    sh("cd #{PROJECT_ROOT} && flutter build appbundle --release")
+    UI.success("✅ Android App Bundle built")
+    UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Clean Android build artifacts"
+  lane :clean do
+    sh("cd #{PROJECT_ROOT} && flutter clean")
+    sh("cd #{PROJECT_ROOT}/android && ./gradlew clean")
+    UI.success("✅ Clean completed!")
+  end
+end
+
+desc "Get Flutter dependencies"
+lane :get_dependencies do
+  sh("cd #{PROJECT_ROOT} && flutter pub get")
+  UI.success("✅ Dependencies fetched!")
+end
+
+desc "Run Flutter tests"
+lane :test do
+  sh("cd #{PROJECT_ROOT} && flutter test")
+  UI.success("✅ Tests completed!")
+end
+
+desc "Clean all build artifacts"
+lane :clean_all do
+  sh("cd #{PROJECT_ROOT} && flutter clean")
+  sh("cd #{IOS_DIR} && rm -rf Pods Podfile.lock")
+  begin
+    sh(
+      "cd #{IOS_DIR} && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u BUNDLE_PATH " \
+      "#{find_pod_command} install",
+      log: false
+    )
+  rescue => _ex
+    # optional
+  end
+  sh("cd #{PROJECT_ROOT}/android && ./gradlew clean")
+  UI.success("✅ All build artifacts cleaned!")
+end

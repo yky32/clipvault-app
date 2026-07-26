@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Fastlane (secrets + local reports)
+ios/fastlane/.env
+ios/fastlane/report.xml
+ios/fastlane/test_output/
+ios/.pod_wrapper/
+**/AuthKey_*.p8
+*.mobileprovision

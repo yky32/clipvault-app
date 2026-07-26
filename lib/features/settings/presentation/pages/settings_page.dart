@@ -157,6 +157,53 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${_clipboardSeconds}s';
   }
 
+  /// High-impact safety: confirm + re-auth when app lock is on, then export.
+  Future<void> _exportPlainText(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.exportConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.exportConfirmBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.exportConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    if (SettingsService.instance.biometricLockEnabled) {
+      final ok = await AppBootstrap.authService.authenticate(
+        reason: l10n.exportAuthReason,
+      );
+      if (!ok || !context.mounted) {
+        if (context.mounted) {
+          HapticFeedback.heavyImpact();
+          CopiedHud.show(context, message: l10n.exportCancelled);
+        }
+        return;
+      }
+    }
+
+    final text = await AppBootstrap.clipItemRepository.exportPlainText();
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    HapticFeedback.lightImpact();
+    CopiedHud.show(context, message: l10n.copied('export'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -346,17 +393,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         color: AppColors.iconExport,
                       ),
                       trailing: const IosChevron(),
-                      onTap: () async {
-                        final text = await AppBootstrap.clipItemRepository
-                            .exportPlainText();
-                        await Clipboard.setData(ClipboardData(text: text));
-                        if (!context.mounted) return;
-                        HapticFeedback.lightImpact();
-                        CopiedHud.show(
-                          context,
-                          message: l10n.copied('export'),
-                        );
-                      },
+                      onTap: () => _exportPlainText(context),
                     ),
                   ],
                 ),

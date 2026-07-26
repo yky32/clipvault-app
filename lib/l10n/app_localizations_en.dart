@@ -306,6 +306,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportComingSoon => 'Export will be available in a future update.';
 
   @override
+  String get exportConfirmTitle => 'Export all values?';
+
+  @override
+  String get exportConfirmBody =>
+      'Every vault value will be copied to the clipboard as plain text. Anyone with access to this device’s clipboard can read them. Continue?';
+
+  @override
+  String get exportConfirmAction => 'Export';
+
+  @override
+  String get exportAuthReason => 'Confirm to export vault values';
+
+  @override
+  String get exportCancelled => 'Export cancelled';
+
+  @override
   String get onboardingTitle1 => 'One-tap copy';
 
   @override

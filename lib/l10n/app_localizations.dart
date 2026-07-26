@@ -662,6 +662,36 @@ abstract class AppLocalizations {
   /// **'Export will be available in a future update.'**
   String get exportComingSoon;
 
+  /// No description provided for @exportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export all values?'**
+  String get exportConfirmTitle;
+
+  /// No description provided for @exportConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every vault value will be copied to the clipboard as plain text. Anyone with access to this device’s clipboard can read them. Continue?'**
+  String get exportConfirmBody;
+
+  /// No description provided for @exportConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get exportConfirmAction;
+
+  /// No description provided for @exportAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm to export vault values'**
+  String get exportAuthReason;
+
+  /// No description provided for @exportCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Export cancelled'**
+  String get exportCancelled;
+
   /// No description provided for @onboardingTitle1.
   ///
   /// In en, this message translates to:
