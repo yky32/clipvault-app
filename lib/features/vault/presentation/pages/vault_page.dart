@@ -104,15 +104,7 @@ class _VaultPageState extends State<VaultPage> {
       context: context,
       builder: (ctx) => CupertinoActionSheet(
         title: Text(title),
-        message: Text(l10n.hintCopy),
         actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<VaultBloc>().add(VaultItemCopied(itemId));
-            },
-            child: Text(l10n.tapToCopy),
-          ),
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(ctx);
