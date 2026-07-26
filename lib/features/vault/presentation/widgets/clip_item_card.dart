@@ -182,31 +182,31 @@ class _GridTile extends StatelessWidget {
       child: GlassIsland(
         borderRadius: BorderRadius.circular(18),
         blur: 16,
-        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                _GlassIconWell(icon: icon, size: 28, iconSize: 14),
+                _GlassIconWell(icon: icon, size: 30, iconSize: 15),
                 const Spacer(),
                 if (item.isPinned)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: Icon(
                       CupertinoIcons.pin_fill,
-                      size: 11,
+                      size: 12,
                       color: AppColors.primary.withValues(alpha: 0.7),
                     ),
                   ),
                 _GlassIconWell(
                   icon: CupertinoIcons.doc_on_clipboard,
-                  size: 26,
-                  iconSize: 13,
+                  size: 28,
+                  iconSize: 14,
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const Spacer(),
             Text(
               item.title,
               maxLines: 2,
@@ -219,7 +219,7 @@ class _GridTile extends StatelessWidget {
                 height: 1.2,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               categoryName ?? l10n.tapToCopy,
               maxLines: 1,

@@ -377,8 +377,8 @@ class _VaultPageState extends State<VaultPage> {
                                   crossAxisCount: 2,
                                   mainAxisSpacing: 10,
                                   crossAxisSpacing: 10,
-                                  // Wider than tall → compact cards, less empty space
-                                  childAspectRatio: 1.55,
+                                  // Square tiles · 2 per row
+                                  childAspectRatio: 1,
                                 ),
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
