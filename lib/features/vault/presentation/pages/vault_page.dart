@@ -159,22 +159,6 @@ class _VaultPageState extends State<VaultPage> {
       },
       child: Scaffold(
         backgroundColor: AppColors.groupedBackground(context),
-        floatingActionButton: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: AppShadows.fab(context),
-          ),
-          child: FloatingActionButton(
-            tooltip: l10n.addItem,
-            onPressed: () {
-              final state = context.read<VaultBloc>().state;
-              _openAdd(categoryId: state.selectedCategoryId);
-            },
-            elevation: 0,
-            highlightElevation: 0,
-            child: const Icon(CupertinoIcons.add, size: 28),
-          ),
-        ),
         body: BlocBuilder<VaultBloc, VaultState>(
           builder: (context, state) {
             if (state.status == VaultStatus.loading ||
@@ -196,6 +180,7 @@ class _VaultPageState extends State<VaultPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Title + actions: list | settings | add (iOS nav pattern)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 6, 0),
                     child: Row(
@@ -237,6 +222,18 @@ class _VaultPageState extends State<VaultPage> {
                           child: Icon(
                             CupertinoIcons.gear,
                             size: 22,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          minimumSize: Size.zero,
+                          onPressed: () {
+                            _openAdd(categoryId: state.selectedCategoryId);
+                          },
+                          child: Icon(
+                            CupertinoIcons.add_circled_solid,
+                            size: 28,
                             color: AppColors.primary,
                           ),
                         ),
@@ -372,7 +369,7 @@ class _VaultPageState extends State<VaultPage> {
                                 16,
                                 12,
                                 16,
-                                100 + bottomInset,
+                                24 + bottomInset,
                               ),
                               sliver: SliverGrid(
                                 gridDelegate:
@@ -414,7 +411,7 @@ class _VaultPageState extends State<VaultPage> {
                                 16,
                                 showRecent ? 8 : 12,
                                 16,
-                                100 + bottomInset,
+                                24 + bottomInset,
                               ),
                               sliver: SliverToBoxAdapter(
                                 child: _SectionedList(
