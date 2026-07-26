@@ -1,4 +1,4 @@
-# ClipVault – Product Requirements Document (PRD)
+# clipVauLt – Product Requirements Document (PRD)
 
 **Version:** 1.2  
 **Date:** 2026-07-26  
@@ -11,7 +11,7 @@
 
 **This is a strict one-purpose app.**
 
-ClipVault has exactly **one job**:
+clipVauLt has exactly **one job**:
 
 > Let the user store any value and copy it to the clipboard with a single tap.
 
@@ -28,7 +28,7 @@ Any deviation from this one-purpose focus is considered a failure.
 
 ## 1. Product Overview
 
-**Product Name:** ClipVault
+**Product Name:** clipVauLt
 
 **One-liner:**  
 A private, one-tap vault for storing any value and instantly copying it to the clipboard.
@@ -53,7 +53,7 @@ People constantly need to copy the same pieces of text:
 - Wi-Fi passwords
 - etc.
 
-Current solutions (Notes, Notion, password managers, screenshots) are either too slow, too heavy, or not designed for rapid one-tap access. ClipVault solves this with extreme simplicity and speed while remaining private and secure.
+Current solutions (Notes, Notion, password managers, screenshots) are either too slow, too heavy, or not designed for rapid one-tap access. clipVauLt solves this with extreme simplicity and speed while remaining private and secure.
 
 ---
 
@@ -138,7 +138,7 @@ Users must never feel that their passwords or private values are being sent to *
 - Toggle: “Sync with iCloud”
 - Use Apple CloudKit (private database)
 - Data stays inside the user’s own iCloud account
-- ClipVault never sees the values
+- clipVauLt never sees the values
 - Clear messaging: “Your data only goes to *your* iCloud account, never to us.”
 
 ### Phase 3 – Future

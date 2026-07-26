@@ -19,7 +19,7 @@ class ClipVaultApp extends StatelessWidget {
         listenable: themeController,
         builder: (context, _) {
           return MaterialApp.router(
-            title: 'ClipVault',
+            title: 'clipVauLt',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,

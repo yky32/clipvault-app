@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appName": "ClipVault",
+  "appName": "clipVauLt",
   "appTagline": "儲存一次。輕觸一次。隨處貼上。",
   "vaultTitle": "保險庫",
   "settingsTitle": "設定",
@@ -69,7 +69,7 @@
   "skip": "略過",
   "enableBiometrics": "啟用應用程式鎖定",
   "notNow": "稍後",
-  "unlockTitle": "解鎖 ClipVault",
+  "unlockTitle": "解鎖 clipVauLt",
   "unlockSubtitle": "驗證身分以開啟保險庫",
   "unlockButton": "解鎖",
   "unlockFailed": "驗證失敗，請再試一次。",

@@ -1,4 +1,4 @@
-# ClipVault
+# clipVauLt
 
 > Store once → Tap once → Paste anywhere.
 
@@ -8,7 +8,7 @@ See [PRD.md](./PRD.md) for full product requirements.
 
 ## One-purpose mandate
 
-ClipVault has exactly **one job**: let the user store any value and copy it with a single tap. No password-manager sprawl, no cloud accounts in MVP.
+clipVauLt has exactly **one job**: let the user store any value and copy it with a single tap. No password-manager sprawl, no cloud accounts in MVP.
 
 ## Stack (aligned with Triftly / Depozio)
 

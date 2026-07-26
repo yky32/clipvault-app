@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'ClipVault';
+  String get appName => 'clipVauLt';
 
   @override
   String get appTagline => 'Store once. Tap once. Paste anywhere.';
@@ -231,7 +231,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notNow => 'Not now';
 
   @override
-  String get unlockTitle => 'Unlock ClipVault';
+  String get unlockTitle => 'Unlock clipVauLt';
 
   @override
   String get unlockSubtitle => 'Authenticate to open your vault';

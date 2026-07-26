@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const appName = 'ClipVault';
+  static const appName = 'clipVauLt';
   static const itemsBoxName = 'clip_items';
   static const categoriesBoxName = 'categories';
   static const encryptionKeyName = 'clipvault_aes_key';

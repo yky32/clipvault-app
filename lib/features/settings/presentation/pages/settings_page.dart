@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_controller.dart';
@@ -56,7 +57,7 @@ class _SettingsPageState extends State<SettingsPage> {
         return;
       }
       final ok = await AppBootstrap.authService.authenticate(
-        reason: 'Enable app lock for ClipVault',
+        reason: 'Enable app lock for clipVauLt',
       );
       if (!ok) return;
     }
@@ -314,7 +315,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 36),
                 Text(
-                  'ClipVault',
+                  AppConstants.appName,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Satoshi',

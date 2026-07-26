@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appName => 'ClipVault';
+  String get appName => 'clipVauLt';
 
   @override
   String get appTagline => '儲存一次。輕觸一次。隨處貼上。';
@@ -226,7 +226,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notNow => '稍後';
 
   @override
-  String get unlockTitle => '解鎖 ClipVault';
+  String get unlockTitle => '解鎖 clipVauLt';
 
   @override
   String get unlockSubtitle => '驗證身分以開啟保險庫';

@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "ClipVault",
+  "appName": "clipVauLt",
   "appTagline": "Store once. Tap once. Paste anywhere.",
   "vaultTitle": "Vault",
   "settingsTitle": "Settings",
@@ -94,7 +94,7 @@
   "skip": "Skip",
   "enableBiometrics": "Enable app lock",
   "notNow": "Not now",
-  "unlockTitle": "Unlock ClipVault",
+  "unlockTitle": "Unlock clipVauLt",
   "unlockSubtitle": "Authenticate to open your vault",
   "unlockButton": "Unlock",
   "unlockFailed": "Authentication failed. Try again.",
