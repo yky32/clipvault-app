@@ -134,12 +134,6 @@ class _ListRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            _GlassIconWell(
-              icon: CupertinoIcons.doc_on_clipboard,
-              size: 30,
-              iconSize: 14,
-            ),
           ],
         ),
       ),
@@ -198,19 +192,11 @@ class _GridTile extends StatelessWidget {
                     _GlassIconWell(icon: icon, size: 30, iconSize: 15),
                     const Spacer(),
                     if (item.isPinned)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Icon(
-                          CupertinoIcons.pin_fill,
-                          size: 12,
-                          color: AppColors.primary.withValues(alpha: 0.7),
-                        ),
+                      Icon(
+                        CupertinoIcons.pin_fill,
+                        size: 12,
+                        color: AppColors.primary.withValues(alpha: 0.7),
                       ),
-                    _GlassIconWell(
-                      icon: CupertinoIcons.doc_on_clipboard,
-                      size: 28,
-                      iconSize: 14,
-                    ),
                   ],
                 ),
                 const Spacer(),
