@@ -88,16 +88,28 @@ jobs:
       - name: Setup App Store Connect API key
         env:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          APP_STORE_CONNECT_API_KEY_IS_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_IS_BASE64 }}
         run: |
           if [ -z "$APP_STORE_CONNECT_API_KEY_CONTENT" ]; then
             echo "::error::Missing secret APP_STORE_CONNECT_API_KEY_CONTENT"
             exit 1
           fi
           mkdir -p ~/.appstoreconnect
-          # Secret may contain literal \n — expand to real newlines
-          printf '%s' "$APP_STORE_CONNECT_API_KEY_CONTENT" | sed 's/\\n/\n/g' > ~/.appstoreconnect/api_key.p8
-          chmod 600 ~/.appstoreconnect/api_key.p8
-          echo "✅ API key written ($(wc -c < ~/.appstoreconnect/api_key.p8) bytes)"
+          KEY_FILE="$HOME/.appstoreconnect/api_key.p8"
+          # Prefer base64 (avoids GitHub secret newline mangling → OpenSSL "invalid curve name")
+          if [ "$APP_STORE_CONNECT_API_KEY_IS_BASE64" = "true" ]; then
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$KEY_FILE"
+          else
+            # Literal PEM, or PEM with escaped \n
+            printf '%s' "$APP_STORE_CONNECT_API_KEY_CONTENT" | sed 's/\\n/\n/g' > "$KEY_FILE"
+          fi
+          chmod 600 "$KEY_FILE"
+          # Sanity-check PEM structure without printing the key
+          if ! head -1 "$KEY_FILE" | grep -q "BEGIN PRIVATE KEY"; then
+            echo "::error::API key file does not look like a PEM private key"
+            exit 1
+          fi
+          echo "✅ API key written ($(wc -c < "$KEY_FILE") bytes)"
 
       - name: Verify iOS CI secrets
         env:
@@ -128,10 +140,12 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          APP_STORE_CONNECT_API_KEY_IS_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_IS_BASE64 }}
         run: |
           cd ios
           unset SPACESHIP_2FA_SMS_DEFAULT_PHONE_NUMBER FASTLANE_SESSION FASTLANE_PASSWORD FASTLANE_USER FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD || true
-          bundle exec fastlane ios prune_excess_certificates_for_ci
+          # Prune is best-effort (must not block if Spaceship/OpenSSL quirks)
+          bundle exec fastlane ios prune_excess_certificates_for_ci || echo "::warning::prune skipped"
           bundle exec fastlane ios setup_appstore_signing
 
       - name: Preview TestFlight release notes
