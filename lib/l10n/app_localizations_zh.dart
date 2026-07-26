@@ -364,4 +364,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get language => '語言';
+
+  @override
+  String get lastUsedLabel => '上次使用';
+
+  @override
+  String get neverUsed => '尚未使用';
+
+  @override
+  String get justNow => '剛剛';
+
+  @override
+  String minutesAgo(int count) {
+    return '$count 分鐘前';
+  }
+
+  @override
+  String hoursAgo(int count) {
+    return '$count 小時前';
+  }
+
+  @override
+  String daysAgo(int count) {
+    return '$count 天前';
+  }
+
+  @override
+  String get yesterday => '昨天';
 }

@@ -144,5 +144,27 @@
   "unlockFailed": "Couldn’t unlock. Try again.",
   "noCategory": "None",
   "requiredField": "Required",
-  "language": "Language"
+  "language": "Language",
+  "lastUsedLabel": "Last used",
+  "neverUsed": "Never used",
+  "justNow": "Just now",
+  "minutesAgo": "{count}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "hoursAgo": "{count}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "daysAgo": "{count}d ago",
+  "@daysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "yesterday": "Yesterday"
 }

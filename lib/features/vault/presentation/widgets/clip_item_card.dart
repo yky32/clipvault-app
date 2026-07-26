@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/relative_time.dart';
 import '../../../../core/widgets/copied_hud.dart';
 import '../../../../core/widgets/glass_island.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -67,7 +68,13 @@ class _ListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final subtitle = categoryName ?? l10n.tapToCopy;
+    final locale = Localizations.localeOf(context).toString();
+    final subtitle = vaultItemMetaLine(
+      l10n: l10n,
+      categoryName: categoryName,
+      lastUsedAt: item.lastCopiedAt,
+      locale: locale,
+    );
     final icon = item.isPinned && item.categoryId == null
         ? CupertinoIcons.pin_fill
         : (categoryIconData ?? categoryIconForId(item.categoryId));
@@ -122,12 +129,8 @@ class _ListRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
-                      color: categoryName != null
-                          ? AppColors.secondaryLabel(context)
-                          : AppColors.primary.withValues(alpha: 0.85),
-                      fontWeight: categoryName == null
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                      color: AppColors.secondaryLabel(context),
+                      fontWeight: FontWeight.w400,
                       letterSpacing: -0.08,
                     ),
                   ),
@@ -160,6 +163,13 @@ class _GridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final meta = vaultItemMetaLine(
+      l10n: l10n,
+      categoryName: categoryName,
+      lastUsedAt: item.lastCopiedAt,
+      locale: locale,
+    );
     final icon = item.isPinned && item.categoryId == null
         ? CupertinoIcons.pin_fill
         : (categoryIconData ?? categoryIconForId(item.categoryId));
@@ -222,7 +232,7 @@ class _GridTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  categoryName ?? l10n.tapToCopy,
+                  meta,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -231,9 +241,7 @@ class _GridTile extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.08,
                     height: 1.15,
-                    color: categoryName != null
-                        ? AppColors.secondaryLabel(context)
-                        : AppColors.primary.withValues(alpha: 0.85),
+                    color: AppColors.secondaryLabel(context),
                   ),
                 ),
               ],

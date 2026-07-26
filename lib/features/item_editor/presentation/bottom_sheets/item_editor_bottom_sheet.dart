@@ -9,6 +9,7 @@ import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/relative_time.dart';
 import '../../../../core/widgets/clipvault_bottom_sheet.dart';
 import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
@@ -272,6 +273,28 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   },
                 ),
               ),
+              if (_existing != null)
+                IosGroupTile(
+                  title: l10n.lastUsedLabel,
+                  subtitle: formatLastUsed(
+                    _existing!.lastCopiedAt,
+                    l10n,
+                    locale: Localizations.localeOf(context).toString(),
+                  ),
+                  leading: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.clock,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),

@@ -114,5 +114,27 @@
   "unlockFailed": "無法解鎖，請再試一次。",
   "noCategory": "無",
   "requiredField": "必填",
-  "language": "語言"
+  "language": "語言",
+  "lastUsedLabel": "上次使用",
+  "neverUsed": "尚未使用",
+  "justNow": "剛剛",
+  "minutesAgo": "{count} 分鐘前",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "hoursAgo": "{count} 小時前",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "daysAgo": "{count} 天前",
+  "@daysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "yesterday": "昨天"
 }

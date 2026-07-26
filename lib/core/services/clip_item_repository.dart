@@ -88,6 +88,9 @@ class ClipItemRepository {
         buffer.writeln('Category: ${item.categoryId}');
       }
       buffer.writeln('Value: ${item.value}');
+      buffer.writeln(
+        'Last used: ${item.lastCopiedAt?.toIso8601String() ?? 'never'}',
+      );
       buffer.writeln();
     }
     return buffer.toString();
