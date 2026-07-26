@@ -96,6 +96,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryHint => '選填';
 
   @override
+  String get categoryPickHint => '輕觸分類，或自行輸入';
+
+  @override
+  String get catPasswords => '密碼';
+
+  @override
+  String get catBanking => '銀行／支付';
+
+  @override
+  String get catWifi => 'Wi-Fi';
+
+  @override
+  String get catCodes => '代碼';
+
+  @override
+  String get catAddresses => '地址';
+
+  @override
+  String get catDeveloper => '開發';
+
+  @override
+  String get catTemplates => '範本';
+
+  @override
   String get pinItem => '置頂';
 
   @override

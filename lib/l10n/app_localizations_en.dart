@@ -97,6 +97,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryHint => 'Optional';
 
   @override
+  String get categoryPickHint => 'Tap a category or type your own';
+
+  @override
+  String get catPasswords => 'Passwords';
+
+  @override
+  String get catBanking => 'Banking';
+
+  @override
+  String get catWifi => 'Wi-Fi';
+
+  @override
+  String get catCodes => 'Codes';
+
+  @override
+  String get catAddresses => 'Addresses';
+
+  @override
+  String get catDeveloper => 'Developer';
+
+  @override
+  String get catTemplates => 'Templates';
+
+  @override
   String get pinItem => 'Pin to top';
 
   @override

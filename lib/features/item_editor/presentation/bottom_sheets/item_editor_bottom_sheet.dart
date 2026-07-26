@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/l10n/category_labels.dart';
+import '../../../../core/models/category.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -17,23 +19,21 @@ import '../../../vault/bloc/vault_bloc.dart';
 class ItemEditorBottomSheet extends StatefulWidget {
   const ItemEditorBottomSheet({
     this.itemId,
-    this.initialCategoryName,
+    this.initialCategoryId,
     super.key,
   });
 
   final String? itemId;
 
-  /// Pre-fills category when adding from a category filter empty state.
-  final String? initialCategoryName;
+  /// Pre-select a category when adding from a vault filter.
+  final String? initialCategoryId;
 
   bool get isNew => itemId == null || itemId == 'new';
 
-  /// Opens the sheet. Pass [vaultBloc] so the root-navigator sheet can refresh
-  /// the vault list after save.
   static Future<void> show(
     BuildContext context, {
     String? itemId,
-    String? initialCategoryName,
+    String? initialCategoryId,
   }) {
     final vaultBloc = context.read<VaultBloc>();
     return ClipVaultBottomSheet.show<void>(
@@ -42,7 +42,7 @@ class ItemEditorBottomSheet extends StatefulWidget {
         value: vaultBloc,
         child: ItemEditorBottomSheet(
           itemId: itemId,
-          initialCategoryName: initialCategoryName,
+          initialCategoryId: initialCategoryId,
         ),
       ),
     );
@@ -55,9 +55,10 @@ class ItemEditorBottomSheet extends StatefulWidget {
 class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   final _titleController = TextEditingController();
   final _valueController = TextEditingController();
-  final _categoryController = TextEditingController();
 
   ClipItem? _existing;
+  List<Category> _categories = const [];
+  String? _selectedCategoryId;
   bool _isPinned = false;
   bool _obscureValue = true;
   bool _saving = false;
@@ -65,21 +66,20 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   @override
   void initState() {
     super.initState();
+    _categories = AppBootstrap.categoryRepository.getAll();
+
     if (!widget.isNew) {
       _existing = AppBootstrap.clipItemRepository.getById(widget.itemId!);
       if (_existing != null) {
         _titleController.text = _existing!.title;
         _valueController.text = _existing!.value;
         _isPinned = _existing!.isPinned;
-        if (_existing!.categoryId != null) {
-          final cat =
-              AppBootstrap.categoryRepository.getById(_existing!.categoryId!);
-          if (cat != null) _categoryController.text = cat.name;
-        }
+        _selectedCategoryId = _existing!.categoryId;
       }
-    } else if (widget.initialCategoryName != null) {
-      _categoryController.text = widget.initialCategoryName!;
+    } else if (widget.initialCategoryId != null) {
+      _selectedCategoryId = widget.initialCategoryId;
     }
+
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);
   }
@@ -94,7 +94,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     _valueController
       ..removeListener(_onChanged)
       ..dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -104,18 +103,21 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         !_saving;
   }
 
+  void _selectCategory(String? id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      // Tap again to clear
+      _selectedCategoryId = _selectedCategoryId == id ? null : id;
+    });
+  }
+
   Future<void> _save() async {
     if (!_canSave) return;
     setState(() => _saving = true);
     HapticFeedback.mediumImpact();
 
     try {
-      String? categoryId;
-      final catName = _categoryController.text.trim();
-      if (catName.isNotEmpty) {
-        final cat = await AppBootstrap.categoryRepository.create(catName);
-        categoryId = cat.id;
-      }
+      final categoryId = _selectedCategoryId;
 
       if (_existing != null) {
         await AppBootstrap.clipItemRepository.update(
@@ -220,23 +222,33 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   ],
                 ),
               ),
-              _SheetField(
-                label: l10n.categoryLabel,
-                child: TextField(
-                  controller: _categoryController,
-                  textInputAction: TextInputAction.done,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  decoration: InputDecoration(
-                    hintText: l10n.categoryHint,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            l10n.categoryLabel,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: AppColors.secondaryLabel(context),
                 ),
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.categoryPickHint,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.tertiaryLabel(context),
+                ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final cat in _categories)
+                _CategoryChip(
+                  label: categoryDisplayName(cat, l10n),
+                  selected: _selectedCategoryId == cat.id,
+                  onTap: () => _selectCategory(cat.id),
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -271,6 +283,51 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : AppColors.cardBackground(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : AppColors.hairline(context),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Satoshi',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: selected
+                ? Colors.white
+                : AppColors.secondaryLabel(context).withValues(alpha: 0.95),
+          ),
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -32,19 +33,23 @@ class _VaultPageState extends State<VaultPage> {
     super.dispose();
   }
 
-  String? _categoryName(VaultState state, String? id) {
+  String? _categoryName(
+    VaultState state,
+    String? id,
+    AppLocalizations l10n,
+  ) {
     if (id == null) return null;
     for (final c in state.categories) {
-      if (c.id == id) return c.name;
+      if (c.id == id) return categoryDisplayName(c, l10n);
     }
     return null;
   }
 
-  void _openAdd({String? categoryName}) {
+  void _openAdd({String? categoryId}) {
     HapticFeedback.selectionClick();
     ItemEditorBottomSheet.show(
       context,
-      initialCategoryName: categoryName,
+      initialCategoryId: categoryId,
     );
   }
 
@@ -170,8 +175,7 @@ class _VaultPageState extends State<VaultPage> {
             tooltip: l10n.addItem,
             onPressed: () {
               final state = context.read<VaultBloc>().state;
-              final catName = _categoryName(state, state.selectedCategoryId);
-              _openAdd(categoryName: catName);
+              _openAdd(categoryId: state.selectedCategoryId);
             },
             elevation: 0,
             highlightElevation: 0,
@@ -298,7 +302,7 @@ class _VaultPageState extends State<VaultPage> {
                                       return Padding(
                                         padding: const EdgeInsets.only(left: 8),
                                         child: _SegmentChip(
-                                          label: c.name,
+                                          label: categoryDisplayName(c, l10n),
                                           count: count,
                                           selected: selected,
                                           // Tap again to clear filter
@@ -346,6 +350,7 @@ class _VaultPageState extends State<VaultPage> {
                               categoryName: _categoryName(
                                 state,
                                 state.selectedCategoryId,
+                                l10n,
                               ),
                               onClearSearch: () {
                                 _searchController.clear();
@@ -355,10 +360,7 @@ class _VaultPageState extends State<VaultPage> {
                               },
                               onShowAll: _clearFilters,
                               onAdd: () => _openAdd(
-                                categoryName: _categoryName(
-                                  state,
-                                  state.selectedCategoryId,
-                                ),
+                                categoryId: state.selectedCategoryId,
                               ),
                             ),
                           )
@@ -395,6 +397,7 @@ class _VaultPageState extends State<VaultPage> {
                                       categoryName: _categoryName(
                                         state,
                                         item.categoryId,
+                                        l10n,
                                       ),
                                       onTap: () => _copy(item),
                                       onLongPress: () => _showItemActions(
@@ -421,8 +424,11 @@ class _VaultPageState extends State<VaultPage> {
                                 child: _SectionedList(
                                   state: state,
                                   filtered: filtered,
-                                  categoryNameOf: (item) =>
-                                      _categoryName(state, item.categoryId),
+                                  categoryNameOf: (item) => _categoryName(
+                                    state,
+                                    item.categoryId,
+                                    l10n,
+                                  ),
                                   onTap: _copy,
                                   onLongPress: (item) => _showItemActions(
                                     context,

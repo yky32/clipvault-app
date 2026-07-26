@@ -260,6 +260,54 @@ abstract class AppLocalizations {
   /// **'Optional'**
   String get categoryHint;
 
+  /// No description provided for @categoryPickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a category or type your own'**
+  String get categoryPickHint;
+
+  /// No description provided for @catPasswords.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords'**
+  String get catPasswords;
+
+  /// No description provided for @catBanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Banking'**
+  String get catBanking;
+
+  /// No description provided for @catWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi'**
+  String get catWifi;
+
+  /// No description provided for @catCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes'**
+  String get catCodes;
+
+  /// No description provided for @catAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get catAddresses;
+
+  /// No description provided for @catDeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get catDeveloper;
+
+  /// No description provided for @catTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Templates'**
+  String get catTemplates;
+
   /// No description provided for @pinItem.
   ///
   /// In en, this message translates to:
