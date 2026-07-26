@@ -36,8 +36,10 @@ jobs:
   deploy:
     name: TestFlight
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.skip_testflight != 'true'
-    runs-on: macos-15
-    timeout-minutes: 120
+    # Apple requires iOS 26 SDK (Xcode 26+) for App Store / TestFlight uploads (2026).
+    # Same runner family as Triftly Deploy.
+    runs-on: macos-26
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -47,18 +49,32 @@ jobs:
           token: ${{ secrets.GH_PAT != '' && secrets.GH_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Select Xcode
+      - name: Select Xcode 26
         run: |
-          # Prefer a recent stable Xcode on the runner image.
-          if [ -d /Applications/Xcode_16.4.app ]; then
-            sudo xcode-select -s /Applications/Xcode_16.4.app
-          elif [ -d /Applications/Xcode_16.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_16.3.app
-          elif [ -d /Applications/Xcode_16.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_16.2.app
-          fi
+          set -e
+          # Prefer explicit Xcode 26.x (iOS 26 SDK required by App Store Connect).
+          for app in \
+            /Applications/Xcode_26.4.1.app \
+            /Applications/Xcode_26.4.app \
+            /Applications/Xcode_26.3.app \
+            /Applications/Xcode_26.2.app \
+            /Applications/Xcode_26.1.app \
+            /Applications/Xcode_26.0.app \
+            /Applications/Xcode_26.app \
+            /Applications/Xcode.app
+          do
+            if [ -d "$app" ]; then
+              sudo xcode-select -s "$app"
+              echo "Using $app"
+              break
+            fi
+          done
           xcodebuild -version
           sw_vers
+          # Fail early if SDK is too old for ASC
+          SDK=$(xcodebuild -showsdks 2>/dev/null | awk '/iOS SDKs:/{f=1;next}/^$/{f=0}f && /iphoneos/{print; exit}')
+          echo "iOS SDK: $SDK"
+
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
