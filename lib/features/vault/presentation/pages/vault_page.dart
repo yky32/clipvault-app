@@ -375,9 +375,10 @@ class _VaultPageState extends State<VaultPage> {
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: 12,
-                                  crossAxisSpacing: 12,
-                                  childAspectRatio: 1.2,
+                                  mainAxisSpacing: 10,
+                                  crossAxisSpacing: 10,
+                                  // Wider than tall → compact cards, less empty space
+                                  childAspectRatio: 1.55,
                                 ),
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
