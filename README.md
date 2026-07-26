@@ -62,17 +62,32 @@ flutter pub get
 flutter run
 ```
 
-## TestFlight (Fastlane — same pattern as Depozio / Triftly)
+## TestFlight
+
+### Local (Fastlane)
 
 ```bash
-cd ios
-bundle install
-bundle exec fastlane ios upload_testflight
+./ios/install_gems_and_pods.sh
+./scripts/testflight.sh
 # or interactive:
-./fastlane/fastlane_menu.sh
+./ios/fastlane/fastlane_menu.sh
 ```
 
-Details: [ios/fastlane/README.md](./ios/fastlane/README.md)
+### CI (GitHub Actions — Triftly pattern)
+
+Push to **`main`** runs **Deploy** → TestFlight automatically.
+
+```
+.github/workflows/deploy.yml   # TestFlight on main
+.github/workflows/pr.yml       # analyze + test on PRs
+```
+
+**Secrets** (copy from `yky32/triftly-app`, same Apple team):  
+see [docs/CI_TESTFLIGHT.md](./docs/CI_TESTFLIGHT.md)
+
+Manual: Actions → **Deploy** → Run workflow.
+
+Local Fastlane details: [ios/fastlane/README.md](./ios/fastlane/README.md)
 
 ## Security notes (MVP)
 

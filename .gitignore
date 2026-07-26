@@ -49,5 +49,7 @@ ios/fastlane/.env
 ios/fastlane/report.xml
 ios/fastlane/test_output/
 ios/.pod_wrapper/
+ios/ExportOptions.ci.plist
+ios/distribution.ci.p12
 **/AuthKey_*.p8
 *.mobileprovision

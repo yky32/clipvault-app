@@ -10,6 +10,12 @@ APP_NAME = "ClipVal"
 TEAM_ID = ENV["FASTLANE_TEAM_ID"] || "3G34999H3A"
 APPLE_ID = ENV["FASTLANE_USER"] || "wayneyu.dev@gmail.com"
 
+CI_SIGNING_KEYCHAIN_PASSWORD = "clipval-ci-keychain"
+
+def ci_build?
+  ENV["CI"] == "true"
+end
+
 def path_for_system_ruby
   "/usr/bin:/usr/local/bin:#{ENV['PATH']}"
 end
@@ -149,6 +155,167 @@ def build_app_store_connect_api_key
   end
 end
 
+# --- CI signing (Triftly pattern, single target com.clipval) ---
+
+def ci_signing_keychain_path
+  File.expand_path("~/Library/Keychains/clipval-ci.keychain-db")
+end
+
+def setup_ci_signing_keychain!
+  keychain = ci_signing_keychain_path
+  login_keychain = File.expand_path("~/Library/Keychains/login.keychain-db")
+
+  sh("security delete-keychain '#{keychain}' 2>/dev/null || true", log: false)
+  sh("security create-keychain -p '#{CI_SIGNING_KEYCHAIN_PASSWORD}' '#{keychain}'", log: false)
+  sh("security unlock-keychain -p '#{CI_SIGNING_KEYCHAIN_PASSWORD}' '#{keychain}'", log: false)
+  sh("security set-keychain-settings -lut 21600 '#{keychain}'", log: false)
+  sh("security list-keychains -d user -s '#{keychain}' '#{login_keychain}'", log: false)
+  keychain
+end
+
+def distribution_identity_installed?
+  keychain = ENV["CI"] ? ci_signing_keychain_path : File.expand_path("~/Library/Keychains/login.keychain-db")
+  output = `security find-identity -v -p codesigning '#{keychain}' 2>/dev/null`
+  output.include?("Apple Distribution") && output.include?(TEAM_ID)
+end
+
+def import_distribution_certificate_for_ci!
+  return false unless ENV["CI"]
+
+  cert_b64 = ENV["IOS_DISTRIBUTION_CERT_BASE64"]
+  return false if cert_b64.nil? || cert_b64.strip.empty?
+
+  require "base64"
+  p12_path = File.join(IOS_DIR, "distribution.ci.p12")
+  File.binwrite(p12_path, Base64.decode64(cert_b64))
+
+  keychain = setup_ci_signing_keychain!
+
+  import_certificate(
+    certificate_path: p12_path,
+    certificate_password: ENV["IOS_DISTRIBUTION_CERT_PASSWORD"] || "",
+    keychain_path: keychain,
+    keychain_password: CI_SIGNING_KEYCHAIN_PASSWORD
+  )
+
+  sh(
+    "security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '#{CI_SIGNING_KEYCHAIN_PASSWORD}' '#{keychain}'",
+    log: false
+  )
+
+  File.delete(p12_path) if File.exist?(p12_path)
+  UI.success("✅ Imported distribution certificate into CI keychain")
+  true
+ensure
+  File.delete(p12_path) if defined?(p12_path) && p12_path && File.exist?(p12_path)
+end
+
+def fetch_appstore_profile!(app_identifier:, force: false)
+  api_key_params = app_store_connect_api_key_params
+  profile_options = {
+    app_identifier: app_identifier,
+    team_id: TEAM_ID,
+    force: force
+  }
+  if api_key_params
+    profile_options[:api_key] = app_store_connect_api_key(**api_key_params)
+  else
+    profile_options[:username] = APPLE_ID
+  end
+  get_provisioning_profile(**profile_options)
+  ENV["SIGH_NAME"]
+end
+
+def write_ci_export_options_plist!
+  profile_name = ENV["SIGH_NAME"]
+  UI.user_error!("SIGH_NAME is required to export the App Store IPA on CI.") unless profile_name
+
+  plist_path = File.join(IOS_DIR, "ExportOptions.ci.plist")
+  plist_content = <<~PLIST
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>method</key>
+      <string>app-store</string>
+      <key>signingStyle</key>
+      <string>manual</string>
+      <key>teamID</key>
+      <string>#{TEAM_ID}</string>
+      <key>provisioningProfiles</key>
+      <dict>
+        <key>#{APP_IDENTIFIER}</key>
+        <string>#{profile_name}</string>
+      </dict>
+    </dict>
+    </plist>
+  PLIST
+
+  File.write(plist_path, plist_content)
+  plist_path
+end
+
+def persist_ci_signing_env!
+  return unless ENV["CI"] && ENV["GITHUB_ENV"] && ENV["SIGH_NAME"]
+
+  File.open(ENV["GITHUB_ENV"], "a") do |file|
+    file.puts "SIGH_NAME=#{ENV['SIGH_NAME']}"
+  end
+end
+
+def ensure_runner_ipa_path!
+  # flutter build ipa may name the IPA after the product; normalize to Runner.ipa
+  ipa_dir = File.join(PROJECT_ROOT, "build/ios/ipa")
+  target = File.join(ipa_dir, "Runner.ipa")
+  return if File.exist?(target)
+
+  Dir.glob(File.join(ipa_dir, "*.ipa")).each do |path|
+    next if File.basename(path) == "Runner.ipa"
+
+    FileUtils.cp(path, target)
+    UI.message("📦 Normalized IPA → Runner.ipa (from #{File.basename(path)})")
+    return
+  end
+end
+
+def connect_api_for_spaceship
+  params = app_store_connect_api_key_params
+  return nil unless params
+
+  key_path = File.join(Dir.home, ".appstoreconnect", "api_key.p8")
+  token = if File.exist?(key_path)
+            Spaceship::ConnectAPI::Token.create(
+              key_id: params[:key_id],
+              issuer_id: params[:issuer_id],
+              filepath: key_path
+            )
+          else
+            Spaceship::ConnectAPI::Token.create(
+              key_id: params[:key_id],
+              issuer_id: params[:issuer_id],
+              key: params[:key_content]
+            )
+          end
+
+  Spaceship::ConnectAPI.token = token
+  token
+end
+
+def prune_certificates_of_type(type, keep:, revoked_ids:)
+  certs = Spaceship::ConnectAPI::Certificate.all(filter: { certificateType: type })
+  certs = certs.reject { |cert| revoked_ids.include?(cert.id) }
+  UI.message("Found #{certs.length} #{type} certificate(s)")
+  return if certs.length <= keep
+
+  sorted = certs.sort_by { |cert| cert.expiration_date.to_s }
+  revoke_list = sorted[0...(sorted.length - keep)]
+  revoke_list.each do |cert|
+    UI.message("Revoking #{type} certificate #{cert.display_name} (#{cert.id})")
+    cert.delete!
+    revoked_ids << cert.id
+  end
+end
+
 def increment_build_number_in_pubspec
   pubspec_path = File.join(PROJECT_ROOT, "pubspec.yaml")
   unless File.exist?(pubspec_path)
@@ -226,11 +393,11 @@ def commit_and_push_build_number(new_build_number)
     end
 
     sh("cd #{PROJECT_ROOT} && git add pubspec.yaml")
+    # [skip ci] prevents infinite Deploy loops on the build-bump commit (Triftly pattern).
     sh(
       "cd #{PROJECT_ROOT} && git commit " \
-      "-m 'chore: Auto-increment build number to #{new_build_number}' " \
-      "-m 'Build number automatically incremented by Fastfile' " \
-      "-m 'Updated to 1.0.0+#{new_build_number}'"
+      "-m 'chore: Auto-increment build number to #{new_build_number} [skip ci]' " \
+      "-m 'Build number automatically incremented by Fastfile'"
     )
     UI.success("✅ Build number change committed")
 
@@ -239,7 +406,7 @@ def commit_and_push_build_number(new_build_number)
     UI.success("✅ Build number change pushed to remote")
   rescue => ex
     UI.important("⚠️  Failed to commit/push build number: #{ex.message}")
-    UI.important("   You may need to commit and push manually")
+    UI.important("   On CI: ensure GH_PAT (or contents:write) can push to main")
   end
 end
 
@@ -287,47 +454,64 @@ platform :ios do
       UI.important("⚠️  bundle install had an issue: #{ex.message}")
     end
 
-    bundle_pod_ok = run_pod_install
-
-    if bundle_pod_ok
-      pod_wrapper_dir = ensure_pod_wrapper_for_flutter
-      build_path = "#{pod_wrapper_dir}:#{ENV['PATH']}"
+    # CI app-store: flutter build ipa runs pod install itself (Triftly pattern).
+    if ci_build? && export_method == "app-store"
+      UI.message("Skipping pre-build pod install on CI (flutter build ipa runs pod install)")
     else
-      pod_cmd = find_pod_command
-      pod_dir = (pod_cmd && pod_cmd.to_s.start_with?("/")) ? File.dirname(pod_cmd) : ""
-      build_path = pod_dir.empty? ? ENV["PATH"] : "/usr/bin:#{pod_dir}:#{ENV['PATH']}"
-    end
-
-    sh("cd #{PROJECT_ROOT} && PATH=#{build_path} flutter build ios --release")
-
-    export_opts = {
-      method: export_method,
-      signingStyle: "automatic",
-      teamID: TEAM_ID
-    }
-
-    if export_method == "app-store"
-      UI.message("📦 Ensuring App Store provisioning profile is available...")
-      begin
-        get_provisioning_profile(
-          app_identifier: APP_IDENTIFIER,
-          adhoc: false,
-          username: APPLE_ID,
-          team_id: TEAM_ID
-        )
-        UI.success("✅ Provisioning profile ready")
-      rescue => ex
-        UI.important("⚠️  Could not fetch profile (run setup_appstore_signing if needed): #{ex.message}")
+      bundle_pod_ok = run_pod_install
+      if bundle_pod_ok
+        pod_wrapper_dir = ensure_pod_wrapper_for_flutter
+        ENV["PATH"] = "#{pod_wrapper_dir}:#{ENV['PATH']}"
       end
     end
 
-    build_app(
-      workspace: "#{IOS_DIR}/Runner.xcworkspace",
-      scheme: "Runner",
-      export_method: export_method,
-      output_directory: "#{PROJECT_ROOT}/build/ios/ipa",
-      export_options: export_opts
-    )
+    if ci_build? && export_method == "app-store"
+      UI.message("🔧 CI: applying App Store signing to Xcode project...")
+      UI.user_error!(
+        "SIGH_NAME must be set. Run setup_appstore_signing first (workflow step)."
+      ) unless ENV["SIGH_NAME"]
+
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "#{IOS_DIR}/Runner.xcodeproj",
+        team_id: TEAM_ID,
+        bundle_identifier: APP_IDENTIFIER,
+        profile_name: ENV["SIGH_NAME"],
+        code_sign_identity: "Apple Distribution",
+        targets: ["Runner"]
+      )
+
+      export_plist = write_ci_export_options_plist!
+      UI.message("📦 Building IPA via flutter build ipa...")
+      sh("cd #{PROJECT_ROOT} && flutter build ipa --release --export-options-plist=#{export_plist}")
+      ensure_runner_ipa_path!
+    else
+      sh("cd #{PROJECT_ROOT} && flutter build ios --release --no-codesign")
+
+      export_opts = {
+        method: export_method,
+        signingStyle: "automatic",
+        teamID: TEAM_ID
+      }
+
+      if export_method == "app-store"
+        UI.message("📦 Ensuring App Store provisioning profile is available...")
+        begin
+          fetch_appstore_profile!(app_identifier: APP_IDENTIFIER)
+          UI.success("✅ Provisioning profile ready")
+        rescue => ex
+          UI.important("⚠️  Could not fetch profile: #{ex.message}")
+        end
+      end
+
+      build_app(
+        workspace: "#{IOS_DIR}/Runner.xcworkspace",
+        scheme: "Runner",
+        export_method: export_method,
+        output_directory: "#{PROJECT_ROOT}/build/ios/ipa",
+        export_options: export_opts
+      )
+    end
 
     UI.success("✅ IPA created successfully!")
     UI.message("📦 IPA location: #{PROJECT_ROOT}/build/ios/ipa/")
@@ -465,25 +649,66 @@ platform :ios do
     end
   end
 
+  desc "Revoke excess API-created Development certs on CI (frees Apple cert slots)"
+  lane :prune_excess_certificates_for_ci do
+    return unless ENV["CI"]
+    return unless connect_api_for_spaceship
+
+    revoked_ids = []
+    %w[DEVELOPMENT IOS_DEVELOPMENT].each do |type|
+      prune_certificates_of_type(type, keep: 0, revoked_ids: revoked_ids)
+    end
+  end
+
   desc "Setup App Store distribution certificate + provisioning profile"
   lane :setup_appstore_signing do
     UI.message("🔧 Setting up App Store distribution signing for #{APP_IDENTIFIER}...")
+    api_key_params = app_store_connect_api_key_params
+
     begin
-      get_certificates(
-        development: false,
-        username: APPLE_ID,
-        team_id: TEAM_ID
-      )
-      get_provisioning_profile(
+      if ENV["CI"]
+        unless api_key_params
+          UI.user_error!(
+            "APP_STORE_CONNECT_API_KEY_ID, ISSUER_ID, and API_KEY_CONTENT must be set for CI."
+          )
+        end
+        import_distribution_certificate_for_ci!
+        unless distribution_identity_installed?
+          UI.user_error!(
+            "No Apple Distribution identity in keychain. Set GitHub secrets " \
+            "IOS_DISTRIBUTION_CERT_BASE64 and IOS_DISTRIBUTION_CERT_PASSWORD."
+          )
+        end
+        UI.message("📜 Reusing imported Apple Distribution certificate on CI")
+      else
+        UI.message("📜 Getting App Store Distribution certificate...")
+        if api_key_params
+          get_certificates(
+            development: false,
+            api_key: app_store_connect_api_key(**api_key_params),
+            team_id: TEAM_ID
+          )
+        else
+          get_certificates(
+            development: false,
+            username: APPLE_ID,
+            team_id: TEAM_ID
+          )
+        end
+      end
+
+      UI.message("📋 Getting App Store provisioning profile for #{APP_IDENTIFIER}...")
+      main_profile = fetch_appstore_profile!(
         app_identifier: APP_IDENTIFIER,
-        username: APPLE_ID,
-        team_id: TEAM_ID
+        force: ENV["CI"] == "true"
       )
-      UI.success("✅ Certificates and profiles ready!")
+      ENV["SIGH_NAME"] = main_profile
+      persist_ci_signing_env!
+
+      UI.success("✅ Certificates and profiles ready! (SIGH_NAME=#{main_profile})")
     rescue => ex
       UI.important("⚠️  Automatic setup failed: #{ex.message}")
-      UI.important("   open ios/Runner.xcworkspace → Signing & Capabilities")
-      UI.important("   Enable Automatic signing, team #{TEAM_ID}")
+      UI.important("   open ios/Runner.xcworkspace → Signing & Capabilities → team #{TEAM_ID}")
       raise
     end
   end
