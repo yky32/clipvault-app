@@ -210,33 +210,57 @@ class _SettingsPageState extends State<SettingsPage> {
     final themeController = ThemeScope.of(context);
     final paletteController = PaletteScope.of(context);
 
+    final theme = Theme.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.groupedBackground(context),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-        slivers: [
-          CupertinoSliverNavigationBar(
-            backgroundColor:
-                AppColors.groupedBackground(context).withValues(alpha: 0.92),
-            border: null,
-            largeTitle: Text(l10n.settingsTitle),
-            leading: CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              onPressed: () => context.pop(),
-              child: Icon(
-                CupertinoIcons.back,
-                color: AppColors.primary,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // Back + title on one row (same pattern as Vault header)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(6, 4, 20, 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      minimumSize: Size.zero,
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        context.pop();
+                      },
+                      child: Icon(
+                        CupertinoIcons.back,
+                        size: 28,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        l10n.settingsTitle,
+                        style: theme.textTheme.displayMedium?.copyWith(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.37,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                IosGroup(
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  IosGroup(
                   header: l10n.settingsSecurity,
                   footer: l10n.biometricLockSubtitle,
                   children: [
@@ -423,6 +447,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
