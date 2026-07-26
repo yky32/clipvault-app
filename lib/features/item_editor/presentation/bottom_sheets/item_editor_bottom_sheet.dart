@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -227,50 +228,26 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   ],
                 ),
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _pickCategory,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 88,
-                          child: Text(
-                            l10n.categoryLabel,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            _categoryLabel(l10n),
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: _selectedCategoryId == null
-                                      ? AppColors.secondaryLabel(context)
-                                      : null,
-                                ),
-                          ),
-                        ),
-                        Icon(
-                          CupertinoIcons.chevron_right,
-                          size: 18,
-                          color: AppColors.tertiaryLabel(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
           IosGroup(
             inset: false,
             children: [
+              // Category — same tile pattern as Pin (icon + label + chevron)
+              IosGroupTile(
+                title: l10n.categoryLabel,
+                subtitle: _categoryLabel(l10n),
+                leading: CategoryLeadingIcon(
+                  categoryId: _selectedCategoryId,
+                ),
+                trailing: Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 18,
+                  color: AppColors.tertiaryLabel(context),
+                ),
+                onTap: _pickCategory,
+              ),
               IosGroupTile(
                 title: l10n.pinItem,
                 leading: Container(

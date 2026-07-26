@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -14,8 +15,8 @@ class ClipItemCard extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.categoryName,
+    this.categoryIconData,
     this.compact = false,
-    this.showDivider = false,
     super.key,
   });
 
@@ -23,10 +24,8 @@ class ClipItemCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final String? categoryName;
+  final IconData? categoryIconData;
   final bool compact;
-
-  /// When true, renders as an iOS grouped list row (no outer card chrome).
-  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +33,7 @@ class ClipItemCard extends StatelessWidget {
       return _GridTile(
         item: item,
         categoryName: categoryName,
+        categoryIconData: categoryIconData,
         onTap: onTap,
         onLongPress: onLongPress,
       );
@@ -41,6 +41,7 @@ class ClipItemCard extends StatelessWidget {
     return _ListRow(
       item: item,
       categoryName: categoryName,
+      categoryIconData: categoryIconData,
       onTap: onTap,
       onLongPress: onLongPress,
     );
@@ -53,18 +54,23 @@ class _ListRow extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.categoryName,
+    this.categoryIconData,
   });
 
   final ClipItem item;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final String? categoryName;
+  final IconData? categoryIconData;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final subtitle = categoryName ?? l10n.tapToCopy;
+    final icon = item.isPinned && item.categoryId == null
+        ? CupertinoIcons.pin_fill
+        : (categoryIconData ?? categoryIconForId(item.categoryId));
 
     return PressableScale(
       onTap: () {
@@ -86,27 +92,35 @@ class _ListRow extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                item.isPinned
-                    ? CupertinoIcons.pin_fill
-                    : CupertinoIcons.doc_on_clipboard,
-                size: 18,
-                color: AppColors.primary,
-              ),
+              child: Icon(icon, size: 18, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.3,
-                    ),
+                  Row(
+                    children: [
+                      if (item.isPinned && item.categoryId != null) ...[
+                        Icon(
+                          CupertinoIcons.pin_fill,
+                          size: 12,
+                          color: AppColors.primary.withValues(alpha: 0.85),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -153,16 +167,21 @@ class _GridTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.categoryName,
+    this.categoryIconData,
   });
 
   final ClipItem item;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final String? categoryName;
+  final IconData? categoryIconData;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final icon = item.isPinned && item.categoryId == null
+        ? CupertinoIcons.pin_fill
+        : (categoryIconData ?? categoryIconForId(item.categoryId));
 
     return PressableScale(
       onTap: () {
@@ -185,15 +204,21 @@ class _GridTile extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  item.isPinned
-                      ? CupertinoIcons.pin_fill
-                      : CupertinoIcons.lock_fill,
-                  size: 14,
-                  color: AppColors.primary.withValues(alpha: 0.85),
+                  icon,
+                  size: 16,
+                  color: AppColors.primary.withValues(alpha: 0.9),
                 ),
+                if (item.isPinned && item.categoryId != null) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    CupertinoIcons.pin_fill,
+                    size: 12,
+                    color: AppColors.primary.withValues(alpha: 0.7),
+                  ),
+                ],
                 const Spacer(),
                 Icon(
-                  CupertinoIcons.doc_on_doc,
+                  CupertinoIcons.doc_on_clipboard,
                   size: 16,
                   color: AppColors.tertiaryLabel(context),
                 ),
@@ -234,11 +259,13 @@ class ClipItemGroupedList extends StatelessWidget {
     required this.categoryNameOf,
     required this.onTap,
     required this.onLongPress,
+    this.categoryIconOf,
     super.key,
   });
 
   final List<ClipItem> items;
   final String? Function(ClipItem) categoryNameOf;
+  final IconData? Function(ClipItem)? categoryIconOf;
   final void Function(ClipItem) onTap;
   final void Function(ClipItem) onLongPress;
 
@@ -256,6 +283,7 @@ class ClipItemGroupedList extends StatelessWidget {
             ClipItemCard(
               item: items[i],
               categoryName: categoryNameOf(items[i]),
+              categoryIconData: categoryIconOf?.call(items[i]),
               onTap: () => onTap(items[i]),
               onLongPress: () => onLongPress(items[i]),
             ),

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/settings_service.dart';
@@ -277,6 +278,7 @@ class _VaultPageState extends State<VaultPage> {
                                   children: [
                                     _SegmentChip(
                                       label: l10n.filterAll,
+                                      icon: CupertinoIcons.square_grid_2x2,
                                       selected:
                                           state.selectedCategoryId == null,
                                       onTap: () => context
@@ -295,9 +297,9 @@ class _VaultPageState extends State<VaultPage> {
                                         padding: const EdgeInsets.only(left: 8),
                                         child: _SegmentChip(
                                           label: categoryDisplayName(c, l10n),
+                                          icon: categoryIcon(c),
                                           count: count,
                                           selected: selected,
-                                          // Tap again to clear filter
                                           onTap: () =>
                                               context.read<VaultBloc>().add(
                                                     VaultCategoryFilterChanged(
@@ -391,6 +393,8 @@ class _VaultPageState extends State<VaultPage> {
                                         item.categoryId,
                                         l10n,
                                       ),
+                                      categoryIconData:
+                                          categoryIconForId(item.categoryId),
                                       onTap: () => _copy(item),
                                       onLongPress: () => _showItemActions(
                                         context,
@@ -421,6 +425,8 @@ class _VaultPageState extends State<VaultPage> {
                                     item.categoryId,
                                     l10n,
                                   ),
+                                  categoryIconOf: (item) =>
+                                      categoryIconForId(item.categoryId),
                                   onTap: _copy,
                                   onLongPress: (item) => _showItemActions(
                                     context,
@@ -453,11 +459,13 @@ class _SectionedList extends StatelessWidget {
     required this.categoryNameOf,
     required this.onTap,
     required this.onLongPress,
+    this.categoryIconOf,
   });
 
   final VaultState state;
   final List<ClipItem> filtered;
   final String? Function(ClipItem) categoryNameOf;
+  final IconData? Function(ClipItem)? categoryIconOf;
   final void Function(ClipItem) onTap;
   final void Function(ClipItem) onLongPress;
 
@@ -472,6 +480,7 @@ class _SectionedList extends StatelessWidget {
       return ClipItemGroupedList(
         items: filtered,
         categoryNameOf: categoryNameOf,
+        categoryIconOf: categoryIconOf,
         onTap: onTap,
         onLongPress: onLongPress,
       );
@@ -484,6 +493,7 @@ class _SectionedList extends StatelessWidget {
         ClipItemGroupedList(
           items: pinned,
           categoryNameOf: categoryNameOf,
+          categoryIconOf: categoryIconOf,
           onTap: onTap,
           onLongPress: onLongPress,
         ),
@@ -492,6 +502,7 @@ class _SectionedList extends StatelessWidget {
         ClipItemGroupedList(
           items: rest,
           categoryNameOf: categoryNameOf,
+          categoryIconOf: categoryIconOf,
           onTap: onTap,
           onLongPress: onLongPress,
         ),
@@ -607,16 +618,22 @@ class _SegmentChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.icon,
     this.count,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final IconData? icon;
   final int? count;
 
   @override
   Widget build(BuildContext context) {
+    final fg = selected
+        ? Colors.white
+        : AppColors.secondaryLabel(context).withValues(alpha: 0.95);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -625,7 +642,7 @@ class _SegmentChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary
@@ -635,6 +652,10 @@ class _SegmentChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: fg),
+              const SizedBox(width: 5),
+            ],
             Text(
               label,
               style: TextStyle(
@@ -642,9 +663,7 @@ class _SegmentChip extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.08,
-                color: selected
-                    ? Colors.white
-                    : AppColors.secondaryLabel(context).withValues(alpha: 0.95),
+                color: fg,
               ),
             ),
             if (count != null) ...[
