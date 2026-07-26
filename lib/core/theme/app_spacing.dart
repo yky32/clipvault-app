@@ -43,6 +43,41 @@ abstract final class AppShadows {
     ];
   }
 
+  /// Soft floating island (list group / grid tile) — Apple “elevated card”
+  /// without a hard outline stroke.
+  static List<BoxShadow> island(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.45),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.2),
+          blurRadius: 2,
+          offset: const Offset(0, 0.5),
+        ),
+      ];
+    }
+    return [
+      // Ambient lift
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.045),
+        blurRadius: 24,
+        spreadRadius: -2,
+        offset: const Offset(0, 10),
+      ),
+      // Soft contact
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.03),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ];
+  }
+
   static List<BoxShadow> fab(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return [

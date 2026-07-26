@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/copied_hud.dart';
+import '../../../../core/widgets/glass_island.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class ClipItemCard extends StatelessWidget {
@@ -82,18 +82,10 @@ class _ListRow extends StatelessWidget {
         onLongPress();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: AppColors.primary),
-            ),
+            _GlassIconWell(icon: icon, size: 34, iconSize: 17),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -104,8 +96,8 @@ class _ListRow extends StatelessWidget {
                       if (item.isPinned && item.categoryId != null) ...[
                         Icon(
                           CupertinoIcons.pin_fill,
-                          size: 12,
-                          color: AppColors.primary.withValues(alpha: 0.85),
+                          size: 11,
+                          color: AppColors.primary.withValues(alpha: 0.8),
                         ),
                         const SizedBox(width: 4),
                       ],
@@ -116,23 +108,25 @@ class _ListRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
+                            fontSize: 16,
                             letterSpacing: -0.3,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 12,
                       color: categoryName != null
                           ? AppColors.secondaryLabel(context)
-                          : AppColors.primary.withValues(alpha: 0.8),
+                          : AppColors.primary.withValues(alpha: 0.85),
                       fontWeight: categoryName == null
-                          ? FontWeight.w500
+                          ? FontWeight.w600
                           : FontWeight.w400,
                       letterSpacing: -0.08,
                     ),
@@ -141,18 +135,10 @@ class _ListRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                CupertinoIcons.doc_on_clipboard,
-                size: 16,
-                color: AppColors.primary,
-              ),
+            _GlassIconWell(
+              icon: CupertinoIcons.doc_on_clipboard,
+              size: 30,
+              iconSize: 14,
             ),
           ],
         ),
@@ -161,7 +147,7 @@ class _ListRow extends StatelessWidget {
   }
 }
 
-/// Compact grid cell — dense, scannable, tap = copy.
+/// Compact grid cell as a floating glass island.
 class _GridTile extends StatelessWidget {
   const _GridTile({
     required this.item,
@@ -193,49 +179,30 @@ class _GridTile extends StatelessWidget {
         HapticFeedback.mediumImpact();
         onLongPress();
       },
-      child: Container(
+      child: GlassIsland(
+        borderRadius: BorderRadius.circular(18),
+        blur: 16,
         padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.hairline(context)),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 15, color: AppColors.primary),
-                ),
+                _GlassIconWell(icon: icon, size: 28, iconSize: 14),
                 const Spacer(),
                 if (item.isPinned)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: Icon(
                       CupertinoIcons.pin_fill,
-                      size: 12,
-                      color: AppColors.primary.withValues(alpha: 0.75),
+                      size: 11,
+                      color: AppColors.primary.withValues(alpha: 0.7),
                     ),
                   ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.doc_on_clipboard,
-                    size: 13,
-                    color: AppColors.primary,
-                  ),
+                _GlassIconWell(
+                  icon: CupertinoIcons.doc_on_clipboard,
+                  size: 26,
+                  iconSize: 13,
                 ),
               ],
             ),
@@ -252,7 +219,7 @@ class _GridTile extends StatelessWidget {
                 height: 1.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               categoryName ?? l10n.tapToCopy,
               maxLines: 1,
@@ -275,7 +242,36 @@ class _GridTile extends StatelessWidget {
   }
 }
 
-/// Grouped list of vault items with iOS inset style + hairline separators.
+/// Soft frosted icon chip — no hard ring.
+class _GlassIconWell extends StatelessWidget {
+  const _GlassIconWell({
+    required this.icon,
+    this.size = 30,
+    this.iconSize = 15,
+  });
+
+  final IconData icon;
+  final double size;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(size * 0.28),
+      ),
+      child: Icon(icon, size: iconSize, color: AppColors.primary),
+    );
+  }
+}
+
+/// Grouped list as one soft glass island (Apple inset list feel).
 class ClipItemGroupedList extends StatelessWidget {
   const ClipItemGroupedList({
     required this.items,
@@ -294,12 +290,11 @@ class ClipItemGroupedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground(context),
-        borderRadius: AppRadii.group,
-      ),
-      clipBehavior: Clip.antiAlias,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GlassIsland(
+      borderRadius: BorderRadius.circular(18),
+      blur: 14,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -312,11 +307,13 @@ class ClipItemGroupedList extends StatelessWidget {
             ),
             if (i < items.length - 1)
               Padding(
-                padding: const EdgeInsets.only(left: 64),
+                padding: const EdgeInsets.only(left: 60),
                 child: Divider(
                   height: 0.5,
                   thickness: 0.5,
-                  color: AppColors.hairline(context),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
           ],
