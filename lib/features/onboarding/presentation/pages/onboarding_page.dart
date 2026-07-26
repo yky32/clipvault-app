@@ -18,7 +18,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _controller = PageController();
   int _index = 0;
 
-  /// Finish onboarding and go straight to the vault.
+  /// Finish legacy full-screen onboarding and go to the vault.
+  /// Welcome explainer (version-gated sheet) is shown from Vault if needed.
   /// App lock is never forced here — only via Settings toggle.
   Future<void> _finish() async {
     await SettingsService.instance.setOnboardingDone(true);

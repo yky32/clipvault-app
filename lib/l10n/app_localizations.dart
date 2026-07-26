@@ -734,6 +734,90 @@ abstract class AppLocalizations {
   /// **'Get started'**
   String get getStarted;
 
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to clipVAuLt'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeTitleUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get welcomeTitleUpgrade;
+
+  /// No description provided for @welcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Store once → Tap once → Paste anywhere.'**
+  String get welcomeSubtitle;
+
+  /// No description provided for @welcomeSubtitleUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String welcomeSubtitleUpgrade(String version);
+
+  /// No description provided for @welcomeWhyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why clipVAuLt'**
+  String get welcomeWhyTitle;
+
+  /// No description provided for @welcomeWhyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords, codes, addresses, API keys, templates — one private place for anything you copy often. Faster than Notes, lighter than a password manager.'**
+  String get welcomeWhyBody;
+
+  /// No description provided for @welcomeLocalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local-only by design'**
+  String get welcomeLocalTitle;
+
+  /// No description provided for @welcomeLocalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault lives only on this device. Values are encrypted at rest (AES-256). No account. No cloud. We never see your data.'**
+  String get welcomeLocalBody;
+
+  /// No description provided for @welcomeHowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get welcomeHowTitle;
+
+  /// No description provided for @welcomeHowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a title and value. Tap any card to copy instantly. Optional Face ID / device lock and clipboard auto-clear live in Settings.'**
+  String get welcomeHowBody;
+
+  /// No description provided for @welcomePromoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your one-tap vault'**
+  String get welcomePromoTitle;
+
+  /// No description provided for @welcomePromoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'clipVAuLt has one job: store any value and copy it with a single tap. Everything else stays out of the way.'**
+  String get welcomePromoBody;
+
+  /// No description provided for @welcomeCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get welcomeCta;
+
+  /// No description provided for @welcomeCtaContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Vault'**
+  String get welcomeCtaContinue;
+
   /// No description provided for @next.
   ///
   /// In en, this message translates to:

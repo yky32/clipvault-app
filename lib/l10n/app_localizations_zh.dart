@@ -339,6 +339,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get getStarted => '開始使用';
 
   @override
+  String get welcomeTitle => '歡迎使用 clipVAuLt';
+
+  @override
+  String get welcomeTitleUpgrade => '更新內容';
+
+  @override
+  String get welcomeSubtitle => '儲存一次 → 輕觸一次 → 隨處貼上。';
+
+  @override
+  String welcomeSubtitleUpgrade(String version) {
+    return '版本 $version';
+  }
+
+  @override
+  String get welcomeWhyTitle => '為什麼用 clipVAuLt';
+
+  @override
+  String get welcomeWhyBody =>
+      '密碼、代碼、地址、API 金鑰、常用訊息 — 集中放在一個私密空間。比備忘錄更快，比密碼管理器更輕。';
+
+  @override
+  String get welcomeLocalTitle => '預設只存本機';
+
+  @override
+  String get welcomeLocalBody =>
+      '保險庫只留在這台裝置。內容以 AES-256 加密儲存。沒有帳號、沒有雲端。我們看不到你的資料。';
+
+  @override
+  String get welcomeHowTitle => '怎麼使用';
+
+  @override
+  String get welcomeHowBody =>
+      '新增標題與內容，輕觸卡片即可複製。可在「設定」開啟 Face ID／裝置鎖定與剪貼簿自動清除。';
+
+  @override
+  String get welcomePromoTitle => '你的一鍵保險庫';
+
+  @override
+  String get welcomePromoBody => 'clipVAuLt 只做一件事：儲存任何值，輕觸一次即可複製。其餘一概從簡。';
+
+  @override
+  String get welcomeCta => '開始使用';
+
+  @override
+  String get welcomeCtaContinue => '進入保險庫';
+
+  @override
   String get next => '下一步';
 
   @override

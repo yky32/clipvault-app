@@ -8,15 +8,15 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/vault/bloc/vault_bloc.dart';
 import '../../features/vault/presentation/pages/vault_page.dart';
 import '../bootstrap/app_bootstrap.dart';
-import '../services/settings_service.dart';
 
 class AppRouter {
   AppRouter._();
 
   static final GlobalKey<NavigatorState> rootKey = GlobalKey<NavigatorState>();
 
+  /// Welcome explainer is a bottom sheet on Vault (version-gated), not a route.
+  /// Legacy `/onboarding` remains for deep links / older installs mid-flow.
   static String get initialLocation {
-    if (!SettingsService.instance.onboardingDone) return '/onboarding';
     if (AppBootstrap.authService.requiresUnlock) return '/lock';
     return '/vault';
   }

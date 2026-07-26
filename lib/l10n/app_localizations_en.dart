@@ -346,6 +346,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
+  String get welcomeTitle => 'Welcome to clipVAuLt';
+
+  @override
+  String get welcomeTitleUpgrade => 'What\'s new';
+
+  @override
+  String get welcomeSubtitle => 'Store once → Tap once → Paste anywhere.';
+
+  @override
+  String welcomeSubtitleUpgrade(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get welcomeWhyTitle => 'Why clipVAuLt';
+
+  @override
+  String get welcomeWhyBody =>
+      'Passwords, codes, addresses, API keys, templates — one private place for anything you copy often. Faster than Notes, lighter than a password manager.';
+
+  @override
+  String get welcomeLocalTitle => 'Local-only by design';
+
+  @override
+  String get welcomeLocalBody =>
+      'Your vault lives only on this device. Values are encrypted at rest (AES-256). No account. No cloud. We never see your data.';
+
+  @override
+  String get welcomeHowTitle => 'How it works';
+
+  @override
+  String get welcomeHowBody =>
+      'Add a title and value. Tap any card to copy instantly. Optional Face ID / device lock and clipboard auto-clear live in Settings.';
+
+  @override
+  String get welcomePromoTitle => 'Your one-tap vault';
+
+  @override
+  String get welcomePromoBody =>
+      'clipVAuLt has one job: store any value and copy it with a single tap. Everything else stays out of the way.';
+
+  @override
+  String get welcomeCta => 'Get started';
+
+  @override
+  String get welcomeCtaContinue => 'Continue to Vault';
+
+  @override
   String get next => 'Next';
 
   @override

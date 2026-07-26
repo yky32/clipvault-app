@@ -136,6 +136,25 @@
   "onboardingTitle3": "Ready when you are",
   "onboardingBody3": "Start storing values right away. You can turn on app lock anytime in Settings.",
   "getStarted": "Get started",
+  "welcomeTitle": "Welcome to clipVAuLt",
+  "welcomeTitleUpgrade": "What's new",
+  "welcomeSubtitle": "Store once → Tap once → Paste anywhere.",
+  "welcomeSubtitleUpgrade": "Version {version}",
+  "@welcomeSubtitleUpgrade": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "welcomeWhyTitle": "Why clipVAuLt",
+  "welcomeWhyBody": "Passwords, codes, addresses, API keys, templates — one private place for anything you copy often. Faster than Notes, lighter than a password manager.",
+  "welcomeLocalTitle": "Local-only by design",
+  "welcomeLocalBody": "Your vault lives only on this device. Values are encrypted at rest (AES-256). No account. No cloud. We never see your data.",
+  "welcomeHowTitle": "How it works",
+  "welcomeHowBody": "Add a title and value. Tap any card to copy instantly. Optional Face ID / device lock and clipboard auto-clear live in Settings.",
+  "welcomePromoTitle": "Your one-tap vault",
+  "welcomePromoBody": "clipVAuLt has one job: store any value and copy it with a single tap. Everything else stays out of the way.",
+  "welcomeCta": "Get started",
+  "welcomeCtaContinue": "Continue to Vault",
   "next": "Next",
   "skip": "Skip",
   "enableBiometrics": "Enable app lock",

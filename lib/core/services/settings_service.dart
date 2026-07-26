@@ -25,6 +25,9 @@ class SettingsService {
   static final SettingsService instance = SettingsService._();
 
   static const _onboardingKey = 'onboarding_done';
+  /// Marketing version (e.g. 1.0.0) last dismissed for the welcome sheet.
+  /// Null = never seen (first install). Re-show only when App Store version changes.
+  static const _welcomeSeenVersionKey = 'welcome_seen_version';
   /// Opt-in only via Settings. New key so older onboarding-forced values are ignored.
   static const _biometricKey = 'app_lock_enabled';
   static const _viewModeKey = 'default_view';
@@ -45,6 +48,24 @@ class SettingsService {
 
   Future<void> setOnboardingDone(bool value) =>
       _prefs.setBool(_onboardingKey, value);
+
+  /// Last marketing version for which the welcome / what's-new sheet was dismissed.
+  String? get welcomeSeenVersion => _prefs.getString(_welcomeSeenVersionKey);
+
+  /// Show on first install, or when App Store marketing version upgrades.
+  /// Build number changes alone (1.0.0+2 → 1.0.0+3) do not re-show.
+  bool shouldShowWelcome(String marketingVersion) {
+    final seen = welcomeSeenVersion;
+    if (seen == null || seen.isEmpty) return true;
+    return seen != marketingVersion;
+  }
+
+  /// Persist that the user finished the welcome sheet for [marketingVersion].
+  /// Also marks legacy onboarding complete so old routes stay consistent.
+  Future<void> markWelcomeSeen(String marketingVersion) async {
+    await _prefs.setString(_welcomeSeenVersionKey, marketingVersion);
+    await setOnboardingDone(true);
+  }
 
   /// Always defaults to **false**. Only Settings can turn this on.
   bool get biometricLockEnabled => _prefs.getBool(_biometricKey) ?? false;

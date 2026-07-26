@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
@@ -14,6 +15,7 @@ import '../../../../core/widgets/apple_search_field.dart';
 import '../../../../core/widgets/copied_hud.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../item_editor/presentation/bottom_sheets/item_editor_bottom_sheet.dart';
+import '../../../welcome/presentation/bottom_sheets/welcome_explainer_sheet.dart';
 import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
@@ -27,6 +29,29 @@ class VaultPage extends StatefulWidget {
 
 class _VaultPageState extends State<VaultPage> {
   final _searchController = TextEditingController();
+  bool _welcomeChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowWelcome());
+  }
+
+  /// First install or App Store marketing-version upgrade only.
+  Future<void> _maybeShowWelcome() async {
+    if (_welcomeChecked || !mounted) return;
+    _welcomeChecked = true;
+
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final version = info.version; // e.g. 1.0.0 — not build number
+      if (!SettingsService.instance.shouldShowWelcome(version)) return;
+      if (!mounted) return;
+      await WelcomeExplainerSheet.show(context, version: version);
+    } catch (_) {
+      // Fail open — vault stays usable if package info fails.
+    }
+  }
 
   @override
   void dispose() {
