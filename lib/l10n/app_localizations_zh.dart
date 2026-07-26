@@ -96,7 +96,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryHint => '選填';
 
   @override
-  String get categoryPickHint => '輕觸分類，或自行輸入';
+  String get categoryNone => '無';
+
+  @override
+  String get categorySelectTitle => '選擇分類';
+
+  @override
+  String get categoryManageTitle => '分類';
+
+  @override
+  String get categoryManageSubtitle => '產品預設分類固定。可新增自訂分類。';
+
+  @override
+  String get categoryAdd => '新增分類';
+
+  @override
+  String get categoryEdit => '編輯分類';
+
+  @override
+  String get categoryNameLabel => '名稱';
+
+  @override
+  String get categoryNameHint => '例如：客戶代碼';
+
+  @override
+  String get categoryDefaultBadge => '預設';
+
+  @override
+  String get categoryCustomSection => '我的分類';
+
+  @override
+  String get categoryDefaultsSection => '產品預設';
+
+  @override
+  String get categoryEmptyCustom => '尚未新增自訂分類';
+
+  @override
+  String get categoryDeleteTitle => '刪除分類？';
+
+  @override
+  String categoryDeleteBody(String name) {
+    return '「$name」將被移除。項目內容會保留，但不再有此標籤。';
+  }
+
+  @override
+  String get slideToAdd => '滑動以新增';
 
   @override
   String get catPasswords => '密碼';

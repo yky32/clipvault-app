@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
@@ -13,6 +14,8 @@ import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/copied_hud.dart';
 import '../../../../core/widgets/ios_group.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../categories/presentation/bottom_sheets/category_manage_bottom_sheet.dart';
+import '../../../vault/bloc/vault_bloc.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -304,6 +307,31 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       onTap: _pickClipboardTimeout,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.categoryManageTitle,
+                  footer: l10n.categoryManageSubtitle,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.categoryManageTitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.tag_fill,
+                        color: AppColors.iconView,
+                      ),
+                      trailing: const IosChevron(),
+                      onTap: () async {
+                        await CategoryManageBottomSheet.show(context);
+                        if (!context.mounted) return;
+                        // Refresh vault chips if shell has VaultBloc.
+                        try {
+                          context
+                              .read<VaultBloc>()
+                              .add(const VaultRefreshed());
+                        } catch (_) {}
+                      },
                     ),
                   ],
                 ),

@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/l10n/category_labels.dart';
-import '../../../../core/models/category.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -13,6 +12,7 @@ import '../../../../core/widgets/clipvault_bottom_sheet.dart';
 import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../categories/presentation/bottom_sheets/category_picker_bottom_sheet.dart';
 import '../../../vault/bloc/vault_bloc.dart';
 
 /// Add / edit vault item — presented as a bottom sheet (Triftly input pattern).
@@ -24,8 +24,6 @@ class ItemEditorBottomSheet extends StatefulWidget {
   });
 
   final String? itemId;
-
-  /// Pre-select a category when adding from a vault filter.
   final String? initialCategoryId;
 
   bool get isNew => itemId == null || itemId == 'new';
@@ -57,7 +55,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   final _valueController = TextEditingController();
 
   ClipItem? _existing;
-  List<Category> _categories = const [];
   String? _selectedCategoryId;
   bool _isPinned = false;
   bool _obscureValue = true;
@@ -66,8 +63,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _categories = AppBootstrap.categoryRepository.getAll();
-
     if (!widget.isNew) {
       _existing = AppBootstrap.clipItemRepository.getById(widget.itemId!);
       if (_existing != null) {
@@ -79,7 +74,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     } else if (widget.initialCategoryId != null) {
       _selectedCategoryId = widget.initialCategoryId;
     }
-
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);
   }
@@ -103,11 +97,22 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         !_saving;
   }
 
-  void _selectCategory(String? id) {
-    HapticFeedback.selectionClick();
+  String _categoryLabel(AppLocalizations l10n) {
+    if (_selectedCategoryId == null) return l10n.categoryNone;
+    final cat =
+        AppBootstrap.categoryRepository.getById(_selectedCategoryId!);
+    if (cat == null) return l10n.categoryNone;
+    return categoryDisplayName(cat, l10n);
+  }
+
+  Future<void> _pickCategory() async {
+    final result = await CategoryPickerBottomSheet.show(
+      context,
+      selectedId: _selectedCategoryId,
+    );
+    if (!mounted || result == null) return;
     setState(() {
-      // Tap again to clear
-      _selectedCategoryId = _selectedCategoryId == id ? null : id;
+      _selectedCategoryId = result.category?.id;
     });
   }
 
@@ -222,33 +227,44 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            l10n.categoryLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.secondaryLabel(context),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _pickCategory,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 88,
+                          child: Text(
+                            l10n.categoryLabel,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            _categoryLabel(l10n),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: _selectedCategoryId == null
+                                      ? AppColors.secondaryLabel(context)
+                                      : null,
+                                ),
+                          ),
+                        ),
+                        Icon(
+                          CupertinoIcons.chevron_right,
+                          size: 18,
+                          color: AppColors.tertiaryLabel(context),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.categoryPickHint,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.tertiaryLabel(context),
-                ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final cat in _categories)
-                _CategoryChip(
-                  label: categoryDisplayName(cat, l10n),
-                  selected: _selectedCategoryId == cat.id,
-                  onTap: () => _selectCategory(cat.id),
-                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -283,51 +299,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary
-              : AppColors.cardBackground(context),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : AppColors.hairline(context),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Satoshi',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: selected
-                ? Colors.white
-                : AppColors.secondaryLabel(context).withValues(alpha: 0.95),
-          ),
-        ),
       ),
     );
   }

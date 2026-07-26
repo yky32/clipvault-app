@@ -97,7 +97,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryHint => 'Optional';
 
   @override
-  String get categoryPickHint => 'Tap a category or type your own';
+  String get categoryNone => 'None';
+
+  @override
+  String get categorySelectTitle => 'Select category';
+
+  @override
+  String get categoryManageTitle => 'Categories';
+
+  @override
+  String get categoryManageSubtitle =>
+      'Product defaults stay fixed. Add your own for custom labels.';
+
+  @override
+  String get categoryAdd => 'Add category';
+
+  @override
+  String get categoryEdit => 'Edit category';
+
+  @override
+  String get categoryNameLabel => 'Name';
+
+  @override
+  String get categoryNameHint => 'e.g. Client codes';
+
+  @override
+  String get categoryDefaultBadge => 'Default';
+
+  @override
+  String get categoryCustomSection => 'Your categories';
+
+  @override
+  String get categoryDefaultsSection => 'Product defaults';
+
+  @override
+  String get categoryEmptyCustom => 'No custom categories yet';
+
+  @override
+  String get categoryDeleteTitle => 'Delete category?';
+
+  @override
+  String categoryDeleteBody(String name) {
+    return '\"$name\" will be removed. Items keep their values but lose this label.';
+  }
+
+  @override
+  String get slideToAdd => 'Slide to add';
 
   @override
   String get catPasswords => 'Passwords';

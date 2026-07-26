@@ -260,11 +260,95 @@ abstract class AppLocalizations {
   /// **'Optional'**
   String get categoryHint;
 
-  /// No description provided for @categoryPickHint.
+  /// No description provided for @categoryNone.
   ///
   /// In en, this message translates to:
-  /// **'Tap a category or type your own'**
-  String get categoryPickHint;
+  /// **'None'**
+  String get categoryNone;
+
+  /// No description provided for @categorySelectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select category'**
+  String get categorySelectTitle;
+
+  /// No description provided for @categoryManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoryManageTitle;
+
+  /// No description provided for @categoryManageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Product defaults stay fixed. Add your own for custom labels.'**
+  String get categoryManageSubtitle;
+
+  /// No description provided for @categoryAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get categoryAdd;
+
+  /// No description provided for @categoryEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get categoryEdit;
+
+  /// No description provided for @categoryNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get categoryNameLabel;
+
+  /// No description provided for @categoryNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Client codes'**
+  String get categoryNameHint;
+
+  /// No description provided for @categoryDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get categoryDefaultBadge;
+
+  /// No description provided for @categoryCustomSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Your categories'**
+  String get categoryCustomSection;
+
+  /// No description provided for @categoryDefaultsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Product defaults'**
+  String get categoryDefaultsSection;
+
+  /// No description provided for @categoryEmptyCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom categories yet'**
+  String get categoryEmptyCustom;
+
+  /// No description provided for @categoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get categoryDeleteTitle;
+
+  /// No description provided for @categoryDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will be removed. Items keep their values but lose this label.'**
+  String categoryDeleteBody(String name);
+
+  /// No description provided for @slideToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to add'**
+  String get slideToAdd;
 
   /// No description provided for @catPasswords.
   ///

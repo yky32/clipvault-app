@@ -70,6 +70,9 @@ class CategoryRepository {
 
   Future<Category> create(String name) async {
     final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Category name is required');
+    }
     final existing = getAll().where(
       (c) => c.name.toLowerCase() == trimmed.toLowerCase(),
     );
@@ -84,11 +87,50 @@ class CategoryRepository {
     return category;
   }
 
+  /// Rename a **custom** category. System defaults keep product names.
+  Future<Category> rename(String id, String newName) async {
+    final existing = getById(id);
+    if (existing == null) {
+      throw StateError('Category not found: $id');
+    }
+    if (existing.isSystem) {
+      throw StateError('System categories cannot be renamed');
+    }
+    final trimmed = newName.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Category name is required');
+    }
+    final clash = getAll().where(
+      (c) => c.id != id && c.name.toLowerCase() == trimmed.toLowerCase(),
+    );
+    if (clash.isNotEmpty) {
+      throw StateError('A category with that name already exists');
+    }
+    final updated = Category(
+      id: existing.id,
+      name: trimmed,
+      systemKey: existing.systemKey,
+      createdAt: existing.createdAt,
+    );
+    await _box.put(updated.id, updated.toMap());
+    return updated;
+  }
+
+  /// Delete a **custom** category only. Product defaults are kept.
   Future<void> delete(String id) async {
-    // Allow deleting system categories if user wants — they can reinstall
-    // or we could re-seed on next launch only when missing.
+    final existing = getById(id);
+    if (existing == null) return;
+    if (existing.isSystem) {
+      throw StateError('System categories cannot be deleted');
+    }
     await _box.delete(id);
   }
+
+  List<Category> get systemCategories =>
+      getAll().where((c) => c.isSystem).toList();
+
+  List<Category> get customCategories =>
+      getAll().where((c) => !c.isSystem).toList();
 
   Category? getById(String id) {
     final raw = _box.get(id);

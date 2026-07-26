@@ -42,7 +42,26 @@
   "valueHint": "The text to copy",
   "categoryLabel": "Category",
   "categoryHint": "Optional",
-  "categoryPickHint": "Tap a category or type your own",
+  "categoryNone": "None",
+  "categorySelectTitle": "Select category",
+  "categoryManageTitle": "Categories",
+  "categoryManageSubtitle": "Product defaults stay fixed. Add your own for custom labels.",
+  "categoryAdd": "Add category",
+  "categoryEdit": "Edit category",
+  "categoryNameLabel": "Name",
+  "categoryNameHint": "e.g. Client codes",
+  "categoryDefaultBadge": "Default",
+  "categoryCustomSection": "Your categories",
+  "categoryDefaultsSection": "Product defaults",
+  "categoryEmptyCustom": "No custom categories yet",
+  "categoryDeleteTitle": "Delete category?",
+  "categoryDeleteBody": "\"{name}\" will be removed. Items keep their values but lose this label.",
+  "@categoryDeleteBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "slideToAdd": "Slide to add",
   "catPasswords": "Passwords",
   "catBanking": "Banking",
   "catWifi": "Wi-Fi",
