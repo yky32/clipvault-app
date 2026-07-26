@@ -476,6 +476,30 @@ abstract class AppLocalizations {
   /// **'List'**
   String get viewList;
 
+  /// No description provided for @viewGrid2.
+  ///
+  /// In en, this message translates to:
+  /// **'2'**
+  String get viewGrid2;
+
+  /// No description provided for @viewGrid3.
+  ///
+  /// In en, this message translates to:
+  /// **'3'**
+  String get viewGrid3;
+
+  /// No description provided for @viewGrid2Label.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid · 2'**
+  String get viewGrid2Label;
+
+  /// No description provided for @viewGrid3Label.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid · 3'**
+  String get viewGrid3Label;
+
   /// No description provided for @settingsSecurity.
   ///
   /// In en, this message translates to:

@@ -167,7 +167,8 @@ class _VaultPageState extends State<VaultPage> {
             }
 
             final isEmpty = state.items.isEmpty;
-            final isGrid = state.viewMode == VaultViewMode.grid;
+            final isGrid = state.viewMode.isGrid;
+            final gridCount = state.viewMode.gridCrossAxisCount;
             final filtered = state.filteredItems;
             final recent = state.recentlyCopied;
             final showRecent = !state.hasActiveFilter &&
@@ -208,9 +209,14 @@ class _VaultPageState extends State<VaultPage> {
                                   .add(const VaultViewModeToggled());
                             },
                             child: Icon(
-                              isGrid
-                                  ? CupertinoIcons.list_bullet
-                                  : CupertinoIcons.square_grid_2x2,
+                              switch (state.viewMode) {
+                                VaultViewMode.list =>
+                                  CupertinoIcons.square_grid_2x2,
+                                VaultViewMode.grid2 =>
+                                  CupertinoIcons.square_grid_3x2,
+                                VaultViewMode.grid3 =>
+                                  CupertinoIcons.list_bullet,
+                              },
                               size: 22,
                               color: AppColors.primary,
                             ),
@@ -373,11 +379,11 @@ class _VaultPageState extends State<VaultPage> {
                               ),
                               sliver: SliverGrid(
                                 gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 10,
-                                  crossAxisSpacing: 10,
-                                  // Square tiles · 2 per row
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: gridCount,
+                                  mainAxisSpacing: gridCount == 3 ? 8 : 10,
+                                  crossAxisSpacing: gridCount == 3 ? 8 : 10,
+                                  // Square tiles · 2 or 3 per row
                                   childAspectRatio: 1,
                                 ),
                                 delegate: SliverChildBuilderDelegate(

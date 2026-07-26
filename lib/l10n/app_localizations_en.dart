@@ -212,6 +212,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewList => 'List';
 
   @override
+  String get viewGrid2 => '2';
+
+  @override
+  String get viewGrid3 => '3';
+
+  @override
+  String get viewGrid2Label => 'Grid · 2';
+
+  @override
+  String get viewGrid3Label => 'Grid · 3';
+
+  @override
   String get settingsSecurity => 'Security';
 
   @override

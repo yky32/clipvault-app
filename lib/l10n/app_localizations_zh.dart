@@ -210,6 +210,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewList => '列表';
 
   @override
+  String get viewGrid2 => '2';
+
+  @override
+  String get viewGrid3 => '3';
+
+  @override
+  String get viewGrid2Label => '網格 · 2';
+
+  @override
+  String get viewGrid3Label => '網格 · 3';
+
+  @override
   String get settingsSecurity => '安全性';
 
   @override

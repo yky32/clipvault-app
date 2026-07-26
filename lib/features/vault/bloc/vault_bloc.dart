@@ -69,9 +69,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     VaultViewModeToggled event,
     Emitter<VaultState> emit,
   ) async {
-    final next = state.viewMode == VaultViewMode.list
-        ? VaultViewMode.grid
-        : VaultViewMode.list;
+    final next = state.viewMode.next; // list → 2-col → 3-col → list
     await SettingsService.instance.setDefaultViewMode(next);
     emit(state.copyWith(viewMode: next));
   }

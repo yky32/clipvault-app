@@ -241,17 +241,24 @@ class _SettingsPageState extends State<SettingsPage> {
                         groupValue: _viewMode,
                         children: {
                           VaultViewMode.list: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
                               l10n.viewList,
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ),
-                          VaultViewMode.grid: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          VaultViewMode.grid2: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
-                              l10n.viewGrid,
-                              style: const TextStyle(fontSize: 13),
+                              l10n.viewGrid2Label,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          VaultViewMode.grid3: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              l10n.viewGrid3Label,
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ),
                         },

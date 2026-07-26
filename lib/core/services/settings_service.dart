@@ -1,6 +1,24 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum VaultViewMode { list, grid }
+enum VaultViewMode {
+  list,
+  grid2,
+  grid3;
+
+  bool get isGrid => this == grid2 || this == grid3;
+
+  int get gridCrossAxisCount => switch (this) {
+        list => 1,
+        grid2 => 2,
+        grid3 => 3,
+      };
+
+  VaultViewMode get next => switch (this) {
+        list => grid2,
+        grid2 => grid3,
+        grid3 => list,
+      };
+}
 
 class SettingsService {
   SettingsService._();
@@ -36,12 +54,20 @@ class SettingsService {
 
   VaultViewMode get defaultViewMode {
     final raw = _prefs.getString(_viewModeKey);
-    return raw == 'grid' ? VaultViewMode.grid : VaultViewMode.list;
+    return switch (raw) {
+      'grid' || 'grid2' => VaultViewMode.grid2, // migrate legacy `grid`
+      'grid3' => VaultViewMode.grid3,
+      _ => VaultViewMode.list,
+    };
   }
 
   Future<void> setDefaultViewMode(VaultViewMode mode) => _prefs.setString(
         _viewModeKey,
-        mode == VaultViewMode.grid ? 'grid' : 'list',
+        switch (mode) {
+          VaultViewMode.list => 'list',
+          VaultViewMode.grid2 => 'grid2',
+          VaultViewMode.grid3 => 'grid3',
+        },
       );
 
   /// 0 = never. Common options: 0, 15, 30, 60.
