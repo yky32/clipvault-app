@@ -5,7 +5,7 @@ FASTLANE_DIR = File.dirname(__FILE__)
 IOS_DIR = File.expand_path("..", FASTLANE_DIR)
 PROJECT_ROOT = File.expand_path("..", IOS_DIR)
 
-APP_IDENTIFIER = "com.yky.clipval"
+APP_IDENTIFIER = "com.clipval"
 APP_NAME = "ClipVal"
 TEAM_ID = ENV["FASTLANE_TEAM_ID"] || "3G34999H3A"
 APPLE_ID = ENV["FASTLANE_USER"] || "wayneyu.dev@gmail.com"

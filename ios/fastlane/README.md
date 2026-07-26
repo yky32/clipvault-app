@@ -35,7 +35,7 @@ cd ios/fastlane
 ### 1. Apple Developer
 
 - Team ID in Xcode / Fastfile: **`3G34999H3A`**
-- Bundle ID: **`com.yky.clipval`**
+- Bundle ID: **`com.clipval`**
 - Display name: **ClipVal**
 
 Ensure the App ID exists (or run `create_app`):

@@ -1,4 +1,4 @@
-package com.yky.clipval
+package com.clipval
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
