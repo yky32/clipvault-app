@@ -1,4 +1,4 @@
-/// Built-in categories aligned with clipVauLt’s one purpose:
+/// Built-in categories aligned with clipVAuLt’s one purpose:
 /// store frequently copied values (PRD §2 / §5).
 abstract final class DefaultCategories {
   /// Stable system keys used for seeding + l10n lookup.

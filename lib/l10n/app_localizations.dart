@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'clipVauLt'**
+  /// **'clipVAuLt'**
   String get appName;
 
   /// No description provided for @appTagline.
@@ -731,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @unlockTitle.
   ///
   /// In en, this message translates to:
-  /// **'clipVauLt'**
+  /// **'clipVAuLt'**
   String get unlockTitle;
 
   /// No description provided for @unlockSubtitle.

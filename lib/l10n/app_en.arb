@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "clipVauLt",
+  "appName": "clipVAuLt",
   "appTagline": "Store once. Tap once. Paste anywhere.",
   "vaultTitle": "Vault",
   "settingsTitle": "Settings",
@@ -135,7 +135,7 @@
   "skip": "Skip",
   "enableBiometrics": "Enable app lock",
   "notNow": "Not now",
-  "unlockTitle": "clipVauLt",
+  "unlockTitle": "clipVAuLt",
   "unlockSubtitle": "Your vault is locked",
   "unlockButton": "Unlock",
   "unlockHint": "Face ID · Touch ID · Device passcode",

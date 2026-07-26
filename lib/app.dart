@@ -34,7 +34,7 @@ class ClipVaultApp extends StatelessWidget {
             final tokens = paletteController.tokens;
 
             return MaterialApp.router(
-              title: 'clipVauLt',
+              title: 'clipVAuLt',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light(tokens),
               darkTheme: AppTheme.dark(tokens),

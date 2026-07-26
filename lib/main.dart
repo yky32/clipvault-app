@@ -81,7 +81,7 @@ class _BootstrapErrorApp extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'clipVauLt failed to start',
+                  'clipVAuLt failed to start',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),

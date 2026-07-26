@@ -100,7 +100,7 @@ class BrandPaletteTokens {
   Color get borderDark => separatorDark;
 }
 
-/// All selectable Higgs palettes for clipVauLt.
+/// All selectable Higgs palettes for clipVAuLt.
 abstract final class BrandPalettes {
   static const BrandPaletteId defaultId = BrandPaletteId.warmGrey;
 

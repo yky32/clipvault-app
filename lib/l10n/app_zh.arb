@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appName": "clipVauLt",
+  "appName": "clipVAuLt",
   "appTagline": "儲存一次。輕觸一次。隨處貼上。",
   "vaultTitle": "保險庫",
   "settingsTitle": "設定",
@@ -105,7 +105,7 @@
   "skip": "略過",
   "enableBiometrics": "啟用應用程式鎖定",
   "notNow": "稍後",
-  "unlockTitle": "clipVauLt",
+  "unlockTitle": "clipVAuLt",
   "unlockSubtitle": "保險庫已鎖定",
   "unlockButton": "解鎖",
   "unlockHint": "Face ID · Touch ID · 裝置密碼",
