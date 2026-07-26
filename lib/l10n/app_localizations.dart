@@ -731,13 +731,13 @@ abstract class AppLocalizations {
   /// No description provided for @unlockTitle.
   ///
   /// In en, this message translates to:
-  /// **'Unlock clipVauLt'**
+  /// **'clipVauLt'**
   String get unlockTitle;
 
   /// No description provided for @unlockSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Authenticate to open your vault'**
+  /// **'Your vault is locked'**
   String get unlockSubtitle;
 
   /// No description provided for @unlockButton.
@@ -746,10 +746,28 @@ abstract class AppLocalizations {
   /// **'Unlock'**
   String get unlockButton;
 
+  /// No description provided for @unlockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Face ID · Touch ID · Device passcode'**
+  String get unlockHint;
+
+  /// No description provided for @unlockAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock your vault'**
+  String get unlockAuthReason;
+
+  /// No description provided for @enableLockAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm to turn on app lock'**
+  String get enableLockAuthReason;
+
   /// No description provided for @unlockFailed.
   ///
   /// In en, this message translates to:
-  /// **'Authentication failed. Try again.'**
+  /// **'Couldn’t unlock. Try again.'**
   String get unlockFailed;
 
   /// No description provided for @noCategory.

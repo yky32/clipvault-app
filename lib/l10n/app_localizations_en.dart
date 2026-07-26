@@ -342,16 +342,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notNow => 'Not now';
 
   @override
-  String get unlockTitle => 'Unlock clipVauLt';
+  String get unlockTitle => 'clipVauLt';
 
   @override
-  String get unlockSubtitle => 'Authenticate to open your vault';
+  String get unlockSubtitle => 'Your vault is locked';
 
   @override
   String get unlockButton => 'Unlock';
 
   @override
-  String get unlockFailed => 'Authentication failed. Try again.';
+  String get unlockHint => 'Face ID · Touch ID · Device passcode';
+
+  @override
+  String get unlockAuthReason => 'Unlock your vault';
+
+  @override
+  String get enableLockAuthReason => 'Confirm to turn on app lock';
+
+  @override
+  String get unlockFailed => 'Couldn’t unlock. Try again.';
 
   @override
   String get noCategory => 'None';

@@ -39,10 +39,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _toggleBiometric(bool value) async {
+    final l10n = AppLocalizations.of(context);
     if (value) {
       final can = await AppBootstrap.authService.canCheckBiometrics();
+      if (!mounted) return;
       if (!can) {
-        if (!mounted) return;
         await showCupertinoDialog<void>(
           context: context,
           builder: (ctx) => CupertinoAlertDialog(
@@ -62,11 +63,13 @@ class _SettingsPageState extends State<SettingsPage> {
         return;
       }
       final ok = await AppBootstrap.authService.authenticate(
-        reason: 'Enable app lock for clipVauLt',
+        // Short system prompt copy — keep it clean (OS owns the sheet UI)
+        reason: l10n.enableLockAuthReason,
       );
-      if (!ok) return;
+      if (!ok || !mounted) return;
     }
     await SettingsService.instance.setBiometricLockEnabled(value);
+    if (!mounted) return;
     HapticFeedback.selectionClick();
     setState(() => _biometric = value);
   }

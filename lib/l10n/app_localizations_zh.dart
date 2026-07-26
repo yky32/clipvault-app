@@ -336,16 +336,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notNow => '稍後';
 
   @override
-  String get unlockTitle => '解鎖 clipVauLt';
+  String get unlockTitle => 'clipVauLt';
 
   @override
-  String get unlockSubtitle => '驗證身分以開啟保險庫';
+  String get unlockSubtitle => '保險庫已鎖定';
 
   @override
   String get unlockButton => '解鎖';
 
   @override
-  String get unlockFailed => '驗證失敗，請再試一次。';
+  String get unlockHint => 'Face ID · Touch ID · 裝置密碼';
+
+  @override
+  String get unlockAuthReason => '解鎖你的保險庫';
+
+  @override
+  String get enableLockAuthReason => '確認以開啟應用程式鎖定';
+
+  @override
+  String get unlockFailed => '無法解鎖，請再試一次。';
 
   @override
   String get noCategory => '無';
