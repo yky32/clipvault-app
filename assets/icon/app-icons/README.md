@@ -33,7 +33,13 @@ Generator (same as Triftly): https://appiconmaker.co/
 
 4. Generate full set at [appiconmaker.co](https://appiconmaker.co/) → export iOS + Android.
 5. Put files into `ios/` and `android/` using the **exact names** below.
-6. Tell the agent / run install: copy into `ios/Runner/Assets.xcassets/AppIcon.appiconset/` and Android `mipmap-*`.
+6. Install into the app (regenerates iOS AppIcon + Android mipmaps):
+
+   ```bash
+   # update source first
+   cp your-1024.png assets/icon/app-icons/source/app-icon-1024.png
+   dart run flutter_launcher_icons
+   ```
 
 ---
 
