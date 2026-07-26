@@ -237,53 +237,43 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: CupertinoIcons.rectangle_grid_2x2_fill,
                         color: AppColors.iconView,
                       ),
-                      trailing: CupertinoSlidingSegmentedControl<VaultViewMode>(
-                        groupValue: _viewMode,
-                        children: {
-                          VaultViewMode.list: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              l10n.viewList,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          VaultViewMode.grid2: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              l10n.viewGrid2Label,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          VaultViewMode.grid3: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              l10n.viewGrid3Label,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        },
-                        onValueChanged: (mode) async {
-                          if (mode == null) return;
-                          HapticFeedback.selectionClick();
-                          await SettingsService.instance
-                              .setDefaultViewMode(mode);
-                          setState(() => _viewMode = mode);
-                        },
+                      // Full-width under title so 3 segments stay aligned
+                      below: SizedBox(
+                        width: double.infinity,
+                        child: CupertinoSlidingSegmentedControl<VaultViewMode>(
+                          groupValue: _viewMode,
+                          children: {
+                            VaultViewMode.list: _SegmentLabel(l10n.viewList),
+                            VaultViewMode.grid2:
+                                _SegmentLabel(l10n.viewGrid2Label),
+                            VaultViewMode.grid3:
+                                _SegmentLabel(l10n.viewGrid3Label),
+                          },
+                          onValueChanged: (mode) async {
+                            if (mode == null) return;
+                            HapticFeedback.selectionClick();
+                            await SettingsService.instance
+                                .setDefaultViewMode(mode);
+                            setState(() => _viewMode = mode);
+                          },
+                        ),
                       ),
                     ),
-                    // Single row · 4-way palette switch (like Default view)
                     IosGroupTile(
                       title: l10n.colorPalette,
                       leading: _LeadingIcon(
                         icon: CupertinoIcons.paintbrush_fill,
                         color: AppColors.primary,
                       ),
-                      trailing: _PaletteSegmentControl(
-                        selected: paletteController.id,
-                        onChanged: (id) async {
-                          HapticFeedback.selectionClick();
-                          await paletteController.setPalette(id);
-                        },
+                      below: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _PaletteSegmentControl(
+                          selected: paletteController.id,
+                          onChanged: (id) async {
+                            HapticFeedback.selectionClick();
+                            await paletteController.setPalette(id);
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -398,7 +388,30 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-/// 4-button palette switch — same row pattern as List / Grid.
+class _SegmentLabel extends StatelessWidget {
+  const _SegmentLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontFamily: 'Satoshi',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// 4-button palette switch — full-width under the title row.
 class _PaletteSegmentControl extends StatelessWidget {
   const _PaletteSegmentControl({
     required this.selected,
@@ -423,20 +436,22 @@ class _PaletteSegmentControl extends StatelessWidget {
         : const Color(0xFFE8E5DF);
 
     return Container(
-      padding: const EdgeInsets.all(2),
+      width: double.infinity,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: track,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           for (final id in BrandPalettes.all)
-            _PaletteSegmentButton(
-              id: id,
-              label: _labels[id]!,
-              selected: selected == id,
-              onTap: () => onChanged(id),
+            Expanded(
+              child: _PaletteSegmentButton(
+                id: id,
+                label: _labels[id]!,
+                selected: selected == id,
+                onTap: () => onChanged(id),
+              ),
             ),
         ],
       ),
@@ -468,16 +483,16 @@ class _PaletteSegmentButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOut,
-        width: 40,
-        height: 30,
-        margin: const EdgeInsets.symmetric(horizontal: 1),
+        height: 34,
+        margin: const EdgeInsets.symmetric(horizontal: 1.5),
         decoration: BoxDecoration(
-          color: selected ? AppColors.cardBackground(context) : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
+          color:
+              selected ? AppColors.cardBackground(context) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -488,19 +503,20 @@ class _PaletteSegmentButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 16,
+              width: 18,
               height: 6,
               decoration: BoxDecoration(
                 color: accent,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               label,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Satoshi',
-                fontSize: 9,
+                fontSize: 11,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 height: 1,
                 color: selected

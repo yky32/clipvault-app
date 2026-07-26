@@ -94,6 +94,7 @@ class IosGroupTile extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.trailing,
+    this.below,
     this.onTap,
     this.titleColor,
     super.key,
@@ -103,6 +104,9 @@ class IosGroupTile extends StatelessWidget {
   final String? subtitle;
   final Widget? leading;
   final Widget? trailing;
+
+  /// Full-width control under the title row (segmented controls, etc.).
+  final Widget? below;
   final VoidCallback? onTap;
   final Color? titleColor;
 
@@ -110,47 +114,63 @@ class IosGroupTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final titleRow = Row(
+      children: [
+        if (leading != null) ...[
+          leading!,
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: titleColor,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.secondaryLabel(context),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: 8),
+          trailing!,
+        ],
+      ],
+    );
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              if (leading != null) ...[
-                leading!,
-                const SizedBox(width: 12),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            below != null ? 14 : 12,
+          ),
+          child: below == null
+              ? titleRow
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: titleColor,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryLabel(context),
-                        ),
-                      ),
-                    ],
+                    titleRow,
+                    const SizedBox(height: 12),
+                    below!,
                   ],
                 ),
-              ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ],
-            ],
-          ),
         ),
       ),
     );
