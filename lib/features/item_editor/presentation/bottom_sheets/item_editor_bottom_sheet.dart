@@ -157,8 +157,8 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     final l10n = AppLocalizations.of(context);
 
     return SheetScaffold.swipeForm(
+      // Single centered title — no tagline (avoids left-heavy header under grabber)
       title: widget.isNew ? l10n.addItem : l10n.editItem,
-      subtitle: widget.isNew ? l10n.appTagline : null,
       swipeLabel: l10n.slideToSave,
       swipeEnabled: _canSave,
       isSubmitting: _saving,

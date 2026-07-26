@@ -19,6 +19,8 @@ class SheetScaffold extends StatelessWidget {
     this.showCloseButton = false,
     this.showDragHandle = true,
     this.compactBody = true,
+    /// iOS form sheets look best with a centered title under the grabber.
+    this.centerTitle = true,
     super.key,
   });
 
@@ -34,12 +36,14 @@ class SheetScaffold extends StatelessWidget {
     SwipeToConfirmStyle swipeStyle = SwipeToConfirmStyle.primary,
     bool compact = true,
     bool isSubmitting = false,
+    bool centerTitle = true,
   }) {
     return SheetScaffold(
       title: title,
       subtitle: subtitle,
       showCloseButton: false,
       compactBody: compact,
+      centerTitle: centerTitle,
       footer: SwipeToConfirm(
         key: swipeKey,
         label: swipeLabel,
@@ -65,6 +69,7 @@ class SheetScaffold extends StatelessWidget {
   final bool showCloseButton;
   final bool showDragHandle;
   final bool compactBody;
+  final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +83,7 @@ class SheetScaffold extends StatelessWidget {
 
     final bodyPadding = EdgeInsets.fromLTRB(
       AppSpacing.lg,
-      title != null && title!.isNotEmpty ? AppSpacing.sm : AppSpacing.md,
+      title != null && title!.isNotEmpty ? AppSpacing.md : AppSpacing.md,
       AppSpacing.lg,
       hugContent ? AppSpacing.sm : AppSpacing.lg,
     );
@@ -128,27 +133,35 @@ class SheetScaffold extends StatelessWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
-                showDragHandle ? AppSpacing.sm : AppSpacing.md,
+                showDragHandle ? 10 : AppSpacing.md,
                 AppSpacing.lg,
-                0,
+                AppSpacing.sm,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: centerTitle
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
                 children: [
                   Text(
                     title!,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    textAlign: centerTitle ? TextAlign.center : TextAlign.start,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
+                          fontSize: 17,
                           letterSpacing: -0.4,
+                          height: 1.2,
                         ),
                   ),
-                  if (subtitle != null) ...[
+                  if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       subtitle!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      textAlign:
+                          centerTitle ? TextAlign.center : TextAlign.start,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.secondaryLabel(context),
-                            height: 1.35,
+                            height: 1.3,
+                            fontSize: 13,
                           ),
                     ),
                   ],
@@ -170,8 +183,12 @@ class SheetScaffold extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final headerH = (showDragHandle ? 20.0 : 0) +
-                (title != null && title!.isNotEmpty ? 56.0 : 0);
+            final hasSubtitle =
+                subtitle != null && subtitle!.trim().isNotEmpty;
+            final headerH = (showDragHandle ? 18.0 : 0) +
+                (title != null && title!.isNotEmpty
+                    ? (hasSubtitle ? 52.0 : 36.0)
+                    : 0);
             final footerH = hasFooter
                 ? 90.0 + safePadding.bottom
                 : (hugContent ? safePadding.bottom : 0);
