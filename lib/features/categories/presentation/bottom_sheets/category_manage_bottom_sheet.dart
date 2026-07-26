@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/category.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/clipvault_bottom_sheet.dart';
+import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'category_editor_bottom_sheet.dart';
 
 /// Manage custom categories; product defaults are read-only.
-/// Reused from Settings and from the category picker.
 class CategoryManageBottomSheet extends StatefulWidget {
   const CategoryManageBottomSheet({super.key});
 
@@ -95,152 +96,170 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return SheetScaffold(
       title: l10n.categoryManageTitle,
       subtitle: l10n.categoryManageSubtitle,
       showCloseButton: false,
       compactBody: false,
-      footer: FilledButton(
+      footer: FilledButton.icon(
         onPressed: _add,
-        child: Text(l10n.categoryAdd),
+        icon: const Icon(CupertinoIcons.add, size: 18),
+        label: Text(l10n.categoryAdd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.categoryDefaultsSection.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppColors.secondaryLabel(context),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ..._system.map(
-            (c) => _ManageRow(
-              label: categoryDisplayName(c, l10n),
-              badge: l10n.categoryDefaultBadge,
-              onTap: null,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            l10n.categoryCustomSection.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppColors.secondaryLabel(context),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (_custom.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                l10n.categoryEmptyCustom,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.secondaryLabel(context),
+          IosGroup(
+            inset: false,
+            header: l10n.categoryDefaultsSection,
+            children: [
+              for (final c in _system)
+                _CategoryTile(
+                  icon: categoryIcon(c),
+                  label: categoryDisplayName(c, l10n),
+                  trailing: _DefaultBadge(l10n.categoryDefaultBadge),
                 ),
-              ),
-            )
-          else
-            ..._custom.map(
-              (c) => _ManageRow(
-                label: categoryDisplayName(c, l10n),
-                onTap: () => _edit(c),
-                onDelete: () => _delete(c),
-              ),
-            ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          IosGroup(
+            inset: false,
+            header: l10n.categoryCustomSection,
+            children: [
+              if (_custom.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.tag,
+                        size: 20,
+                        color: AppColors.tertiaryLabel(context),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.categoryEmptyCustom,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppColors.secondaryLabel(context),
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                for (final c in _custom)
+                  _CategoryTile(
+                    icon: categoryIcon(c),
+                    label: categoryDisplayName(c, l10n),
+                    onTap: () => _edit(c),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          onPressed: () => _delete(c),
+                          child: Icon(
+                            CupertinoIcons.trash,
+                            size: 18,
+                            color: AppColors.error.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        Icon(
+                          CupertinoIcons.chevron_right,
+                          size: 16,
+                          color: AppColors.tertiaryLabel(context),
+                        ),
+                      ],
+                    ),
+                  ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _ManageRow extends StatelessWidget {
-  const _ManageRow({
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.icon,
     required this.label,
-    this.badge,
+    this.trailing,
     this.onTap,
-    this.onDelete,
   });
 
+  final IconData icon;
   final String label;
-  final String? badge;
+  final Widget? trailing;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final editable = onTap != null;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Material(
-        color: AppColors.cardBackground(context),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          label,
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                      ),
-                      if (badge != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            badge!,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(icon, size: 16, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                if (editable) ...[
-                  if (onDelete != null)
-                    CupertinoButton(
-                      padding: const EdgeInsets.only(right: 4),
-                      minimumSize: Size.zero,
-                      onPressed: onDelete,
-                      child: Icon(
-                        CupertinoIcons.delete,
-                        size: 18,
-                        color: AppColors.error,
-                      ),
-                    ),
-                  Icon(
-                    CupertinoIcons.pencil,
-                    size: 18,
-                    color: AppColors.secondaryLabel(context),
-                  ),
-                ],
-              ],
-            ),
+              ),
+              if (trailing != null) trailing!,
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DefaultBadge extends StatelessWidget {
+  const _DefaultBadge(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              letterSpacing: -0.1,
+            ),
       ),
     );
   }
