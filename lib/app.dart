@@ -86,7 +86,7 @@ class _ClipVaultAppState extends State<ClipVaultApp>
             final tokens = widget.paletteController.tokens;
 
             return MaterialApp.router(
-              title: 'clipVAuLt',
+              title: 'ClipVal',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light(tokens),
               darkTheme: AppTheme.dark(tokens),

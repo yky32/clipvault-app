@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-shot TestFlight upload for clipVAuLt (wraps Fastlane like Depozio/Triftly).
+# One-shot TestFlight upload for ClipVal (wraps Fastlane like Depozio/Triftly).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

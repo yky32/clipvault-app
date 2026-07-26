@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Fastlane interactive menu — clipVAuLt (same pattern as Depozio / Triftly)
+# Fastlane interactive menu — ClipVal (same pattern as Depozio / Triftly)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -30,7 +30,7 @@ counter=1
 clear
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${CYAN}║${NC}          ${BOLD}Fastlane Menu — clipVAuLt${NC}                  ${BOLD}${CYAN}║${NC}"
+echo -e "${BOLD}${CYAN}║${NC}          ${BOLD}Fastlane Menu — ClipVal${NC}                  ${BOLD}${CYAN}║${NC}"
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

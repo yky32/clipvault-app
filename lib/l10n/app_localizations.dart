@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'clipVAuLt'**
+  /// **'ClipVal'**
   String get appName;
 
   /// No description provided for @appTagline.
@@ -737,7 +737,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to clipVAuLt'**
+  /// **'Welcome to ClipVal'**
   String get welcomeTitle;
 
   /// No description provided for @welcomeTitleUpgrade.
@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeWhyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Why clipVAuLt'**
+  /// **'Why ClipVal'**
   String get welcomeWhyTitle;
 
   /// No description provided for @welcomeWhyBody.
@@ -803,7 +803,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomePromoBody.
   ///
   /// In en, this message translates to:
-  /// **'clipVAuLt has one job: store any value and copy it with a single tap. Everything else stays out of the way.'**
+  /// **'ClipVal has one job: store any value and copy it with a single tap. Everything else stays out of the way.'**
   String get welcomePromoBody;
 
   /// No description provided for @welcomeCta.
@@ -845,7 +845,7 @@ abstract class AppLocalizations {
   /// No description provided for @unlockTitle.
   ///
   /// In en, this message translates to:
-  /// **'clipVAuLt'**
+  /// **'ClipVal'**
   String get unlockTitle;
 
   /// No description provided for @unlockSubtitle.

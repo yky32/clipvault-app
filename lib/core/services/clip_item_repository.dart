@@ -79,7 +79,7 @@ class ClipItemRepository {
 
   Future<String> exportPlainText() async {
     final items = getAll();
-    final buffer = StringBuffer('clipVAuLt export\n');
+    final buffer = StringBuffer('ClipVal export\n');
     buffer.writeln('Generated: ${DateTime.now().toIso8601String()}\n');
     for (final item in items) {
       buffer.writeln('---');

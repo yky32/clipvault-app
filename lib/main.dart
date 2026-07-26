@@ -16,7 +16,7 @@ Future<void> main() async {
   FlutterError.onError = (details) {
     developer.log(
       details.exceptionAsString(),
-      name: 'clipvault.flutter',
+      name: 'clipval.flutter',
       error: details.exception,
       stackTrace: details.stack,
     );
@@ -26,7 +26,7 @@ Future<void> main() async {
   PlatformDispatcher.instance.onError = (error, stack) {
     developer.log(
       '$error',
-      name: 'clipvault.platform',
+      name: 'clipval.platform',
       error: error,
       stackTrace: stack,
     );
@@ -48,7 +48,7 @@ Future<void> main() async {
     bootstrapStack = stack;
     developer.log(
       'Startup failed',
-      name: 'clipvault.bootstrap',
+      name: 'clipval.bootstrap',
       error: error,
       stackTrace: stack,
     );
@@ -81,7 +81,7 @@ class _BootstrapErrorApp extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'clipVAuLt failed to start',
+                  'ClipVal failed to start',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),

@@ -1,4 +1,4 @@
-# clipVAuLt — Fastlane (TestFlight)
+# ClipVal — Fastlane (TestFlight)
 
 Automated iOS build + TestFlight upload, aligned with **Depozio** / **Triftly**.
 
@@ -34,9 +34,9 @@ cd ios/fastlane
 
 ### 1. Apple Developer
 
-- Team ID in Xcode / Fastfile: **`59S8HHXTXU`**
-- Bundle ID: **`com.yky.clipvault`**
-- Display name: **clipVAuLt**
+- Team ID in Xcode / Fastfile: **`3G34999H3A`**
+- Bundle ID: **`com.yky.clipval`**
+- Display name: **ClipVal**
 
 Ensure the App ID exists (or run `create_app`):
 
@@ -52,7 +52,7 @@ Open Xcode once:
 open ios/Runner.xcworkspace
 ```
 
-Runner → **Signing & Capabilities** → Automatic → team **59S8HHXTXU**.
+Runner → **Signing & Capabilities** → Automatic → team **3G34999H3A**.
 
 Or CLI:
 
@@ -116,12 +116,12 @@ That installs Gemfile gems under rbenv 2.6.10 and runs `pod install`.
 | Variable | Default |
 |----------|---------|
 | `FASTLANE_USER` | `wayneyu.dev@gmail.com` |
-| `FASTLANE_TEAM_ID` | `59S8HHXTXU` |
+| `FASTLANE_TEAM_ID` | `3G34999H3A` |
 | `FASTLANE_ITC_TEAM_ID` | (optional, multi-team ASC) |
 | `APP_STORE_CONNECT_API_KEY_*` | (optional API key auth) |
 
 ## Notes
 
-- clipVAuLt has **no** Flutter `--dart-define` secrets (unlike Triftly). Local-only vault.
+- ClipVal has **no** Flutter `--dart-define` secrets (unlike Triftly). Local-only vault.
 - Android release still uses debug signing in Gradle until you add a Play keystore.
 - After first TestFlight upload, complete App Store Connect listing (privacy, screenshots) before public release — not required for internal TestFlight.

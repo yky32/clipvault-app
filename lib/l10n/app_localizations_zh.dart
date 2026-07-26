@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appName => 'clipVAuLt';
+  String get appName => 'ClipVal';
 
   @override
   String get appTagline => '儲存一次。輕觸一次。隨處貼上。';
@@ -339,7 +339,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get getStarted => '開始使用';
 
   @override
-  String get welcomeTitle => '歡迎使用 clipVAuLt';
+  String get welcomeTitle => '歡迎使用 ClipVal';
 
   @override
   String get welcomeTitleUpgrade => '更新內容';
@@ -353,7 +353,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get welcomeWhyTitle => '為什麼用 clipVAuLt';
+  String get welcomeWhyTitle => '為什麼用 ClipVal';
 
   @override
   String get welcomeWhyBody =>
@@ -377,7 +377,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get welcomePromoTitle => '你的一鍵保險庫';
 
   @override
-  String get welcomePromoBody => 'clipVAuLt 只做一件事：儲存任何值，輕觸一次即可複製。其餘一概從簡。';
+  String get welcomePromoBody => 'ClipVal 只做一件事：儲存任何值，輕觸一次即可複製。其餘一概從簡。';
 
   @override
   String get welcomeCta => '開始使用';
@@ -398,7 +398,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notNow => '稍後';
 
   @override
-  String get unlockTitle => 'clipVAuLt';
+  String get unlockTitle => 'ClipVal';
 
   @override
   String get unlockSubtitle => '保險庫已鎖定';

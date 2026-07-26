@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'clipVAuLt';
+  String get appName => 'ClipVal';
 
   @override
   String get appTagline => 'Store once. Tap once. Paste anywhere.';
@@ -346,7 +346,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
-  String get welcomeTitle => 'Welcome to clipVAuLt';
+  String get welcomeTitle => 'Welcome to ClipVal';
 
   @override
   String get welcomeTitleUpgrade => 'What\'s new';
@@ -360,7 +360,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get welcomeWhyTitle => 'Why clipVAuLt';
+  String get welcomeWhyTitle => 'Why ClipVal';
 
   @override
   String get welcomeWhyBody =>
@@ -385,7 +385,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomePromoBody =>
-      'clipVAuLt has one job: store any value and copy it with a single tap. Everything else stays out of the way.';
+      'ClipVal has one job: store any value and copy it with a single tap. Everything else stays out of the way.';
 
   @override
   String get welcomeCta => 'Get started';
@@ -406,7 +406,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notNow => 'Not now';
 
   @override
-  String get unlockTitle => 'clipVAuLt';
+  String get unlockTitle => 'ClipVal';
 
   @override
   String get unlockSubtitle => 'Your vault is locked';
