@@ -362,7 +362,7 @@ class _VaultPageState extends State<VaultPage> {
                         if (isEmpty)
                           SliverFillRemaining(
                             hasScrollBody: false,
-                            child: VaultEmptyState(onAdd: () => _openAdd()),
+                            child: const VaultEmptyState(),
                           )
                         else if (filtered.isEmpty)
                           SliverFillRemaining(

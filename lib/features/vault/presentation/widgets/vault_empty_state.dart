@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Truly empty vault (no items at all).
+/// Truly empty vault (no items at all). Header + still adds items.
 class VaultEmptyState extends StatelessWidget {
-  const VaultEmptyState({required this.onAdd, super.key});
-
-  final VoidCallback onAdd;
+  const VaultEmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,15 +49,6 @@ class VaultEmptyState extends StatelessWidget {
                 color: AppColors.secondaryLabel(context),
                 height: 1.4,
               ),
-            ),
-            const SizedBox(height: 28),
-            FilledButton(
-              onPressed: onAdd,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(200, 48),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-              ),
-              child: Text(l10n.addFirstItem),
             ),
           ],
         ),
