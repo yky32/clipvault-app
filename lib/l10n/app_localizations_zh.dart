@@ -39,6 +39,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editItem => '編輯項目';
 
   @override
+  String get tapToCopy => '輕觸即可複製';
+
+  @override
+  String itemCount(int count) {
+    return '$count 個項目';
+  }
+
+  @override
+  String get itemCountOne => '1 個項目';
+
+  @override
+  String get noMatchesTitle => '沒有結果';
+
+  @override
+  String noMatchesSearch(String query) {
+    return '找不到「$query」。';
+  }
+
+  @override
+  String noMatchesCategory(String category) {
+    return '「$category」還沒有項目。';
+  }
+
+  @override
+  String get clearSearch => '清除搜尋';
+
+  @override
+  String get showAllItems => '顯示全部';
+
+  @override
+  String get addToCategory => '在此分類新增';
+
+  @override
+  String get hintCopy => '提示：輕觸項目即可複製內容';
+
+  @override
+  String get unpin => '取消置頂';
+
+  @override
   String get titleLabel => '標題';
 
   @override

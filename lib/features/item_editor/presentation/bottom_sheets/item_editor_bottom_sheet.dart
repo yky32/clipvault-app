@@ -15,9 +15,16 @@ import '../../../vault/bloc/vault_bloc.dart';
 
 /// Add / edit vault item — presented as a bottom sheet (Triftly input pattern).
 class ItemEditorBottomSheet extends StatefulWidget {
-  const ItemEditorBottomSheet({this.itemId, super.key});
+  const ItemEditorBottomSheet({
+    this.itemId,
+    this.initialCategoryName,
+    super.key,
+  });
 
   final String? itemId;
+
+  /// Pre-fills category when adding from a category filter empty state.
+  final String? initialCategoryName;
 
   bool get isNew => itemId == null || itemId == 'new';
 
@@ -26,13 +33,17 @@ class ItemEditorBottomSheet extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     String? itemId,
+    String? initialCategoryName,
   }) {
     final vaultBloc = context.read<VaultBloc>();
     return ClipVaultBottomSheet.show<void>(
       context,
       child: BlocProvider.value(
         value: vaultBloc,
-        child: ItemEditorBottomSheet(itemId: itemId),
+        child: ItemEditorBottomSheet(
+          itemId: itemId,
+          initialCategoryName: initialCategoryName,
+        ),
       ),
     );
   }
@@ -66,6 +77,8 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           if (cat != null) _categoryController.text = cat.name;
         }
       }
+    } else if (widget.initialCategoryName != null) {
+      _categoryController.text = widget.initialCategoryName!;
     }
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);

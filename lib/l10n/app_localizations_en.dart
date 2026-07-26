@@ -40,6 +40,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editItem => 'Edit item';
 
   @override
+  String get tapToCopy => 'Tap to copy';
+
+  @override
+  String itemCount(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get itemCountOne => '1 item';
+
+  @override
+  String get noMatchesTitle => 'No matches';
+
+  @override
+  String noMatchesSearch(String query) {
+    return 'Nothing matches “$query”.';
+  }
+
+  @override
+  String noMatchesCategory(String category) {
+    return 'No items in “$category” yet.';
+  }
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get showAllItems => 'Show all items';
+
+  @override
+  String get addToCategory => 'Add item here';
+
+  @override
+  String get hintCopy => 'Tip: tap any item to copy its value';
+
+  @override
+  String get unpin => 'Unpin';
+
+  @override
   String get titleLabel => 'Title';
 
   @override

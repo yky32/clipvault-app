@@ -10,6 +10,32 @@
   "addFirstItem": "Add your first item",
   "addItem": "Add item",
   "editItem": "Edit item",
+  "tapToCopy": "Tap to copy",
+  "itemCount": "{count} items",
+  "@itemCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "itemCountOne": "1 item",
+  "noMatchesTitle": "No matches",
+  "noMatchesSearch": "Nothing matches “{query}”.",
+  "@noMatchesSearch": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "noMatchesCategory": "No items in “{category}” yet.",
+  "@noMatchesCategory": {
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
+  "clearSearch": "Clear search",
+  "showAllItems": "Show all items",
+  "addToCategory": "Add item here",
+  "hintCopy": "Tip: tap any item to copy its value",
+  "unpin": "Unpin",
   "titleLabel": "Title",
   "titleHint": "e.g. Wi-Fi password",
   "valueLabel": "Value",

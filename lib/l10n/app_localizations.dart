@@ -158,6 +158,72 @@ abstract class AppLocalizations {
   /// **'Edit item'**
   String get editItem;
 
+  /// No description provided for @tapToCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to copy'**
+  String get tapToCopy;
+
+  /// No description provided for @itemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String itemCount(int count);
+
+  /// No description provided for @itemCountOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 item'**
+  String get itemCountOne;
+
+  /// No description provided for @noMatchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get noMatchesTitle;
+
+  /// No description provided for @noMatchesSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches “{query}”.'**
+  String noMatchesSearch(String query);
+
+  /// No description provided for @noMatchesCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No items in “{category}” yet.'**
+  String noMatchesCategory(String category);
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @showAllItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all items'**
+  String get showAllItems;
+
+  /// No description provided for @addToCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item here'**
+  String get addToCategory;
+
+  /// No description provided for @hintCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: tap any item to copy its value'**
+  String get hintCopy;
+
+  /// No description provided for @unpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get unpin;
+
   /// No description provided for @titleLabel.
   ///
   /// In en, this message translates to:

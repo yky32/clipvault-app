@@ -34,17 +34,24 @@ final class VaultState extends Equatable {
     return result;
   }
 
+  bool get hasActiveFilter =>
+      searchQuery.trim().isNotEmpty || selectedCategoryId != null;
+
   List<ClipItem> get pinnedItems =>
       filteredItems.where((i) => i.isPinned).toList();
 
   List<ClipItem> get unpinnedItems =>
       filteredItems.where((i) => !i.isPinned).toList();
 
+  /// Recently copied among *all* items (not filtered) for quick re-copy.
   List<ClipItem> get recentlyCopied {
     final withCopy = items.where((i) => i.lastCopiedAt != null).toList()
       ..sort((a, b) => b.lastCopiedAt!.compareTo(a.lastCopiedAt!));
     return withCopy.take(AppConstants.recentCopiedLimit).toList();
   }
+
+  int countInCategory(String categoryId) =>
+      items.where((i) => i.categoryId == categoryId).length;
 
   VaultState copyWith({
     List<ClipItem>? items,

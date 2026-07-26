@@ -6,6 +6,7 @@ import '../../../../core/models/clip_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/copied_hud.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class ClipItemCard extends StatelessWidget {
   const ClipItemCard({
@@ -62,6 +63,8 @@ class _ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final subtitle = categoryName ?? l10n.tapToCopy;
 
     return PressableScale(
       onTap: () {
@@ -101,27 +104,41 @@ class _ListRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
-                    categoryName ?? '••••••••',
+                    subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryLabel(context),
-                      letterSpacing: categoryName == null ? 1.2 : -0.08,
+                      color: categoryName != null
+                          ? AppColors.secondaryLabel(context)
+                          : AppColors.primary.withValues(alpha: 0.8),
+                      fontWeight: categoryName == null
+                          ? FontWeight.w500
+                          : FontWeight.w400,
+                      letterSpacing: -0.08,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              CupertinoIcons.doc_on_doc,
-              size: 18,
-              color: AppColors.tertiaryLabel(context),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                CupertinoIcons.doc_on_clipboard,
+                size: 16,
+                color: AppColors.primary,
+              ),
             ),
           ],
         ),
