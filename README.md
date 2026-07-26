@@ -54,6 +54,20 @@ ItemEditorBottomSheet.show(context, itemId: id); // edit
 ```
 
 
+## App icons
+
+Drop / generate icons under the Triftly-style folder:
+
+```
+assets/icon/app-icons/
+  source/     # master 1024 PNG
+  ios/        # Icon-App-* sizes
+  android/    # Icon-48 … Icon-512
+```
+
+See [assets/icon/app-icons/README.md](./assets/icon/app-icons/README.md).  
+Generator: https://appiconmaker.co/
+
 ## Run
 
 ```bash
