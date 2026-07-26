@@ -21,7 +21,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTitle => '設定';
 
   @override
-  String get searchHint => '搜尋項目…';
+  String get searchHint => '搜尋';
 
   @override
   String get emptyTitle => '保險庫是空的';

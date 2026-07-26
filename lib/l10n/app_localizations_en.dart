@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
-  String get searchHint => 'Search items…';
+  String get searchHint => 'Search';
 
   @override
   String get emptyTitle => 'Your vault is empty';

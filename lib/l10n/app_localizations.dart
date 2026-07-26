@@ -125,7 +125,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search items…'**
+  /// **'Search'**
   String get searchHint;
 
   /// No description provided for @emptyTitle.
