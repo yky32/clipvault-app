@@ -135,13 +135,13 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return SheetScaffold.form(
+    return SheetScaffold.swipeForm(
       title: widget.isNew ? l10n.addItem : l10n.editItem,
       subtitle: widget.isNew ? l10n.appTagline : null,
-      actionLabel: l10n.save,
-      actionEnabled: _canSave,
+      swipeLabel: l10n.slideToSave,
+      swipeEnabled: _canSave,
       isSubmitting: _saving,
-      onAction: _save,
+      onSwipeConfirmed: _save,
       compact: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,9 +212,6 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                 child: TextField(
                   controller: _categoryController,
                   textInputAction: TextInputAction.done,
-                  onSubmitted: (_) {
-                    if (_canSave) _save();
-                  },
                   style: Theme.of(context).textTheme.bodyLarge,
                   decoration: InputDecoration(
                     hintText: l10n.categoryHint,

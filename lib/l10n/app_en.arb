@@ -18,6 +18,7 @@
   "categoryHint": "Optional",
   "pinItem": "Pin to top",
   "save": "Save",
+  "slideToSave": "Slide to save",
   "cancel": "Cancel",
   "delete": "Delete",
   "deleteConfirmTitle": "Delete item?",

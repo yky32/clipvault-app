@@ -206,6 +206,12 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @slideToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to save'**
+  String get slideToSave;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

@@ -64,6 +64,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
+  String get slideToSave => 'Slide to save';
+
+  @override
   String get cancel => 'Cancel';
 
   @override

@@ -63,6 +63,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '儲存';
 
   @override
+  String get slideToSave => '滑動以儲存';
+
+  @override
   String get cancel => '取消';
 
   @override

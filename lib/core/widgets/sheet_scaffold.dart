@@ -1,11 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import 'swipe_to_confirm.dart';
 
-/// Consistent modal bottom sheet chrome (aligned with Triftly SheetScaffold):
-/// drag handle, title, scroll body, optional pinned footer.
+/// Consistent modal bottom sheet chrome (Triftly-aligned):
+/// drag handle, optional title, scroll body, optional pinned footer.
+///
+/// Form sheets use [SheetScaffold.swipeForm] — no close button; dismiss
+/// by swiping the sheet down; confirm with [SwipeToConfirm].
 class SheetScaffold extends StatelessWidget {
   const SheetScaffold({
     required this.child,
@@ -13,35 +16,44 @@ class SheetScaffold extends StatelessWidget {
     this.subtitle,
     this.footer,
     this.onClose,
-    this.showCloseButton = true,
+    this.showCloseButton = false,
     this.showDragHandle = true,
     this.compactBody = true,
     super.key,
   });
 
-  /// Form sheet with a primary action button pinned in the footer.
-  factory SheetScaffold.form({
+  /// Form sheet with [SwipeToConfirm] pinned in the footer (Triftly pattern A).
+  factory SheetScaffold.swipeForm({
     required Widget child,
-    required String title,
+    required String swipeLabel,
+    required bool swipeEnabled,
+    required VoidCallback onSwipeConfirmed,
+    String? title,
     String? subtitle,
-    required String actionLabel,
-    required bool actionEnabled,
-    required VoidCallback onAction,
-    bool isSubmitting = false,
+    Key? swipeKey,
+    SwipeToConfirmStyle swipeStyle = SwipeToConfirmStyle.primary,
     bool compact = true,
+    bool isSubmitting = false,
   }) {
     return SheetScaffold(
       title: title,
       subtitle: subtitle,
-      showCloseButton: true,
+      showCloseButton: false,
       compactBody: compact,
-      footer: _SheetPrimaryButton(
-        label: actionLabel,
-        enabled: actionEnabled && !isSubmitting,
-        isSubmitting: isSubmitting,
-        onPressed: onAction,
+      footer: SwipeToConfirm(
+        key: swipeKey,
+        label: swipeLabel,
+        enabled: swipeEnabled && !isSubmitting,
+        style: swipeStyle,
+        onConfirmed: onSwipeConfirmed,
       ),
-      child: child,
+      child: IgnorePointer(
+        ignoring: isSubmitting,
+        child: Opacity(
+          opacity: isSubmitting ? 0.55 : 1,
+          child: child,
+        ),
+      ),
     );
   }
 
@@ -81,11 +93,11 @@ class SheetScaffold extends StatelessWidget {
                   top: BorderSide(color: AppColors.hairline(context)),
                 ),
               ),
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.md,
                 AppSpacing.lg,
-                AppSpacing.md + (hugContent ? 0 : 0),
+                AppSpacing.lg,
               ),
               child: footer,
             ),
@@ -117,50 +129,29 @@ class SheetScaffold extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 showDragHandle ? AppSpacing.sm : AppSpacing.md,
-                showCloseButton ? AppSpacing.sm : AppSpacing.lg,
+                AppSpacing.lg,
                 0,
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title!,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.4,
-                          ),
+                  Text(
+                    title!,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
                         ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle!,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                              color: AppColors.secondaryLabel(context),
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
                   ),
-                  if (showCloseButton)
-                    CupertinoButton(
-                      padding: const EdgeInsets.all(8),
-                      minimumSize: Size.zero,
-                      onPressed: onClose ?? () => Navigator.pop(context),
-                      child: Icon(
-                        CupertinoIcons.xmark_circle_fill,
-                        size: 28,
-                        color: AppColors.tertiaryLabel(context)
-                            .withValues(alpha: 0.55),
-                      ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.secondaryLabel(context),
+                            height: 1.35,
+                          ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -182,7 +173,7 @@ class SheetScaffold extends StatelessWidget {
             final headerH = (showDragHandle ? 20.0 : 0) +
                 (title != null && title!.isNotEmpty ? 56.0 : 0);
             final footerH = hasFooter
-                ? 72.0 + safePadding.bottom
+                ? 90.0 + safePadding.bottom
                 : (hugContent ? safePadding.bottom : 0);
             final bodyMax = (constraints.maxHeight - headerH - footerH)
                 .clamp(0.0, constraints.maxHeight);
@@ -221,38 +212,6 @@ class SheetScaffold extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _SheetPrimaryButton extends StatelessWidget {
-  const _SheetPrimaryButton({
-    required this.label,
-    required this.enabled,
-    required this.onPressed,
-    this.isSubmitting = false,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback onPressed;
-  final bool isSubmitting;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: enabled ? onPressed : null,
-        child: isSubmitting
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CupertinoActivityIndicator(color: Colors.white),
-              )
-            : Text(label),
       ),
     );
   }
