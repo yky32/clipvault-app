@@ -151,30 +151,11 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${_clipboardSeconds}s';
   }
 
-  String _paletteTitle(BrandPaletteId id, AppLocalizations l10n) {
-    return switch (id) {
-      BrandPaletteId.deepBrown => l10n.paletteDeepBrown,
-      BrandPaletteId.warmGrey => l10n.paletteWarmGrey,
-      BrandPaletteId.woodBlue => l10n.paletteWoodBlue,
-      BrandPaletteId.inkBlue => l10n.paletteInkBlue,
-    };
-  }
-
-  String _paletteCaption(BrandPaletteId id, AppLocalizations l10n) {
-    return switch (id) {
-      BrandPaletteId.deepBrown => l10n.paletteDeepBrownCaption,
-      BrandPaletteId.warmGrey => l10n.paletteWarmGreyCaption,
-      BrandPaletteId.woodBlue => l10n.paletteWoodBlueCaption,
-      BrandPaletteId.inkBlue => l10n.paletteInkBlueCaption,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final themeController = ThemeScope.of(context);
     final paletteController = PaletteScope.of(context);
-    final selectedPalette = paletteController.id;
 
     return Scaffold(
       backgroundColor: AppColors.groupedBackground(context),
@@ -223,6 +204,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 28),
                 IosGroup(
                   header: l10n.settingsAppearance,
+                  footer: l10n.colorPaletteSubtitle,
                   children: [
                     IosGroupTile(
                       title: l10n.themeMode,
@@ -279,24 +261,21 @@ class _SettingsPageState extends State<SettingsPage> {
                         },
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                IosGroup(
-                  header: l10n.colorPalette,
-                  footer: l10n.colorPaletteSubtitle,
-                  children: [
-                    for (final id in BrandPalettes.all)
-                      _PaletteOption(
-                        id: id,
-                        title: _paletteTitle(id, l10n),
-                        caption: _paletteCaption(id, l10n),
-                        selected: selectedPalette == id,
-                        onTap: () async {
+                    // Single row · 4-way palette switch (like Default view)
+                    IosGroupTile(
+                      title: l10n.colorPalette,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.paintbrush_fill,
+                        color: AppColors.primary,
+                      ),
+                      trailing: _PaletteSegmentControl(
+                        selected: paletteController.id,
+                        onChanged: (id) async {
                           HapticFeedback.selectionClick();
                           await paletteController.setPalette(id);
                         },
                       ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 28),
@@ -384,95 +363,118 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _PaletteOption extends StatelessWidget {
-  const _PaletteOption({
+/// 4-button palette switch — same row pattern as List / Grid.
+class _PaletteSegmentControl extends StatelessWidget {
+  const _PaletteSegmentControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final BrandPaletteId selected;
+  final ValueChanged<BrandPaletteId> onChanged;
+
+  static const _labels = {
+    BrandPaletteId.deepBrown: '01',
+    BrandPaletteId.warmGrey: '02',
+    BrandPaletteId.woodBlue: '05',
+    BrandPaletteId.inkBlue: '06',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final track = isDark
+        ? AppColors.surfaceElevatedDark
+        : const Color(0xFFE8E5DF);
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: track,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final id in BrandPalettes.all)
+            _PaletteSegmentButton(
+              id: id,
+              label: _labels[id]!,
+              selected: selected == id,
+              onTap: () => onChanged(id),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaletteSegmentButton extends StatelessWidget {
+  const _PaletteSegmentButton({
     required this.id,
-    required this.title,
-    required this.caption,
+    required this.label,
     required this.selected,
     required this.onTap,
   });
 
   final BrandPaletteId id;
-  final String title;
-  final String caption;
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final tokens = BrandPalettes.of(id);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              _PaletteSwatch(tokens: tokens),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      caption,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.secondaryLabel(context),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selected)
-                Icon(
-                  CupertinoIcons.checkmark_alt,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PaletteSwatch extends StatelessWidget {
-  const _PaletteSwatch({required this.tokens});
-
-  final BrandPaletteTokens tokens;
-
-  @override
-  Widget build(BuildContext context) {
-    // Preview: 60% / 30% / 10% strip (Higgs ratio)
-    final page = tokens.appPageLight;
-    final card = tokens.appCardLight;
     final accent = tokens.accent10;
 
-    return Container(
-      width: 44,
-      height: 32,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.hairline(context)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          Expanded(flex: 6, child: ColoredBox(color: page)),
-          Expanded(flex: 3, child: ColoredBox(color: card)),
-          Expanded(flex: 1, child: ColoredBox(color: accent)),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        width: 40,
+        height: 30,
+        margin: const EdgeInsets.symmetric(horizontal: 1),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.cardBackground(context) : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 16,
+              height: 6,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Satoshi',
+                fontSize: 9,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                height: 1,
+                color: selected
+                    ? AppColors.textPrimary
+                    : AppColors.secondaryLabel(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
