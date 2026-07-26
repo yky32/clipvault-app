@@ -253,7 +253,7 @@ class _VaultPageState extends State<VaultPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           minimumSize: Size.zero,
                           onPressed: () => context.push('/vault/settings'),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.gear,
                             size: 22,
                             color: AppColors.primary,
@@ -591,7 +591,7 @@ class _RecentStrip extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.doc_on_clipboard,
                         size: 14,
                         color: AppColors.primary,

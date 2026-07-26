@@ -85,7 +85,7 @@ class _LockPageState extends State<LockPage> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     CupertinoIcons.lock_fill,
                     size: 36,
                     color: AppColors.primary,

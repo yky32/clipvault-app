@@ -7,6 +7,8 @@ import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/brand_palette.dart';
+import '../../../../core/theme/palette_controller.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/copied_hud.dart';
 import '../../../../core/widgets/ios_group.dart';
@@ -149,10 +151,30 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${_clipboardSeconds}s';
   }
 
+  String _paletteTitle(BrandPaletteId id, AppLocalizations l10n) {
+    return switch (id) {
+      BrandPaletteId.deepBrown => l10n.paletteDeepBrown,
+      BrandPaletteId.warmGrey => l10n.paletteWarmGrey,
+      BrandPaletteId.woodBlue => l10n.paletteWoodBlue,
+      BrandPaletteId.inkBlue => l10n.paletteInkBlue,
+    };
+  }
+
+  String _paletteCaption(BrandPaletteId id, AppLocalizations l10n) {
+    return switch (id) {
+      BrandPaletteId.deepBrown => l10n.paletteDeepBrownCaption,
+      BrandPaletteId.warmGrey => l10n.paletteWarmGreyCaption,
+      BrandPaletteId.woodBlue => l10n.paletteWoodBlueCaption,
+      BrandPaletteId.inkBlue => l10n.paletteInkBlueCaption,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final themeController = ThemeScope.of(context);
+    final paletteController = PaletteScope.of(context);
+    final selectedPalette = paletteController.id;
 
     return Scaffold(
       backgroundColor: AppColors.groupedBackground(context),
@@ -170,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               onPressed: () => context.pop(),
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.back,
                 color: AppColors.primary,
               ),
@@ -186,7 +208,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     IosGroupTile(
                       title: l10n.biometricLock,
-                      leading: const _LeadingIcon(
+                      leading: _LeadingIcon(
                         icon: CupertinoIcons.lock_shield_fill,
                         color: AppColors.iconSecurity,
                       ),
@@ -204,7 +226,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     IosGroupTile(
                       title: l10n.themeMode,
-                      leading: const _LeadingIcon(
+                      leading: _LeadingIcon(
                         icon: CupertinoIcons.moon_stars_fill,
                         color: AppColors.iconTheme,
                       ),
@@ -226,7 +248,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     IosGroupTile(
                       title: l10n.defaultView,
-                      leading: const _LeadingIcon(
+                      leading: _LeadingIcon(
                         icon: CupertinoIcons.rectangle_grid_2x2_fill,
                         color: AppColors.iconView,
                       ),
@@ -261,12 +283,30 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 28),
                 IosGroup(
+                  header: l10n.colorPalette,
+                  footer: l10n.colorPaletteSubtitle,
+                  children: [
+                    for (final id in BrandPalettes.all)
+                      _PaletteOption(
+                        id: id,
+                        title: _paletteTitle(id, l10n),
+                        caption: _paletteCaption(id, l10n),
+                        selected: selectedPalette == id,
+                        onTap: () async {
+                          HapticFeedback.selectionClick();
+                          await paletteController.setPalette(id);
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
                   header: l10n.settingsClipboard,
                   footer: l10n.clipboardAutoClearSubtitle,
                   children: [
                     IosGroupTile(
                       title: l10n.clipboardAutoClear,
-                      leading: const _LeadingIcon(
+                      leading: _LeadingIcon(
                         icon: CupertinoIcons.doc_on_clipboard_fill,
                         color: AppColors.iconClipboard,
                       ),
@@ -294,7 +334,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     IosGroupTile(
                       title: l10n.exportPlain,
-                      leading: const _LeadingIcon(
+                      leading: _LeadingIcon(
                         icon: CupertinoIcons.share_solid,
                         color: AppColors.iconExport,
                       ),
@@ -338,6 +378,100 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaletteOption extends StatelessWidget {
+  const _PaletteOption({
+    required this.id,
+    required this.title,
+    required this.caption,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final BrandPaletteId id;
+  final String title;
+  final String caption;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = BrandPalettes.of(id);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              _PaletteSwatch(tokens: tokens),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      caption,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.secondaryLabel(context),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (selected)
+                Icon(
+                  CupertinoIcons.checkmark_alt,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaletteSwatch extends StatelessWidget {
+  const _PaletteSwatch({required this.tokens});
+
+  final BrandPaletteTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    // Preview: 60% / 30% / 10% strip (Higgs ratio)
+    final page = tokens.appPageLight;
+    final card = tokens.appCardLight;
+    final accent = tokens.accent10;
+
+    return Container(
+      width: 44,
+      height: 32,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.hairline(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          Expanded(flex: 6, child: ColoredBox(color: page)),
+          Expanded(flex: 3, child: ColoredBox(color: card)),
+          Expanded(flex: 1, child: ColoredBox(color: accent)),
         ],
       ),
     );

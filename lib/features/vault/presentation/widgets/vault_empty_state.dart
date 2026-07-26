@@ -28,7 +28,7 @@ class VaultEmptyState extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.lock_shield_fill,
                 size: 34,
                 color: AppColors.primary,

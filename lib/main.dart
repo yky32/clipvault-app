@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'core/bootstrap/app_bootstrap.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/palette_controller.dart';
 import 'core/theme/theme_controller.dart';
 
 Future<void> main() async {
@@ -32,11 +34,14 @@ Future<void> main() async {
   };
 
   final themeController = ThemeController();
+  final paletteController = PaletteController();
   Object? bootstrapError;
   StackTrace? bootstrapStack;
 
   try {
     await themeController.load();
+    await paletteController.load();
+    PaletteControllerHolder.instance = paletteController;
     await AppBootstrap.initialize();
   } catch (error, stack) {
     bootstrapError = error;
@@ -52,7 +57,10 @@ Future<void> main() async {
   runApp(
     bootstrapError != null
         ? _BootstrapErrorApp(error: bootstrapError, stackTrace: bootstrapStack)
-        : ClipVaultApp(themeController: themeController),
+        : ClipVaultApp(
+            themeController: themeController,
+            paletteController: paletteController,
+          ),
   );
 }
 

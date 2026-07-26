@@ -172,6 +172,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeDark => '深色';
 
   @override
+  String get colorPalette => '配色方案';
+
+  @override
+  String get colorPaletteSubtitle => 'Higgs 高級感 60·30·10 配色';
+
+  @override
+  String get paletteDeepBrown => '深啡 + 焦糖';
+
+  @override
+  String get paletteDeepBrownCaption => '01 · 沉穩有質感';
+
+  @override
+  String get paletteWarmGrey => '灰白 + 橘紅';
+
+  @override
+  String get paletteWarmGreyCaption => '02 · 俐落現代';
+
+  @override
+  String get paletteWoodBlue => '木色 + 湖藍';
+
+  @override
+  String get paletteWoodBlueCaption => '05 · 自然有設計感';
+
+  @override
+  String get paletteInkBlue => '黑白 + 亮藍';
+
+  @override
+  String get paletteInkBlueCaption => '06 · 簡約有記憶點';
+
+  @override
   String get defaultView => '預設檢視';
 
   @override

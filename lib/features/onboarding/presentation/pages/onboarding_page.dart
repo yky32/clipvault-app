@@ -70,7 +70,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 },
                 child: Text(
                   l10n.skip,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),

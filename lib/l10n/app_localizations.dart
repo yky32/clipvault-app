@@ -404,6 +404,66 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @colorPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Color palette'**
+  String get colorPalette;
+
+  /// No description provided for @colorPaletteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Higgs-inspired 60·30·10 schemes'**
+  String get colorPaletteSubtitle;
+
+  /// No description provided for @paletteDeepBrown.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep brown + caramel'**
+  String get paletteDeepBrown;
+
+  /// No description provided for @paletteDeepBrownCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'01 · Calm & mature'**
+  String get paletteDeepBrownCaption;
+
+  /// No description provided for @paletteWarmGrey.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm grey + terracotta'**
+  String get paletteWarmGrey;
+
+  /// No description provided for @paletteWarmGreyCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'02 · Clean & modern'**
+  String get paletteWarmGreyCaption;
+
+  /// No description provided for @paletteWoodBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Wood + lake blue'**
+  String get paletteWoodBlue;
+
+  /// No description provided for @paletteWoodBlueCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'05 · Natural + designed'**
+  String get paletteWoodBlueCaption;
+
+  /// No description provided for @paletteInkBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Ink + electric blue'**
+  String get paletteInkBlue;
+
+  /// No description provided for @paletteInkBlueCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'06 · Bold & minimal'**
+  String get paletteInkBlueCaption;
+
   /// No description provided for @defaultView.
   ///
   /// In en, this message translates to:

@@ -134,7 +134,7 @@ class _ListRow extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.doc_on_clipboard,
                 size: 16,
                 color: AppColors.primary,

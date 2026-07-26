@@ -174,6 +174,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get colorPalette => 'Color palette';
+
+  @override
+  String get colorPaletteSubtitle => 'Higgs-inspired 60·30·10 schemes';
+
+  @override
+  String get paletteDeepBrown => 'Deep brown + caramel';
+
+  @override
+  String get paletteDeepBrownCaption => '01 · Calm & mature';
+
+  @override
+  String get paletteWarmGrey => 'Warm grey + terracotta';
+
+  @override
+  String get paletteWarmGreyCaption => '02 · Clean & modern';
+
+  @override
+  String get paletteWoodBlue => 'Wood + lake blue';
+
+  @override
+  String get paletteWoodBlueCaption => '05 · Natural + designed';
+
+  @override
+  String get paletteInkBlue => 'Ink + electric blue';
+
+  @override
+  String get paletteInkBlueCaption => '06 · Bold & minimal';
+
+  @override
   String get defaultView => 'Default view';
 
   @override

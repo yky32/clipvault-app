@@ -4,12 +4,18 @@ import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'brand_palette.dart';
 
 class AppTheme {
-  static ThemeData get light => _build(Brightness.light);
-  static ThemeData get dark => _build(Brightness.dark);
+  static ThemeData light([BrandPaletteTokens? tokens]) =>
+      _build(Brightness.light, tokens);
+  static ThemeData dark([BrandPaletteTokens? tokens]) =>
+      _build(Brightness.dark, tokens);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData _build(Brightness brightness, BrandPaletteTokens? tokens) {
+    // Ensure AppColors getters see the right tokens during theme build.
+    // Caller should already have set PaletteControllerHolder; tokens param is
+    // used for explicit surface colors when provided.
     final isDark = brightness == Brightness.dark;
     final bg = isDark ? AppColors.surfaceDark : AppColors.surfaceDim;
     final card = isDark ? AppColors.surfaceCardDark : AppColors.surfaceCard;
@@ -17,20 +23,21 @@ class AppTheme {
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
     final secondary =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final primary = tokens?.primary ?? AppColors.primary;
+    final primaryLight = tokens?.primaryLight ?? AppColors.primaryLight;
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: AppColors.primary,
+      primary: primary,
       onPrimary: Colors.white,
-      secondary: AppColors.primaryLight,
+      secondary: primaryLight,
       onSecondary: Colors.white,
       surface: card,
       onSurface: onSurface,
       error: AppColors.error,
       onError: Colors.white,
-      surfaceContainerHighest: isDark
-          ? AppColors.surfaceElevatedDark
-          : AppColors.warmGrey,
+      surfaceContainerHighest:
+          isDark ? AppColors.surfaceElevatedDark : AppColors.surfaceDim,
     );
 
     final textTheme = _textTheme(onSurface, secondary, isDark);
@@ -53,11 +60,11 @@ class AppTheme {
       primaryTextTheme: textTheme,
       cupertinoOverrideTheme: CupertinoThemeData(
         brightness: brightness,
-        primaryColor: AppColors.primary,
+        primaryColor: primary,
         scaffoldBackgroundColor: bg,
         barBackgroundColor: bg.withValues(alpha: 0.86),
         textTheme: CupertinoTextThemeData(
-          primaryColor: AppColors.primary,
+          primaryColor: primary,
           textStyle: textTheme.bodyLarge!,
           navTitleTextStyle: textTheme.titleMedium!.copyWith(
             fontWeight: FontWeight.w600,
@@ -70,7 +77,7 @@ class AppTheme {
             height: 1.1,
           ),
           actionTextStyle: textTheme.bodyLarge!.copyWith(
-            color: AppColors.primary,
+            color: primary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -92,8 +99,8 @@ class AppTheme {
           letterSpacing: -0.4,
           color: onSurface,
         ),
-        iconTheme: IconThemeData(color: AppColors.primary, size: 22),
-        actionsIconTheme: IconThemeData(color: AppColors.primary, size: 22),
+        iconTheme: IconThemeData(color: primary, size: 22),
+        actionsIconTheme: IconThemeData(color: primary, size: 22),
       ),
       cardTheme: CardThemeData(
         color: card,
@@ -103,7 +110,7 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 0,
         highlightElevation: 0,
@@ -116,7 +123,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.surfaceCardDark : AppColors.warmWhite,
+        fillColor: isDark ? AppColors.surfaceCardDark : AppColors.surfaceCard,
         border: OutlineInputBorder(
           borderRadius: AppRadii.control,
           borderSide: BorderSide.none,
@@ -127,11 +134,11 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadii.control,
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadii.control,
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColors.error),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -152,9 +159,9 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.35),
+          disabledBackgroundColor: primary.withValues(alpha: 0.35),
           minimumSize: const Size.fromHeight(50),
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -170,7 +177,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: primary,
           textStyle: const TextStyle(
             fontFamily: 'Satoshi',
             fontWeight: FontWeight.w500,
@@ -179,22 +186,19 @@ class AppTheme {
         ),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Colors.white;
-          return Colors.white;
-        }),
+        thumbColor: const WidgetStatePropertyAll(Colors.white),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          // Accent only when on — keeps 10% 橘红 disciplined.
-          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          if (states.contains(WidgetState.selected)) return primary;
           return isDark
-              ? const Color(0xFF3D3A35)
-              : const Color(0xFFD0CDC6);
+              ? AppColors.separatorDark
+              : AppColors.separator;
         }),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? const Color(0xFF2C2C2E) : const Color(0xFF1C1C1E),
+        backgroundColor:
+            isDark ? AppColors.surfaceCardDark : const Color(0xFF1C1C1E),
         contentTextStyle: const TextStyle(
           fontFamily: 'Satoshi',
           color: Colors.white,
@@ -206,7 +210,7 @@ class AppTheme {
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor:
-            isDark ? AppColors.surfaceDimDark : AppColors.warmWhite,
+            isDark ? AppColors.surfaceDimDark : AppColors.surfaceCard,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: AppRadii.sheet),
         showDragHandle: true,
@@ -217,7 +221,7 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor:
-            isDark ? AppColors.surfaceCardDark : AppColors.warmWhite,
+            isDark ? AppColors.surfaceCardDark : AppColors.surfaceCard,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         titleTextStyle: TextStyle(
@@ -236,7 +240,7 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         minVerticalPadding: 12,
-        iconColor: AppColors.primary,
+        iconColor: primary,
         titleTextStyle: TextStyle(
           fontFamily: 'Satoshi',
           fontSize: 17,
@@ -258,9 +262,7 @@ class AppTheme {
         thickness: 0.5,
         space: 0.5,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
@@ -272,7 +274,12 @@ class AppTheme {
   }
 
   static TextTheme _textTheme(Color primary, Color secondary, bool isDark) {
-    TextStyle base(double size, FontWeight weight, {double? height, double? tracking}) {
+    TextStyle base(
+      double size,
+      FontWeight weight, {
+      double? height,
+      double? tracking,
+    }) {
       return TextStyle(
         fontFamily: 'Satoshi',
         fontSize: size,
@@ -293,7 +300,8 @@ class AppTheme {
       titleSmall: base(15, FontWeight.w600, tracking: -0.2),
       bodyLarge: base(17, FontWeight.w400, height: 1.35, tracking: -0.4),
       bodyMedium: base(15, FontWeight.w400, height: 1.35, tracking: -0.2),
-      bodySmall: base(13, FontWeight.w400, height: 1.3, tracking: -0.08).copyWith(
+      bodySmall: base(13, FontWeight.w400, height: 1.3, tracking: -0.08)
+          .copyWith(
         color: secondary.withValues(alpha: isDark ? 0.6 : 0.55),
       ),
       labelLarge: base(15, FontWeight.w600, tracking: -0.2),
