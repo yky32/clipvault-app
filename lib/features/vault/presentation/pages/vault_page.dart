@@ -205,30 +205,14 @@ class _VaultPageState extends State<VaultPage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.vaultTitle,
-                                style: theme.textTheme.displayMedium?.copyWith(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.37,
-                                  height: 1.1,
-                                ),
-                              ),
-                              if (!isEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  state.items.length == 1
-                                      ? l10n.itemCountOne
-                                      : l10n.itemCount(state.items.length),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: AppColors.secondaryLabel(context),
-                                  ),
-                                ),
-                              ],
-                            ],
+                          child: Text(
+                            l10n.vaultTitle,
+                            style: theme.textTheme.displayMedium?.copyWith(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.37,
+                              height: 1.1,
+                            ),
                           ),
                         ),
                         if (!isEmpty)
