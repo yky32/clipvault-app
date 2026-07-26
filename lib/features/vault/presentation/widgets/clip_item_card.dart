@@ -183,59 +183,76 @@ class _GridTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         blur: 16,
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Title type size ≈ 30% of tile height (square grid cell).
+            final titleSize =
+                (constraints.maxHeight * 0.30).clamp(18.0, 42.0);
+            final metaSize = (titleSize * 0.38).clamp(10.0, 14.0);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _GlassIconWell(icon: icon, size: 30, iconSize: 15),
+                Row(
+                  children: [
+                    _GlassIconWell(icon: icon, size: 30, iconSize: 15),
+                    const Spacer(),
+                    if (item.isPinned)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          CupertinoIcons.pin_fill,
+                          size: 12,
+                          color: AppColors.primary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    _GlassIconWell(
+                      icon: CupertinoIcons.doc_on_clipboard,
+                      size: 28,
+                      iconSize: 14,
+                    ),
+                  ],
+                ),
                 const Spacer(),
-                if (item.isPinned)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Icon(
-                      CupertinoIcons.pin_fill,
-                      size: 12,
-                      color: AppColors.primary.withValues(alpha: 0.7),
+                // Title band ~30% of tile height
+                SizedBox(
+                  height: constraints.maxHeight * 0.30,
+                  width: double.infinity,
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Satoshi',
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.4,
+                        height: 1.05,
+                      ),
                     ),
                   ),
-                _GlassIconWell(
-                  icon: CupertinoIcons.doc_on_clipboard,
-                  size: 28,
-                  iconSize: 14,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  categoryName ?? l10n.tapToCopy,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Satoshi',
+                    fontSize: metaSize,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.08,
+                    height: 1.15,
+                    color: categoryName != null
+                        ? AppColors.secondaryLabel(context)
+                        : AppColors.primary.withValues(alpha: 0.85),
+                  ),
                 ),
               ],
-            ),
-            const Spacer(),
-            Text(
-              item.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Satoshi',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              categoryName ?? l10n.tapToCopy,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Satoshi',
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.08,
-                height: 1.2,
-                color: categoryName != null
-                    ? AppColors.secondaryLabel(context)
-                    : AppColors.primary.withValues(alpha: 0.85),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
