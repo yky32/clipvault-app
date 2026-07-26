@@ -68,14 +68,13 @@ class VaultEmptyState extends StatelessWidget {
   }
 }
 
-/// Search / category filter returned zero rows — offer a clear next step.
+/// Search / category filter returned zero rows — keep it clean (header + still works).
 class VaultFilterEmptyState extends StatelessWidget {
   const VaultFilterEmptyState({
     required this.searchQuery,
     required this.categoryName,
     required this.onClearSearch,
     required this.onShowAll,
-    required this.onAdd,
     super.key,
   });
 
@@ -83,7 +82,6 @@ class VaultFilterEmptyState extends StatelessWidget {
   final String? categoryName;
   final VoidCallback onClearSearch;
   final VoidCallback onShowAll;
-  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -131,24 +129,13 @@ class VaultFilterEmptyState extends StatelessWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             if (hasSearch)
               CupertinoButton(
                 onPressed: onClearSearch,
                 child: Text(l10n.clearSearch),
               ),
-            if (hasCategory && !hasSearch) ...[
-              FilledButton(
-                onPressed: onAdd,
-                child: Text(l10n.addToCategory),
-              ),
-              const SizedBox(height: 8),
-              CupertinoButton(
-                onPressed: onShowAll,
-                child: Text(l10n.showAllItems),
-              ),
-            ],
-            if (hasSearch && hasCategory)
+            if (hasCategory)
               CupertinoButton(
                 onPressed: onShowAll,
                 child: Text(l10n.showAllItems),

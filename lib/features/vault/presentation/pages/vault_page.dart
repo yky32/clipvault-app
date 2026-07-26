@@ -381,9 +381,6 @@ class _VaultPageState extends State<VaultPage> {
                                     .add(const VaultSearchChanged(''));
                               },
                               onShowAll: _clearFilters,
-                              onAdd: () => _openAdd(
-                                categoryId: state.selectedCategoryId,
-                              ),
                             ),
                           )
                         else ...[
