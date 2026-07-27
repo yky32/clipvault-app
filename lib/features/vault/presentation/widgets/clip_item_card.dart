@@ -189,21 +189,10 @@ class _GridTile extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Base title size from tile height, then shrink for longer labels
-            // so more of "Office WiFi" fits before ellipsis.
-            final baseSize =
-                (constraints.maxHeight * 0.26).clamp(15.0, 28.0);
-            final titleLen = item.title.trim().length;
-            final scale = titleLen > 16
-                ? 0.72
-                : titleLen > 11
-                    ? 0.82
-                    : titleLen > 8
-                        ? 0.92
-                        : 1.0;
-            final titleSize = (baseSize * scale).clamp(13.0, 28.0);
-            final metaSize = (titleSize * 0.42).clamp(10.0, 13.0);
-            final titleBandH = constraints.maxHeight * 0.32;
+            // Title type size ≈ 28% of tile height (square grid cell).
+            final titleSize =
+                (constraints.maxHeight * 0.28).clamp(16.0, 32.0);
+            final metaSize = (titleSize * 0.40).clamp(10.0, 13.0);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,10 +210,10 @@ class _GridTile extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                // Title: up to 2 lines; ellipsis when still too long.
-                // Full title via Tooltip (long-press / accessibility).
+                // Single line + ellipsis: "Office WiFi" → "Office…"
+                // Full title: Tooltip + long-press actions sheet.
                 SizedBox(
-                  height: titleBandH,
+                  height: titleSize * 1.2,
                   width: double.infinity,
                   child: Align(
                     alignment: Alignment.bottomLeft,
@@ -233,15 +222,15 @@ class _GridTile extends StatelessWidget {
                       waitDuration: const Duration(milliseconds: 400),
                       child: Text(
                         item.title,
-                        maxLines: 2,
-                        softWrap: true,
+                        maxLines: 1,
+                        softWrap: false,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Satoshi',
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.4,
-                          height: 1.08,
+                          height: 1.05,
                         ),
                       ),
                     ),
