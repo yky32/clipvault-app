@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/build_info.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/brand_palette.dart';
@@ -445,7 +446,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  l10n.settingsFooterVersion(_versionLabel),
+                  BuildInfo.hasCommit
+                      ? l10n.settingsFooterVersionWithCommit(
+                          _versionLabel,
+                          BuildInfo.shortCommit,
+                        )
+                      : l10n.settingsFooterVersion(_versionLabel),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Satoshi',

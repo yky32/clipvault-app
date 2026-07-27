@@ -448,6 +448,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String settingsFooterVersionWithCommit(String version, String commit) {
+    return 'v$version #$commit · 僅儲存在本機裝置';
+  }
+
+  @override
   String get lastUsedLabel => '上次使用';
 
   @override

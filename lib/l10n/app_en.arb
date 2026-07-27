@@ -180,6 +180,13 @@
       "version": { "type": "String" }
     }
   },
+  "settingsFooterVersionWithCommit": "v{version} #{commit} · Stored in local device only",
+  "@settingsFooterVersionWithCommit": {
+    "placeholders": {
+      "version": { "type": "String" },
+      "commit": { "type": "String" }
+    }
+  },
   "lastUsedLabel": "Last used",
   "neverUsed": "Never used",
   "justNow": "Just now",

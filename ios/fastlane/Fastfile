@@ -16,6 +16,23 @@ def ci_build?
   ENV["CI"] == "true"
 end
 
+# Short/full git SHA for Settings footer (v1.0.0 #abc1234) via --dart-define.
+def git_commit_sha
+  sha = ENV["GIT_COMMIT"].to_s.strip
+  return sha unless sha.empty?
+
+  out = `cd #{PROJECT_ROOT} && git rev-parse HEAD 2>/dev/null`.to_s.strip
+  out
+end
+
+def flutter_git_define_args
+  sha = git_commit_sha
+  return "" if sha.empty?
+
+  UI.message("🔖 Embedding GIT_COMMIT=#{sha[0, 7]}…")
+  "--dart-define=GIT_COMMIT=#{sha}"
+end
+
 def path_for_system_ruby
   "/usr/bin:/usr/local/bin:#{ENV['PATH']}"
 end
@@ -505,10 +522,15 @@ platform :ios do
 
       export_plist = write_ci_export_options_plist!
       UI.message("📦 Building IPA via flutter build ipa...")
-      sh("cd #{PROJECT_ROOT} && flutter build ipa --release --export-options-plist=#{export_plist}")
+      git_def = flutter_git_define_args
+      sh(
+        "cd #{PROJECT_ROOT} && flutter build ipa --release " \
+        "--export-options-plist=#{export_plist} #{git_def}"
+      )
       ensure_runner_ipa_path!
     else
-      sh("cd #{PROJECT_ROOT} && flutter build ios --release --no-codesign")
+      git_def = flutter_git_define_args
+      sh("cd #{PROJECT_ROOT} && flutter build ios --release --no-codesign #{git_def}")
 
       export_opts = {
         method: export_method,

@@ -196,6 +196,8 @@ jobs:
       - name: Deploy to TestFlight
         env:
           CI: true
+          # Full SHA baked into the IPA for Settings footer (v1.0.0 #abcdef1)
+          GIT_COMMIT: ${{ github.sha }}
           TESTFLIGHT_CHANGELOG_PREFIX: ${{ github.event.inputs.changelog_prefix }}
           SIGH_NAME: ${{ env.SIGH_NAME }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}

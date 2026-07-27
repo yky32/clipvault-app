@@ -150,6 +150,13 @@
       "version": { "type": "String" }
     }
   },
+  "settingsFooterVersionWithCommit": "v{version} #{commit} · 僅儲存在本機裝置",
+  "@settingsFooterVersionWithCommit": {
+    "placeholders": {
+      "version": { "type": "String" },
+      "commit": { "type": "String" }
+    }
+  },
   "lastUsedLabel": "上次使用",
   "neverUsed": "尚未使用",
   "justNow": "剛剛",

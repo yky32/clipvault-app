@@ -938,6 +938,12 @@ abstract class AppLocalizations {
   /// **'v{version} · Stored in local device only'**
   String settingsFooterVersion(String version);
 
+  /// No description provided for @settingsFooterVersionWithCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'v{version} #{commit} · Stored in local device only'**
+  String settingsFooterVersionWithCommit(String version, String commit);
+
   /// No description provided for @lastUsedLabel.
   ///
   /// In en, this message translates to:

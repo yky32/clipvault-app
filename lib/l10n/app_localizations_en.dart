@@ -456,6 +456,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String settingsFooterVersionWithCommit(String version, String commit) {
+    return 'v$version #$commit · Stored in local device only';
+  }
+
+  @override
   String get lastUsedLabel => 'Last used';
 
   @override
