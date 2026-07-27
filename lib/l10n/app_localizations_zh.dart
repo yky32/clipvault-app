@@ -440,6 +440,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get language => '語言';
 
   @override
+  String get settingsFooterTagline => '僅儲存在本機裝置';
+
+  @override
+  String settingsFooterVersion(String version) {
+    return 'v$version · 僅儲存在本機裝置';
+  }
+
+  @override
   String get lastUsedLabel => '上次使用';
 
   @override

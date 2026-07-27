@@ -926,6 +926,18 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
+  /// No description provided for @settingsFooterTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored in local device only'**
+  String get settingsFooterTagline;
+
+  /// No description provided for @settingsFooterVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'v{version} · Stored in local device only'**
+  String settingsFooterVersion(String version);
+
   /// No description provided for @lastUsedLabel.
   ///
   /// In en, this message translates to:

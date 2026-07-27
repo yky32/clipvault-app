@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -28,6 +29,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _biometric;
   late VaultViewMode _viewMode;
   late int _clipboardSeconds;
+  String _versionLabel = '1.0.0';
 
   @override
   void initState() {
@@ -36,6 +38,15 @@ class _SettingsPageState extends State<SettingsPage> {
     _biometric = s.biometricLockEnabled;
     _viewMode = s.defaultViewMode;
     _clipboardSeconds = s.clipboardClearSeconds;
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() => _versionLabel = info.version);
+    } catch (_) {}
   }
 
   Future<void> _toggleBiometric(bool value) async {
@@ -434,7 +445,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'v1.0.0 · Local-only · AES-256',
+                  l10n.settingsFooterVersion(_versionLabel),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Satoshi',

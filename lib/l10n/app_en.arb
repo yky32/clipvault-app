@@ -173,6 +173,13 @@
   "noCategory": "None",
   "requiredField": "Required",
   "language": "Language",
+  "settingsFooterTagline": "Stored in local device only",
+  "settingsFooterVersion": "v{version} · Stored in local device only",
+  "@settingsFooterVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
   "lastUsedLabel": "Last used",
   "neverUsed": "Never used",
   "justNow": "Just now",

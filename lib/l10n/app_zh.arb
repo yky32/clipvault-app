@@ -143,6 +143,13 @@
   "noCategory": "無",
   "requiredField": "必填",
   "language": "語言",
+  "settingsFooterTagline": "僅儲存在本機裝置",
+  "settingsFooterVersion": "v{version} · 僅儲存在本機裝置",
+  "@settingsFooterVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
   "lastUsedLabel": "上次使用",
   "neverUsed": "尚未使用",
   "justNow": "剛剛",

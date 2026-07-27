@@ -448,6 +448,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get language => 'Language';
 
   @override
+  String get settingsFooterTagline => 'Stored in local device only';
+
+  @override
+  String settingsFooterVersion(String version) {
+    return 'v$version · Stored in local device only';
+  }
+
+  @override
   String get lastUsedLabel => 'Last used';
 
   @override
