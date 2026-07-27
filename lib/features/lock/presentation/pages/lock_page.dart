@@ -172,33 +172,12 @@ class _LockPageState extends State<LockPage>
               child: Column(
                 children: [
                   const Spacer(flex: 2),
-                  // App icon (brand) — not a generic lock glyph
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      _appIconAsset,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => ColoredBox(
-                        color: accent.withValues(alpha: 0.12),
-                        child: Icon(
-                          CupertinoIcons.lock_fill,
-                          size: 36,
-                          color: accent,
-                        ),
-                      ),
-                    ),
+                  // App icon — mask white marketing fringes (flattened 1024 PNG).
+                  _LockAppIcon(
+                    asset: _appIconAsset,
+                    size: 96,
+                    accent: accent,
+                    isDark: isDark,
                   ),
                   const SizedBox(height: 28),
                   Text(
@@ -286,6 +265,85 @@ class _LockPageState extends State<LockPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Rounded brand mark without white edge cracks from marketing assets.
+class _LockAppIcon extends StatelessWidget {
+  const _LockAppIcon({
+    required this.asset,
+    required this.size,
+    required this.accent,
+    required this.isDark,
+  });
+
+  final String asset;
+  final double size;
+  final Color accent;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    // iOS-like continuous corner (~22% of side).
+    final radius = BorderRadius.circular(size * 0.223);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        // Match lock atmosphere so any residual fringe is invisible.
+        color: isDark ? const Color(0xFF152038) : const Color(0xFFE8E4DC),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.14),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Scale past 1.0 crops baked-in white corner padding from App Store PNG.
+            Transform.scale(
+              scale: 1.08,
+              child: Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+                isAntiAlias: true,
+                gaplessPlayback: true,
+                errorBuilder: (_, __, ___) => ColoredBox(
+                  color: accent.withValues(alpha: 0.15),
+                  child: Icon(
+                    CupertinoIcons.lock_fill,
+                    size: size * 0.38,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ),
+            // Hairline inner ring softens the mask edge (no white crack).
+            IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
