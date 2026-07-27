@@ -693,6 +693,49 @@ platform :ios do
     end
   end
 
+  desc "Upload App Store screenshots only (no binary) — from store/screenshots/"
+  lane :upload_screenshots do
+    screenshots_path = File.join(PROJECT_ROOT, "store", "screenshots")
+    UI.user_error!("Missing #{screenshots_path}") unless Dir.exist?(screenshots_path)
+
+    key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s
+    issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s
+    key_path = File.join(Dir.home, ".appstoreconnect", "api_key.p8")
+    private_key = File.join(Dir.home, "private_keys", "AuthKey_#{key_id}.p8")
+    private_key = File.join(Dir.home, "private_keys", "AuthKey_GVQ92UZ87M.p8") unless File.exist?(private_key)
+
+    if !File.exist?(key_path) && File.exist?(private_key)
+      FileUtils.mkdir_p(File.dirname(key_path))
+      FileUtils.cp(private_key, key_path)
+    end
+
+    UI.user_error!("Missing API key id (APP_STORE_CONNECT_API_KEY_ID)") if key_id.empty?
+    UI.user_error!("Missing issuer id (APP_STORE_CONNECT_ISSUER_ID)") if issuer_id.empty?
+    UI.user_error!("Missing API key file at #{key_path}") unless File.exist?(key_path)
+
+    api_key = app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_filepath: key_path
+    )
+
+    UI.message("🖼️  Uploading screenshots from #{screenshots_path}…")
+    deliver(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      screenshots_path: screenshots_path,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      force: true,
+      overwrite_screenshots: true,
+      run_precheck_before_submit: false,
+      submit_for_review: false,
+      automatic_release: false
+    )
+    UI.success("✅ Screenshots uploaded to App Store Connect")
+  end
+
   desc "Revoke excess API-created Development certs on CI (frees Apple cert slots)"
   lane :prune_excess_certificates_for_ci do
     return unless ENV["CI"]
