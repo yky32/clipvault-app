@@ -167,6 +167,15 @@ class _VaultPageState extends State<VaultPage> {
     context.read<VaultBloc>().add(VaultItemCopied(item.id));
   }
 
+  /// Pull-to-refresh (Triftly pattern) — reloads items + categories from local store.
+  Future<void> _onPullRefresh() async {
+    HapticFeedback.selectionClick();
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const VaultRefreshed());
+    // Local Hive load is instant; short delay so the indicator is visible.
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -272,7 +281,10 @@ class _VaultPageState extends State<VaultPage> {
                     ),
                   ),
                   Expanded(
-                    child: CustomScrollView(
+                    child: RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: _onPullRefresh,
+                      child: CustomScrollView(
                       physics: const BouncingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics(),
                       ),
@@ -465,6 +477,7 @@ class _VaultPageState extends State<VaultPage> {
                             ),
                         ],
                       ],
+                    ),
                     ),
                   ),
                 ],
