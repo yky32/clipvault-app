@@ -418,6 +418,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockHint => 'Face ID · Touch ID · Device passcode';
 
   @override
+  String get unlockWithFaceId => 'Face ID';
+
+  @override
+  String get unlockWithTouchId => 'Touch ID';
+
+  @override
+  String get unlockWithBiometrics => 'Biometrics';
+
+  @override
+  String get unlockWithPasscode => 'Device passcode';
+
+  @override
   String get unlockAuthReason => 'Unlock your vault';
 
   @override

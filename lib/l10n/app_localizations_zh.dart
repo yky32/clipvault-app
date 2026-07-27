@@ -410,6 +410,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockHint => 'Face ID · Touch ID · 裝置密碼';
 
   @override
+  String get unlockWithFaceId => 'Face ID';
+
+  @override
+  String get unlockWithTouchId => 'Touch ID';
+
+  @override
+  String get unlockWithBiometrics => '生物辨識';
+
+  @override
+  String get unlockWithPasscode => '裝置密碼';
+
+  @override
   String get unlockAuthReason => '解鎖你的保險庫';
 
   @override

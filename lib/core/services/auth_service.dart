@@ -3,6 +3,15 @@ import 'package:local_auth/local_auth.dart';
 
 import 'settings_service.dart';
 
+/// Preferred unlock method for UI (icon / hint on lock screen).
+enum UnlockBiometricKind {
+  faceId,
+  touchId,
+  fingerprint,
+  strongBiometric,
+  devicePasscode,
+}
+
 class AuthService {
   AuthService({LocalAuthentication? localAuth})
       : _localAuth = localAuth ?? LocalAuthentication();
@@ -15,6 +24,33 @@ class AuthService {
           await _localAuth.isDeviceSupported();
     } on PlatformException {
       return false;
+    }
+  }
+
+  /// Best-effort biometric type for lock UI (Face ID / Touch ID / lock).
+  Future<UnlockBiometricKind> preferredUnlockKind() async {
+    try {
+      final supported = await _localAuth.isDeviceSupported();
+      if (!supported) return UnlockBiometricKind.devicePasscode;
+
+      final types = await _localAuth.getAvailableBiometrics();
+      if (types.contains(BiometricType.face)) {
+        return UnlockBiometricKind.faceId;
+      }
+      if (types.contains(BiometricType.fingerprint)) {
+        // iOS Touch ID reports as fingerprint; Android fingerprint too.
+        return UnlockBiometricKind.touchId;
+      }
+      if (types.contains(BiometricType.strong) ||
+          types.contains(BiometricType.weak)) {
+        return UnlockBiometricKind.strongBiometric;
+      }
+      if (types.contains(BiometricType.iris)) {
+        return UnlockBiometricKind.faceId;
+      }
+      return UnlockBiometricKind.devicePasscode;
+    } on PlatformException {
+      return UnlockBiometricKind.devicePasscode;
     }
   }
 

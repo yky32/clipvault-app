@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,13 +5,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Full-screen lock — modern brand gate. System Face ID / passcode is only
-/// invoked after this UI paints (we cannot restyle the system sheet).
+/// Full-screen lock — brand gate with app icon.
+/// System Face ID / passcode sheet is invoked automatically (and via the
+/// biometric control). We cannot restyle the OS auth UI.
 class LockPage extends StatefulWidget {
   const LockPage({super.key});
 
@@ -25,7 +24,11 @@ class _LockPageState extends State<LockPage>
     with SingleTickerProviderStateMixin {
   bool _busy = false;
   String? _error;
+  UnlockBiometricKind _kind = UnlockBiometricKind.devicePasscode;
   late final AnimationController _pulse;
+
+  static const _appIconAsset =
+      'assets/icon/app-icons/source/app-icon-1024.png';
 
   @override
   void initState() {
@@ -40,6 +43,8 @@ class _LockPageState extends State<LockPage>
         if (mounted) context.go('/vault');
         return;
       }
+      final kind = await AppBootstrap.authService.preferredUnlockKind();
+      if (mounted) setState(() => _kind = kind);
       // Let the brand screen settle before the system prompt.
       await Future<void>.delayed(const Duration(milliseconds: 450));
       if (mounted) _unlock(auto: true);
@@ -82,6 +87,28 @@ class _LockPageState extends State<LockPage>
     }
   }
 
+  IconData get _unlockIcon {
+    return switch (_kind) {
+      UnlockBiometricKind.faceId => Icons.face_outlined,
+      UnlockBiometricKind.touchId ||
+      UnlockBiometricKind.fingerprint =>
+        Icons.fingerprint,
+      UnlockBiometricKind.strongBiometric => Icons.fingerprint,
+      UnlockBiometricKind.devicePasscode => CupertinoIcons.lock_fill,
+    };
+  }
+
+  String _unlockLabel(AppLocalizations l10n) {
+    return switch (_kind) {
+      UnlockBiometricKind.faceId => l10n.unlockWithFaceId,
+      UnlockBiometricKind.touchId ||
+      UnlockBiometricKind.fingerprint =>
+        l10n.unlockWithTouchId,
+      UnlockBiometricKind.strongBiometric => l10n.unlockWithBiometrics,
+      UnlockBiometricKind.devicePasscode => l10n.unlockWithPasscode,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -93,7 +120,6 @@ class _LockPageState extends State<LockPage>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Soft atmospheric background
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -114,7 +140,6 @@ class _LockPageState extends State<LockPage>
               ),
             ),
           ),
-          // Ambient glow
           Positioned(
             top: MediaQuery.sizeOf(context).height * 0.18,
             left: 0,
@@ -147,37 +172,26 @@ class _LockPageState extends State<LockPage>
               child: Column(
                 children: [
                   const Spacer(flex: 2),
-                  // Brand monogram glass
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.white.withValues(alpha: 0.7),
-                            width: 0.6,
-                          ),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isDark
-                                ? [
-                                    Colors.white.withValues(alpha: 0.12),
-                                    Colors.white.withValues(alpha: 0.04),
-                                  ]
-                                : [
-                                    Colors.white.withValues(alpha: 0.9),
-                                    Colors.white.withValues(alpha: 0.55),
-                                  ],
-                          ),
-                          boxShadow: AppShadows.island(context),
+                  // App icon (brand) — not a generic lock glyph
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
                         ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      _appIconAsset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => ColoredBox(
+                        color: accent.withValues(alpha: 0.12),
                         child: Icon(
                           CupertinoIcons.lock_fill,
                           size: 36,
@@ -224,60 +238,49 @@ class _LockPageState extends State<LockPage>
                     ),
                   ],
                   const Spacer(flex: 2),
-                  // Primary unlock control
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: FilledButton(
-                      onPressed: _busy ? null : () => _unlock(auto: false),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: accent,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            accent.withValues(alpha: 0.45),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                  // Device-aware unlock control (no full-width button)
+                  Opacity(
+                    opacity: _busy ? 0.45 : 1,
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
                       ),
-                      child: _busy
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
+                      onPressed: _busy ? null : () => _unlock(auto: false),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_busy)
+                            SizedBox(
+                              width: 44,
+                              height: 44,
                               child: CupertinoActivityIndicator(
-                                color: Colors.white,
+                                color: accent,
                               ),
                             )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(CupertinoIcons.lock_open_fill,
-                                    size: 18),
-                                const SizedBox(width: 8),
-                                Text(
-                                  l10n.unlockButton,
-                                  style: const TextStyle(
-                                    fontFamily: 'Satoshi',
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.3,
-                                  ),
-                                ),
-                              ],
+                          else
+                            Icon(
+                              _unlockIcon,
+                              size: 40,
+                              color: accent,
                             ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _unlockLabel(l10n),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Satoshi',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.2,
+                              color: AppColors.secondaryLabel(context),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.unlockHint,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Satoshi',
-                      fontSize: 12,
-                      color: AppColors.tertiaryLabel(context),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 36),
                 ],
               ),
             ),

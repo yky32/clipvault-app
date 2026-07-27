@@ -866,6 +866,30 @@ abstract class AppLocalizations {
   /// **'Face ID · Touch ID · Device passcode'**
   String get unlockHint;
 
+  /// No description provided for @unlockWithFaceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Face ID'**
+  String get unlockWithFaceId;
+
+  /// No description provided for @unlockWithTouchId.
+  ///
+  /// In en, this message translates to:
+  /// **'Touch ID'**
+  String get unlockWithTouchId;
+
+  /// No description provided for @unlockWithBiometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics'**
+  String get unlockWithBiometrics;
+
+  /// No description provided for @unlockWithPasscode.
+  ///
+  /// In en, this message translates to:
+  /// **'Device passcode'**
+  String get unlockWithPasscode;
+
   /// No description provided for @unlockAuthReason.
   ///
   /// In en, this message translates to:
