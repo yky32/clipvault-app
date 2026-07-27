@@ -24,6 +24,12 @@ if [ ! -d vendor/bundle ] && [ ! -f Gemfile.lock ]; then
   "$ROOT/ios/install_gems_and_pods.sh"
 fi
 
+# Full SHA baked into the IPA for Settings footer (v1.0.0 #abcdef1)
+export GIT_COMMIT="${GIT_COMMIT:-$(cd "$ROOT" && git rev-parse HEAD 2>/dev/null || true)}"
+
 echo "→ $(ruby -v)"
+if [ -n "${GIT_COMMIT:-}" ]; then
+  echo "→ GIT_COMMIT=${GIT_COMMIT:0:7}…"
+fi
 echo "→ fastlane ios upload_testflight $*"
 bundle exec fastlane ios upload_testflight "$@"
