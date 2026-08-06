@@ -486,4 +486,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterday => 'Yesterday';
+
+  @override
+  String get addressLanguageLabel => 'Address language';
+
+  @override
+  String get addressLanguageNone => 'Any';
+
+  @override
+  String get addressLanguageZh => 'Chinese';
+
+  @override
+  String get addressLanguageEn => 'English';
+
+  @override
+  String get gridTitleSize => 'Grid title size';
+
+  @override
+  String get gridTitleSizeSubtitle =>
+      'Title text on vault grid cards. Does not auto-shrink.';
+
+  @override
+  String get gridTitleSizeLarge => 'Large';
+
+  @override
+  String get gridTitleSizeMedium => 'Medium';
+
+  @override
+  String get gridTitleSizeSmall => 'Small';
 }

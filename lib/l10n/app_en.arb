@@ -208,5 +208,15 @@
       "count": { "type": "int" }
     }
   },
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "addressLanguageLabel": "Address language",
+  "addressLanguageNone": "Any",
+  "addressLanguageZh": "Chinese",
+  "addressLanguageEn": "English",
+  "gridTitleSize": "Grid title size",
+  "gridTitleSizeSubtitle": "Title text on vault grid cards. Does not auto-shrink.",
+  "gridTitleSizeLarge": "Large",
+  "gridTitleSizeMedium": "Medium",
+  "gridTitleSizeSmall": "Small"
 }
+

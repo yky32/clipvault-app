@@ -29,6 +29,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   late bool _biometric;
   late VaultViewMode _viewMode;
+  late GridTitleSize _gridTitleSize;
   late int _clipboardSeconds;
   String _versionLabel = '1.0.0';
 
@@ -38,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final s = SettingsService.instance;
     _biometric = s.biometricLockEnabled;
     _viewMode = s.defaultViewMode;
+    _gridTitleSize = s.gridTitleSize;
     _clipboardSeconds = s.clipboardClearSeconds;
     _loadVersion();
   }
@@ -293,7 +295,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 28),
                 IosGroup(
                   header: l10n.settingsAppearance,
-                  footer: l10n.colorPaletteSubtitle,
+                  footer: l10n.gridTitleSizeSubtitle,
                   children: [
                     IosGroupTile(
                       title: l10n.themeMode,
@@ -341,6 +343,34 @@ class _SettingsPageState extends State<SettingsPage> {
                             await SettingsService.instance
                                 .setDefaultViewMode(mode);
                             setState(() => _viewMode = mode);
+                          },
+                        ),
+                      ),
+                    ),
+                    IosGroupTile(
+                      title: l10n.gridTitleSize,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.textformat_size,
+                        color: AppColors.iconTheme,
+                      ),
+                      below: SizedBox(
+                        width: double.infinity,
+                        child: CupertinoSlidingSegmentedControl<GridTitleSize>(
+                          groupValue: _gridTitleSize,
+                          children: {
+                            GridTitleSize.large:
+                                _SegmentLabel(l10n.gridTitleSizeLarge),
+                            GridTitleSize.medium:
+                                _SegmentLabel(l10n.gridTitleSizeMedium),
+                            GridTitleSize.small:
+                                _SegmentLabel(l10n.gridTitleSizeSmall),
+                          },
+                          onValueChanged: (size) async {
+                            if (size == null) return;
+                            HapticFeedback.selectionClick();
+                            await SettingsService.instance
+                                .setGridTitleSize(size);
+                            setState(() => _gridTitleSize = size);
                           },
                         ),
                       ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum VaultViewMode {
@@ -20,6 +21,27 @@ enum VaultViewMode {
       };
 }
 
+/// Fixed grid card title sizes (no shrink-to-fit).
+enum GridTitleSize {
+  large,
+  medium,
+  small;
+
+  /// Title point size on grid tiles.
+  double get titleFontSize => switch (this) {
+        large => 24,
+        medium => 20,
+        small => 15,
+      };
+
+  /// Meta line under the title.
+  double get metaFontSize => switch (this) {
+        large => 12.5,
+        medium => 12,
+        small => 11,
+      };
+}
+
 class SettingsService {
   SettingsService._();
   static final SettingsService instance = SettingsService._();
@@ -33,8 +55,13 @@ class SettingsService {
   static const _viewModeKey = 'default_view';
   static const _clipboardClearKey = 'clipboard_clear_seconds';
   static const _localeKey = 'locale_code';
+  static const _gridTitleSizeKey = 'grid_title_size';
 
   late SharedPreferences _prefs;
+
+  /// Listenable so vault grid rebuilds when size changes in Settings.
+  final ValueNotifier<GridTitleSize> gridTitleSizeListenable =
+      ValueNotifier(GridTitleSize.large);
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -42,6 +69,7 @@ class SettingsService {
     if (_prefs.containsKey('biometric_lock')) {
       await _prefs.remove('biometric_lock');
     }
+    gridTitleSizeListenable.value = gridTitleSize;
   }
 
   bool get onboardingDone => _prefs.getBool(_onboardingKey) ?? false;
@@ -105,5 +133,27 @@ class SettingsService {
     } else {
       await _prefs.setString(_localeKey, code);
     }
+  }
+
+  /// Grid card title size. Default **large** (no auto-shrink).
+  GridTitleSize get gridTitleSize {
+    final raw = _prefs.getString(_gridTitleSizeKey);
+    return switch (raw) {
+      'medium' => GridTitleSize.medium,
+      'small' => GridTitleSize.small,
+      _ => GridTitleSize.large,
+    };
+  }
+
+  Future<void> setGridTitleSize(GridTitleSize size) async {
+    await _prefs.setString(
+      _gridTitleSizeKey,
+      switch (size) {
+        GridTitleSize.large => 'large',
+        GridTitleSize.medium => 'medium',
+        GridTitleSize.small => 'small',
+      },
+    );
+    gridTitleSizeListenable.value = size;
   }
 }

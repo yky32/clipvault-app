@@ -415,8 +415,9 @@ class _VaultPageState extends State<VaultPage> {
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: gridCount,
-                                  mainAxisSpacing: gridCount == 3 ? 8 : 10,
-                                  crossAxisSpacing: gridCount == 3 ? 8 : 10,
+                                  // More air between tiles so corner badges breathe.
+                                  mainAxisSpacing: gridCount == 3 ? 10 : 12,
+                                  crossAxisSpacing: gridCount == 3 ? 10 : 12,
                                   // Square tiles · 2 or 3 per row
                                   childAspectRatio: 1,
                                 ),

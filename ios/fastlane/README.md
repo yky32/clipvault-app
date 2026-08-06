@@ -1,127 +1,172 @@
-# ClipVal — Fastlane (TestFlight)
+fastlane documentation
+----
 
-Automated iOS build + TestFlight upload, aligned with **Depozio** / **Triftly**.
+# Installation
 
-## One-command TestFlight
+Make sure you have the latest version of the Xcode command line tools installed:
 
-From the repo root (or `ios/`):
-
-```bash
-cd ios
-bundle install
-bundle exec fastlane ios upload_testflight
+```sh
+xcode-select --install
 ```
 
-Or use the interactive menu (same as Depozio):
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-```bash
-cd ios/fastlane
-./fastlane_menu.sh
-# pick [5] ios upload_testflight
+# Available Actions
+
+### get_dependencies
+
+```sh
+[bundle exec] fastlane get_dependencies
 ```
 
-### What `upload_testflight` does
+Get Flutter dependencies
 
-1. Bumps `pubspec.yaml` build number (`1.0.0+N` → `+N+1`)
-2. Commits + pushes that bump
-3. `flutter pub get` + `pod install`
-4. `flutter build ios --release` + archive IPA (App Store export)
-5. Uploads IPA to TestFlight with release notes from last git commits
-6. On missing App Store Connect app → tries `create_app` then retries
-7. On signing failure → tries `setup_appstore_signing` then retries once
+### test
 
-## First-time setup
-
-### 1. Apple Developer
-
-- Team ID in Xcode / Fastfile: **`3G34999H3A`**
-- Bundle ID: **`com.clipval`**
-- Display name: **ClipVal**
-
-Ensure the App ID exists (or run `create_app`):
-
-```bash
-cd ios && bundle exec fastlane ios create_app
+```sh
+[bundle exec] fastlane test
 ```
 
-### 2. Signing (Automatic)
+Run Flutter tests
 
-Open Xcode once:
+### clean_all
 
-```bash
-open ios/Runner.xcworkspace
+```sh
+[bundle exec] fastlane clean_all
 ```
 
-Runner → **Signing & Capabilities** → Automatic → team **3G34999H3A**.
+Clean all build artifacts
 
-Or CLI:
+----
 
-```bash
-cd ios && bundle exec fastlane ios setup_appstore_signing
+
+## iOS
+
+### ios build_debug
+
+```sh
+[bundle exec] fastlane ios build_debug
 ```
 
-### 3. Auth for upload
+Build iOS app for development (Debug)
 
-**Option A — Apple ID (local, interactive 2FA)**  
-Uses `FASTLANE_USER` (default `wayneyu.dev@gmail.com`). First run may prompt for password / 2FA.
+### ios build_release
 
-**Option B — App Store Connect API key (recommended, non-interactive)**  
-
-Create a key in App Store Connect → Users and Access → Keys, then either:
-
-- Save the `.p8` as `~/.appstoreconnect/api_key.p8`, and set:
-
-```bash
-export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXX
-export APP_STORE_CONNECT_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-export APP_STORE_CONNECT_API_KEY_CONTENT="$(cat ~/.appstoreconnect/api_key.p8)"
+```sh
+[bundle exec] fastlane ios build_release
 ```
 
-- Or put the same vars in `ios/fastlane/.env` (gitignored).
+Build iOS app for release (no codesign)
 
-Copy defaults:
+### ios build_ipa
 
-```bash
-cp ios/fastlane/.env.default ios/fastlane/.env
-# edit .env
+```sh
+[bundle exec] fastlane ios build_ipa
 ```
 
-### 4. Gems + pods (Ruby 2.6 via rbenv — same as Triftly)
+Build iOS app and create IPA (requires code signing)
 
-System `/usr/bin/ruby` can fail on modern `ffi`. Use the project helper:
+Options: export_method — development | ad-hoc | app-store | enterprise (default: development)
 
-```bash
-# once: brew install rbenv ruby-build && rbenv install 2.6.10
-./ios/install_gems_and_pods.sh
+### ios upload_testflight
+
+```sh
+[bundle exec] fastlane ios upload_testflight
 ```
 
-That installs Gemfile gems under rbenv 2.6.10 and runs `pod install`.
+Build IPA and upload to TestFlight (auto build number + release notes)
 
-## Other lanes
+Options: skip_build:true — upload existing IPA only
 
-| Lane | Purpose |
-|------|---------|
-| `ios build_debug` | Debug build, no codesign |
-| `ios build_release` | Release, no codesign |
-| `ios build_ipa` | IPA (development by default) |
-| `ios build_ipa export_method:app-store` | App Store IPA only |
-| `ios upload_testflight skip_build:true` | Re-upload existing IPA |
-| `ios create_app` | Register ASC + Developer portal |
-| `ios setup_appstore_signing` | Dist cert + profile |
-| `android build_release_apk` | Android APK (debug signing until Play keystore) |
-| `test` | `flutter test` |
+### ios create_app
 
-## Env overrides
+```sh
+[bundle exec] fastlane ios create_app
+```
 
-| Variable | Default |
-|----------|---------|
-| `FASTLANE_USER` | `wayneyu.dev@gmail.com` |
-| `FASTLANE_TEAM_ID` | `3G34999H3A` |
-| `FASTLANE_ITC_TEAM_ID` | (optional, multi-team ASC) |
-| `APP_STORE_CONNECT_API_KEY_*` | (optional API key auth) |
+Create app in App Store Connect + Developer Portal
 
-## Notes
+### ios upload_screenshots
 
-- ClipVal has **no** Flutter `--dart-define` secrets (unlike Triftly). Local-only vault.
-- Android release still uses debug signing in Gradle until you add a Play keystore.
-- After first TestFlight upload, complete App Store Connect listing (privacy, screenshots) before public release — not required for internal TestFlight.
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Upload App Store screenshots only (no binary) — from store/screenshots/
+
+### ios prune_excess_certificates_for_ci
+
+```sh
+[bundle exec] fastlane ios prune_excess_certificates_for_ci
+```
+
+Revoke excess API-created Development certs on CI (frees Apple cert slots)
+
+### ios setup_appstore_signing
+
+```sh
+[bundle exec] fastlane ios setup_appstore_signing
+```
+
+Setup App Store distribution certificate + provisioning profile
+
+### ios increment_build
+
+```sh
+[bundle exec] fastlane ios increment_build
+```
+
+Increment build number in Xcode project only
+
+### ios clean
+
+```sh
+[bundle exec] fastlane ios clean
+```
+
+Clean iOS build artifacts
+
+----
+
+
+## Android
+
+### android build_debug
+
+```sh
+[bundle exec] fastlane android build_debug
+```
+
+Build Android debug APK
+
+### android build_release_apk
+
+```sh
+[bundle exec] fastlane android build_release_apk
+```
+
+Build Android release APK
+
+### android build_release_bundle
+
+```sh
+[bundle exec] fastlane android build_release_bundle
+```
+
+Build Android release App Bundle
+
+### android clean
+
+```sh
+[bundle exec] fastlane android clean
+```
+
+Clean Android build artifacts
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).

@@ -694,9 +694,13 @@ platform :ios do
   end
 
   desc "Upload App Store screenshots only (no binary) — from store/screenshots/"
+  # Uses Spaceship single-pass upload (not deliver overwrite_screenshots), which can
+  # double-upload on retry and leave 4+4=8 duplicate slots on APP_IPHONE_67.
   lane :upload_screenshots do
     screenshots_path = File.join(PROJECT_ROOT, "store", "screenshots")
+    locale_dir = File.join(screenshots_path, "en-US")
     UI.user_error!("Missing #{screenshots_path}") unless Dir.exist?(screenshots_path)
+    UI.user_error!("Missing #{locale_dir}") unless Dir.exist?(locale_dir)
 
     key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s
     issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s
@@ -713,27 +717,51 @@ platform :ios do
     UI.user_error!("Missing issuer id (APP_STORE_CONNECT_ISSUER_ID)") if issuer_id.empty?
     UI.user_error!("Missing API key file at #{key_path}") unless File.exist?(key_path)
 
-    api_key = app_store_connect_api_key(
+    files = Dir[File.join(locale_dir, "*.png")].sort
+    UI.user_error!("No PNGs in #{locale_dir}") if files.empty?
+    UI.message("🖼️  Single-pass upload of #{files.size} screenshot(s) from #{locale_dir}…")
+    files.each { |f| UI.message("   • #{File.basename(f)}") }
+
+    token = Spaceship::ConnectAPI::Token.create(
       key_id: key_id,
       issuer_id: issuer_id,
-      key_filepath: key_path
+      filepath: key_path
     )
+    Spaceship::ConnectAPI.token = token
 
-    UI.message("🖼️  Uploading screenshots from #{screenshots_path}…")
-    deliver(
-      api_key: api_key,
-      app_identifier: APP_IDENTIFIER,
-      screenshots_path: screenshots_path,
-      skip_binary_upload: true,
-      skip_metadata: true,
-      skip_app_version_update: true,
-      force: true,
-      overwrite_screenshots: true,
-      run_precheck_before_submit: false,
-      submit_for_review: false,
-      automatic_release: false
-    )
-    UI.success("✅ Screenshots uploaded to App Store Connect")
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    UI.user_error!("App not found: #{APP_IDENTIFIER}") unless app
+
+    version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS)
+    UI.user_error!("No editable App Store version") unless version
+
+    loc = version.get_app_store_version_localizations.find { |l| l.locale == "en-US" }
+    UI.user_error!("Missing en-US localization on version #{version.version_string}") unless loc
+
+    display_type = "APP_IPHONE_67"
+    set = loc.get_app_screenshot_sets.find { |s| s.screenshot_display_type == display_type }
+    unless set
+      set = Spaceship::ConnectAPI::AppScreenshotSet.create(
+        app_store_version_localization_id: loc.id,
+        screenshot_display_type: display_type
+      )
+    end
+
+    existing = set.app_screenshots || []
+    UI.message("Clearing #{existing.size} existing #{display_type} screenshot(s)…") if existing.any?
+    existing.each do |shot|
+      Spaceship::ConnectAPI.delete_app_screenshot(app_screenshot_id: shot.id)
+    end
+
+    files.each_with_index do |path, idx|
+      UI.message("Upload #{idx + 1}/#{files.size}: #{File.basename(path)}")
+      set.upload_screenshot(path: path, wait_for_processing: true)
+    end
+
+    set = loc.get_app_screenshot_sets.find { |s| s.screenshot_display_type == display_type }
+    final = set.app_screenshots || []
+    UI.user_error!("Expected #{files.size} screenshots, ASC has #{final.size}") unless final.size == files.size
+    UI.success("✅ Screenshots uploaded to App Store Connect (#{final.size} on #{display_type}, no duplicates)")
   end
 
   desc "Revoke excess API-created Development certs on CI (frees Apple cert slots)"

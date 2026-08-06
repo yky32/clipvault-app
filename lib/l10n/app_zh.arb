@@ -178,5 +178,15 @@
       "count": { "type": "int" }
     }
   },
-  "yesterday": "昨天"
+  "yesterday": "昨天",
+  "addressLanguageLabel": "地址語言",
+  "addressLanguageNone": "不限",
+  "addressLanguageZh": "中文",
+  "addressLanguageEn": "English",
+  "gridTitleSize": "網格標題大小",
+  "gridTitleSizeSubtitle": "保險庫網格卡片的標題字級，不會自動縮小。",
+  "gridTitleSizeLarge": "大",
+  "gridTitleSizeMedium": "中",
+  "gridTitleSizeSmall": "小"
 }
+

@@ -985,6 +985,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yesterday'**
   String get yesterday;
+
+  /// No description provided for @addressLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address language'**
+  String get addressLanguageLabel;
+
+  /// No description provided for @addressLanguageNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get addressLanguageNone;
+
+  /// No description provided for @addressLanguageZh.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get addressLanguageZh;
+
+  /// No description provided for @addressLanguageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get addressLanguageEn;
+
+  /// No description provided for @gridTitleSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid title size'**
+  String get gridTitleSize;
+
+  /// No description provided for @gridTitleSizeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title text on vault grid cards. Does not auto-shrink.'**
+  String get gridTitleSizeSubtitle;
+
+  /// No description provided for @gridTitleSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get gridTitleSizeLarge;
+
+  /// No description provided for @gridTitleSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get gridTitleSizeMedium;
+
+  /// No description provided for @gridTitleSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get gridTitleSizeSmall;
 }
 
 class _AppLocalizationsDelegate

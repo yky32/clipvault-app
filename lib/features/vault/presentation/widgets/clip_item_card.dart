@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/models/clip_item.dart';
+import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/relative_time.dart';
 import '../../../../core/widgets/copied_hud.dart';
@@ -69,6 +70,7 @@ class _ListRow extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toString();
+    // Language sits on the trailing edge — not in the meta line.
     final subtitle = vaultItemMetaLine(
       l10n: l10n,
       categoryName: categoryName,
@@ -91,12 +93,14 @@ class _ListRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _GlassIconWell(icon: icon, size: 34, iconSize: 17),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -137,6 +141,10 @@ class _ListRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (item.languageTag != null) ...[
+              const SizedBox(width: 10),
+              _LanguageCornerBadge(tag: item.languageTag!),
+            ],
           ],
         ),
       ),
@@ -145,6 +153,13 @@ class _ListRow extends StatelessWidget {
 }
 
 /// Compact grid cell as a floating glass island.
+///
+/// Layout (use the full square cleanly):
+/// ```
+/// [icon]              [EN] 📌   ← status chrome
+/// Home Address                  ← title (up to 2 lines)
+/// Addresses · Just now          ← meta
+/// ```
 class _GridTile extends StatelessWidget {
   const _GridTile({
     required this.item,
@@ -164,6 +179,7 @@ class _GridTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toString();
+    // Language lives top-right — keep meta short.
     final meta = vaultItemMetaLine(
       l10n: l10n,
       categoryName: categoryName,
@@ -186,57 +202,64 @@ class _GridTile extends StatelessWidget {
       child: GlassIsland(
         borderRadius: BorderRadius.circular(18),
         blur: 16,
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Title type size ≈ 28% of tile height (square grid cell).
-            final titleSize =
-                (constraints.maxHeight * 0.28).clamp(16.0, 32.0);
-            final metaSize = (titleSize * 0.40).clamp(10.0, 13.0);
+        padding: const EdgeInsets.fromLTRB(12, 11, 11, 11),
+        // Title size is a Settings preference — never auto-shrinks.
+        child: ValueListenableBuilder<GridTitleSize>(
+          valueListenable: SettingsService.instance.gridTitleSizeListenable,
+          builder: (context, titleSizePref, _) {
+            final titleSize = titleSizePref.titleFontSize;
+            final metaSize = titleSizePref.metaFontSize;
+            const iconSize = 30.0;
 
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    _GlassIconWell(icon: icon, size: 30, iconSize: 15),
-                    const Spacer(),
-                    if (item.isPinned)
-                      Icon(
-                        CupertinoIcons.pin_fill,
-                        size: 12,
-                        color: AppColors.primary.withValues(alpha: 0.7),
-                      ),
-                  ],
-                ),
-                const Spacer(),
-                // Single line + ellipsis: "Office WiFi" → "Office…"
-                // Full title: Tooltip + long-press actions sheet.
+                // —— Top chrome: category icon | language + pin ——
                 SizedBox(
-                  height: titleSize * 1.2,
-                  width: double.infinity,
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Tooltip(
-                      message: item.title,
-                      waitDuration: const Duration(milliseconds: 400),
-                      child: Text(
-                        item.title,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Satoshi',
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.4,
-                          height: 1.05,
+                  height: iconSize,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _GlassIconWell(
+                        icon: icon,
+                        size: iconSize,
+                        iconSize: 15,
+                      ),
+                      const Spacer(),
+                      _StatusCluster(
+                        languageTag: item.languageTag,
+                        isPinned: item.isPinned,
+                      ),
+                    ],
+                  ),
+                ),
+                // —— Flexible middle: title uses remaining height ——
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Tooltip(
+                        message: item.title,
+                        waitDuration: const Duration(milliseconds: 400),
+                        child: Text(
+                          item.title,
+                          maxLines: 2,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Satoshi',
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.35,
+                            height: 1.12,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                // —— Foot meta: category · last used ——
                 Text(
                   meta,
                   maxLines: 1,
@@ -253,6 +276,80 @@ class _GridTile extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Top-right status group: language pill, then pin — single alignment baseline.
+class _StatusCluster extends StatelessWidget {
+  const _StatusCluster({
+    this.languageTag,
+    this.isPinned = false,
+  });
+
+  final String? languageTag;
+  final bool isPinned;
+
+  @override
+  Widget build(BuildContext context) {
+    if (languageTag == null && !isPinned) {
+      return const SizedBox.shrink();
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (languageTag != null) _LanguageCornerBadge(tag: languageTag!),
+        if (languageTag != null && isPinned) const SizedBox(width: 5),
+        if (isPinned)
+          Icon(
+            CupertinoIcons.pin_fill,
+            size: 12,
+            color: AppColors.primary.withValues(alpha: 0.72),
+          ),
+      ],
+    );
+  }
+}
+
+/// Compact language tag for Addresses — top-right of grid / trailing on list.
+class _LanguageCornerBadge extends StatelessWidget {
+  const _LanguageCornerBadge({required this.tag});
+
+  final String tag;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final full = languageTagLabel(tag, l10n);
+    if (full == null) return const SizedBox.shrink();
+
+    final short = switch (tag) {
+      ClipItem.languageZh => '中',
+      ClipItem.languageEn => 'EN',
+      _ => full,
+    };
+
+    return Tooltip(
+      message: full,
+      waitDuration: const Duration(milliseconds: 350),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.5),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          short,
+          style: TextStyle(
+            fontFamily: 'Satoshi',
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.15,
+            height: 1.1,
+            color: AppColors.primary,
+          ),
         ),
       ),
     );

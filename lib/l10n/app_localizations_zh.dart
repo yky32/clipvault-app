@@ -478,4 +478,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yesterday => '昨天';
+
+  @override
+  String get addressLanguageLabel => '地址語言';
+
+  @override
+  String get addressLanguageNone => '不限';
+
+  @override
+  String get addressLanguageZh => '中文';
+
+  @override
+  String get addressLanguageEn => 'English';
+
+  @override
+  String get gridTitleSize => '網格標題大小';
+
+  @override
+  String get gridTitleSizeSubtitle => '保險庫網格卡片的標題字級，不會自動縮小。';
+
+  @override
+  String get gridTitleSizeLarge => '大';
+
+  @override
+  String get gridTitleSizeMedium => '中';
+
+  @override
+  String get gridTitleSizeSmall => '小';
 }

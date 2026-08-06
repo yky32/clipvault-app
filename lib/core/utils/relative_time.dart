@@ -31,17 +31,36 @@ String formatLastUsed(DateTime? at, AppLocalizations l10n, {String? locale}) {
   return DateFormat(pattern, locale).format(local);
 }
 
-/// Category + last-used on one meta line for list/grid cards.
+/// Category + optional language tag + last-used on one meta line for cards.
 String vaultItemMetaLine({
   required AppLocalizations l10n,
   String? categoryName,
+  String? languageTag,
   DateTime? lastUsedAt,
   String? locale,
 }) {
   final used = formatLastUsed(lastUsedAt, l10n, locale: locale);
+  final parts = <String>[];
   final cat = categoryName?.trim();
   if (cat != null && cat.isNotEmpty) {
-    return '$cat · $used';
+    parts.add(cat);
   }
-  return used;
+  final lang = languageTagLabel(languageTag, l10n);
+  if (lang != null) {
+    parts.add(lang);
+  }
+  parts.add(used);
+  return parts.join(' · ');
+}
+
+/// Short label for Addresses language tag (`zh` / `en`), or null if unmarked.
+String? languageTagLabel(String? tag, AppLocalizations l10n) {
+  switch (tag) {
+    case 'zh':
+      return l10n.addressLanguageZh;
+    case 'en':
+      return l10n.addressLanguageEn;
+    default:
+      return null;
+  }
 }

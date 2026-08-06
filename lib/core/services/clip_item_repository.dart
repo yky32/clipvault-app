@@ -38,6 +38,7 @@ class ClipItemRepository {
     required String title,
     required String value,
     String? categoryId,
+    String? languageTag,
     bool isPinned = false,
   }) async {
     final now = DateTime.now();
@@ -46,6 +47,7 @@ class ClipItemRepository {
       title: title.trim(),
       value: value,
       categoryId: categoryId,
+      languageTag: languageTag,
       isPinned: isPinned,
       createdAt: now,
       updatedAt: now,
@@ -86,6 +88,9 @@ class ClipItemRepository {
       buffer.writeln('Title: ${item.title}');
       if (item.categoryId != null) {
         buffer.writeln('Category: ${item.categoryId}');
+      }
+      if (item.languageTag != null) {
+        buffer.writeln('Language: ${item.languageTag}');
       }
       buffer.writeln('Value: ${item.value}');
       buffer.writeln(

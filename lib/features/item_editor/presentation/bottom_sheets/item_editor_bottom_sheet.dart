@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/constants/default_categories.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
@@ -58,9 +59,18 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
 
   ClipItem? _existing;
   String? _selectedCategoryId;
+  /// Addresses only: `zh` | `en` | null.
+  String? _languageTag;
   bool _isPinned = false;
   bool _obscureValue = true;
   bool _saving = false;
+
+  bool get _isAddressesCategory {
+    final id = _selectedCategoryId;
+    if (id == null) return false;
+    final cat = AppBootstrap.categoryRepository.getById(id);
+    return cat?.systemKey == DefaultCategories.addresses;
+  }
 
   @override
   void initState() {
@@ -72,6 +82,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         _valueController.text = _existing!.value;
         _isPinned = _existing!.isPinned;
         _selectedCategoryId = _existing!.categoryId;
+        _languageTag = _existing!.languageTag;
       }
     } else if (widget.initialCategoryId != null) {
       _selectedCategoryId = widget.initialCategoryId;
@@ -115,6 +126,10 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     if (!mounted || result == null) return;
     setState(() {
       _selectedCategoryId = result.category?.id;
+      // Language tag only applies to Addresses.
+      if (!_isAddressesCategory) {
+        _languageTag = null;
+      }
     });
   }
 
@@ -125,6 +140,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
 
     try {
       final categoryId = _selectedCategoryId;
+      final languageTag = _isAddressesCategory ? _languageTag : null;
 
       if (_existing != null) {
         await AppBootstrap.clipItemRepository.update(
@@ -133,6 +149,8 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
             value: _valueController.text,
             categoryId: categoryId,
             clearCategory: categoryId == null,
+            languageTag: languageTag,
+            clearLanguageTag: languageTag == null,
             isPinned: _isPinned,
           ),
         );
@@ -141,6 +159,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           title: _titleController.text.trim(),
           value: _valueController.text,
           categoryId: categoryId,
+          languageTag: languageTag,
           isPinned: _isPinned,
         );
       }
@@ -249,6 +268,60 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                 ),
                 onTap: _pickCategory,
               ),
+              if (_isAddressesCategory)
+                IosGroupTile(
+                  title: l10n.addressLanguageLabel,
+                  leading: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.textformat,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  below: Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _LanguageChip(
+                          label: l10n.addressLanguageNone,
+                          selected: _languageTag == null,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _languageTag = null);
+                          },
+                        ),
+                        _LanguageChip(
+                          label: l10n.addressLanguageZh,
+                          selected: _languageTag == ClipItem.languageZh,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(
+                              () => _languageTag = ClipItem.languageZh,
+                            );
+                          },
+                        ),
+                        _LanguageChip(
+                          label: l10n.addressLanguageEn,
+                          selected: _languageTag == ClipItem.languageEn,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(
+                              () => _languageTag = ClipItem.languageEn,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               IosGroupTile(
                 title: l10n.pinItem,
                 leading: Container(
@@ -299,6 +372,47 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
+      ),
+    );
+  }
+}
+
+class _LanguageChip extends StatelessWidget {
+  const _LanguageChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppColors.primary;
+    return Material(
+      color: selected
+          ? primary.withValues(alpha: 0.16)
+          : AppColors.secondaryLabel(context).withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected
+                      ? primary
+                      : AppColors.secondaryLabel(context),
+                  fontSize: 13,
+                  letterSpacing: -0.1,
+                ),
+          ),
+        ),
       ),
     );
   }
