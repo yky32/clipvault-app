@@ -12,12 +12,22 @@ abstract final class ClipVaultBottomSheet {
       context: context,
       useRootNavigator: useRootNavigator,
       isScrollControlled: true,
-      // SheetScaffold owns bottom inset / keyboard bridge — don't double-pad.
+      // Let the sheet own home-indicator / keyboard insets via SheetScaffold.
       useSafeArea: false,
       showDragHandle: false,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => _SheetKeyboardDismiss(child: child),
+      builder: (ctx) {
+        // Give tall sheets a bounded max height (90% of screen above keyboard).
+        final media = MediaQuery.of(ctx);
+        final maxH = media.size.height * 0.92 - media.viewInsets.bottom;
+        return _SheetKeyboardDismiss(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

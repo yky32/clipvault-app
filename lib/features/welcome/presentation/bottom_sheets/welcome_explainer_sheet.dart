@@ -55,82 +55,92 @@ class WelcomeExplainerSheet extends StatelessWidget {
         : l10n.welcomeSubtitle;
     final cta = isUpgrade ? l10n.welcomeCtaContinue : l10n.welcomeCta;
 
-    // ~90% of usable height (exclude home indicator via viewPadding).
-    final media = MediaQuery.of(context);
-    final usable = media.size.height - media.viewPadding.bottom;
-    final sheetHeight = usable * 0.90;
+    // Cap height using the *available* modal height (after keyboard/safe area),
+    // never a rigid fraction of the full physical screen.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenH = MediaQuery.sizeOf(context).height;
+        final viewPad = MediaQuery.viewPaddingOf(context).bottom;
+        final viewInset = MediaQuery.viewInsetsOf(context).bottom;
+        final available = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : (screenH - viewPad - viewInset);
+        // Leave a little headroom so chrome + CTA never overflow.
+        final sheetHeight = (available * 0.92).clamp(320.0, available);
 
-    return SizedBox(
-      height: sheetHeight,
-      width: double.infinity,
-      child: SheetScaffold(
-        title: title,
-        subtitle: subtitle,
-        compactBody: false,
-        centerTitle: true,
-        showCloseButton: false,
-        footer: SizedBox(
+        return SizedBox(
+          height: sheetHeight,
           width: double.infinity,
-          height: 52,
-          child: FilledButton(
-            onPressed: () => _dismiss(context),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+          child: SheetScaffold(
+            title: title,
+            subtitle: subtitle,
+            compactBody: false,
+            centerTitle: true,
+            showCloseButton: false,
+            footer: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton(
+                onPressed: () => _dismiss(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  cta,
+                  style: const TextStyle(
+                    fontFamily: 'Satoshi',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                  ),
+                ),
               ),
             ),
-            child: Text(
-              cta,
-              style: const TextStyle(
-                fontFamily: 'Satoshi',
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _WelcomeSection(
+                  emoji: '🚀',
+                  icon: CupertinoIcons.bolt_fill,
+                  iconColor: AppColors.primary,
+                  title: l10n.welcomeWhyTitle,
+                  body: l10n.welcomeWhyBody,
+                ),
+                const _WelcomeDivider(),
+                _WelcomeSection(
+                  emoji: '🔒',
+                  icon: CupertinoIcons.lock_shield_fill,
+                  iconColor: AppColors.iconSecurity,
+                  title: l10n.welcomeLocalTitle,
+                  body: l10n.welcomeLocalBody,
+                ),
+                const _WelcomeDivider(),
+                _WelcomeSection(
+                  emoji: '✨',
+                  icon: CupertinoIcons.hand_point_right_fill,
+                  iconColor: AppColors.iconView,
+                  title: l10n.welcomeHowTitle,
+                  body: l10n.welcomeHowBody,
+                ),
+                const _WelcomeDivider(),
+                _WelcomeSection(
+                  emoji: '💎',
+                  icon: CupertinoIcons.star_fill,
+                  iconColor: AppColors.iconExport,
+                  title: l10n.welcomePromoTitle,
+                  body: l10n.welcomePromoBody,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
             ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _WelcomeSection(
-              emoji: '🚀',
-              icon: CupertinoIcons.bolt_fill,
-              iconColor: AppColors.primary,
-              title: l10n.welcomeWhyTitle,
-              body: l10n.welcomeWhyBody,
-            ),
-            const _WelcomeDivider(),
-            _WelcomeSection(
-              emoji: '🔒',
-              icon: CupertinoIcons.lock_shield_fill,
-              iconColor: AppColors.iconSecurity,
-              title: l10n.welcomeLocalTitle,
-              body: l10n.welcomeLocalBody,
-            ),
-            const _WelcomeDivider(),
-            _WelcomeSection(
-              emoji: '✨',
-              icon: CupertinoIcons.hand_point_right_fill,
-              iconColor: AppColors.iconView,
-              title: l10n.welcomeHowTitle,
-              body: l10n.welcomeHowBody,
-            ),
-            const _WelcomeDivider(),
-            _WelcomeSection(
-              emoji: '💎',
-              icon: CupertinoIcons.star_fill,
-              iconColor: AppColors.iconExport,
-              title: l10n.welcomePromoTitle,
-              body: l10n.welcomePromoBody,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
