@@ -123,12 +123,40 @@
   "clipboardNever": "Never",
   "exportData": "Export data",
   "exportPlain": "Export as plain text",
+  "exportCsv": "Export CSV",
+  "importCsv": "Import CSV",
   "exportComingSoon": "Export will be available in a future update.",
   "exportConfirmTitle": "Export all values?",
   "exportConfirmBody": "Every vault value will be copied to the clipboard as plain text. Anyone with access to this device’s clipboard can read them. Continue?",
+  "exportCsvConfirmTitle": "Export vault as CSV?",
+  "exportCsvConfirmBody": "Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?",
+  "importCsvConfirmTitle": "Import vault CSV?",
+  "importCsvConfirmBody": "Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?",
   "exportConfirmAction": "Export",
+  "importConfirmAction": "Import",
   "exportAuthReason": "Confirm to export vault values",
+  "importAuthReason": "Confirm to import vault values",
   "exportCancelled": "Export cancelled",
+  "importCancelled": "Import cancelled",
+  "exportCsvShared": "CSV ready to share",
+  "importCsvSuccess": "Imported {imported}, skipped {skipped}",
+  "@importCsvSuccess": {
+    "placeholders": {
+      "imported": { "type": "int" },
+      "skipped": { "type": "int" }
+    }
+  },
+  "importCsvSuccessWithFailed": "Imported {imported}, skipped {skipped}, failed {failed}",
+  "@importCsvSuccessWithFailed": {
+    "placeholders": {
+      "imported": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "importCsvEmpty": "No items found in that file",
+  "importCsvInvalid": "Could not read that CSV file",
+  "importCsvPickFailed": "No file selected",
   "onboardingTitle1": "One-tap copy",
   "onboardingBody1": "Store any value and copy it instantly with a single tap.",
   "onboardingTitle2": "Private by default",

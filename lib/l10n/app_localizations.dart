@@ -656,6 +656,18 @@ abstract class AppLocalizations {
   /// **'Export as plain text'**
   String get exportPlain;
 
+  /// No description provided for @exportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCsv;
+
+  /// No description provided for @importCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Import CSV'**
+  String get importCsv;
+
   /// No description provided for @exportComingSoon.
   ///
   /// In en, this message translates to:
@@ -674,11 +686,41 @@ abstract class AppLocalizations {
   /// **'Every vault value will be copied to the clipboard as plain text. Anyone with access to this device’s clipboard can read them. Continue?'**
   String get exportConfirmBody;
 
+  /// No description provided for @exportCsvConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export vault as CSV?'**
+  String get exportCsvConfirmTitle;
+
+  /// No description provided for @exportCsvConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?'**
+  String get exportCsvConfirmBody;
+
+  /// No description provided for @importCsvConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import vault CSV?'**
+  String get importCsvConfirmTitle;
+
+  /// No description provided for @importCsvConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?'**
+  String get importCsvConfirmBody;
+
   /// No description provided for @exportConfirmAction.
   ///
   /// In en, this message translates to:
   /// **'Export'**
   String get exportConfirmAction;
+
+  /// No description provided for @importConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importConfirmAction;
 
   /// No description provided for @exportAuthReason.
   ///
@@ -686,11 +728,59 @@ abstract class AppLocalizations {
   /// **'Confirm to export vault values'**
   String get exportAuthReason;
 
+  /// No description provided for @importAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm to import vault values'**
+  String get importAuthReason;
+
   /// No description provided for @exportCancelled.
   ///
   /// In en, this message translates to:
   /// **'Export cancelled'**
   String get exportCancelled;
+
+  /// No description provided for @importCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Import cancelled'**
+  String get importCancelled;
+
+  /// No description provided for @exportCsvShared.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV ready to share'**
+  String get exportCsvShared;
+
+  /// No description provided for @importCsvSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {imported}, skipped {skipped}'**
+  String importCsvSuccess(int imported, int skipped);
+
+  /// No description provided for @importCsvSuccessWithFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {imported}, skipped {skipped}, failed {failed}'**
+  String importCsvSuccessWithFailed(int imported, int skipped, int failed);
+
+  /// No description provided for @importCsvEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No items found in that file'**
+  String get importCsvEmpty;
+
+  /// No description provided for @importCsvInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read that CSV file'**
+  String get importCsvInvalid;
+
+  /// No description provided for @importCsvPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'No file selected'**
+  String get importCsvPickFailed;
 
   /// No description provided for @onboardingTitle1.
   ///

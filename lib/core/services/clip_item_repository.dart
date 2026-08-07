@@ -40,6 +40,9 @@ class ClipItemRepository {
     String? categoryId,
     String? languageTag,
     bool isPinned = false,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? lastCopiedAt,
   }) async {
     final now = DateTime.now();
     final item = ClipItem(
@@ -49,8 +52,9 @@ class ClipItemRepository {
       categoryId: categoryId,
       languageTag: languageTag,
       isPinned: isPinned,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: createdAt ?? now,
+      updatedAt: updatedAt ?? now,
+      lastCopiedAt: lastCopiedAt,
     );
     await _save(item);
     return item;

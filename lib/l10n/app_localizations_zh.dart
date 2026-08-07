@@ -300,6 +300,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportPlain => '匯出為純文字';
 
   @override
+  String get exportCsv => '匯出 CSV';
+
+  @override
+  String get importCsv => '匯入 CSV';
+
+  @override
   String get exportComingSoon => '匯出功能將於未來版本提供。';
 
   @override
@@ -309,13 +315,58 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportConfirmBody => '保險庫內的所有值會以純文字複製到剪貼簿。任何能存取此裝置剪貼簿的人都能讀取。確定繼續？';
 
   @override
+  String get exportCsvConfirmTitle => '匯出保險庫為 CSV？';
+
+  @override
+  String get exportCsvConfirmBody =>
+      '保險庫內容會以純文字寫入 CSV 檔，方便儲存至「檔案」、iCloud 或分享。任何取得此檔案的人都能讀取內容。確定繼續？';
+
+  @override
+  String get importCsvConfirmTitle => '匯入保險庫 CSV？';
+
+  @override
+  String get importCsvConfirmBody =>
+      '檔案中的項目會加入此保險庫。完全相同的標題與內容會略過。檔案內為純文字。確定繼續？';
+
+  @override
   String get exportConfirmAction => '匯出';
+
+  @override
+  String get importConfirmAction => '匯入';
 
   @override
   String get exportAuthReason => '確認以匯出保險庫內容';
 
   @override
+  String get importAuthReason => '確認以匯入保險庫內容';
+
+  @override
   String get exportCancelled => '已取消匯出';
+
+  @override
+  String get importCancelled => '已取消匯入';
+
+  @override
+  String get exportCsvShared => 'CSV 已準備分享';
+
+  @override
+  String importCsvSuccess(int imported, int skipped) {
+    return '已匯入 $imported，略過 $skipped';
+  }
+
+  @override
+  String importCsvSuccessWithFailed(int imported, int skipped, int failed) {
+    return '已匯入 $imported，略過 $skipped，失敗 $failed';
+  }
+
+  @override
+  String get importCsvEmpty => '檔案中找不到項目';
+
+  @override
+  String get importCsvInvalid => '無法讀取此 CSV 檔案';
+
+  @override
+  String get importCsvPickFailed => '未選擇檔案';
 
   @override
   String get onboardingTitle1 => '一鍵複製';

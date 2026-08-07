@@ -93,12 +93,40 @@
   "clipboardNever": "永不",
   "exportData": "匯出資料",
   "exportPlain": "匯出為純文字",
+  "exportCsv": "匯出 CSV",
+  "importCsv": "匯入 CSV",
   "exportComingSoon": "匯出功能將於未來版本提供。",
   "exportConfirmTitle": "匯出所有內容？",
   "exportConfirmBody": "保險庫內的所有值會以純文字複製到剪貼簿。任何能存取此裝置剪貼簿的人都能讀取。確定繼續？",
+  "exportCsvConfirmTitle": "匯出保險庫為 CSV？",
+  "exportCsvConfirmBody": "保險庫內容會以純文字寫入 CSV 檔，方便儲存至「檔案」、iCloud 或分享。任何取得此檔案的人都能讀取內容。確定繼續？",
+  "importCsvConfirmTitle": "匯入保險庫 CSV？",
+  "importCsvConfirmBody": "檔案中的項目會加入此保險庫。完全相同的標題與內容會略過。檔案內為純文字。確定繼續？",
   "exportConfirmAction": "匯出",
+  "importConfirmAction": "匯入",
   "exportAuthReason": "確認以匯出保險庫內容",
+  "importAuthReason": "確認以匯入保險庫內容",
   "exportCancelled": "已取消匯出",
+  "importCancelled": "已取消匯入",
+  "exportCsvShared": "CSV 已準備分享",
+  "importCsvSuccess": "已匯入 {imported}，略過 {skipped}",
+  "@importCsvSuccess": {
+    "placeholders": {
+      "imported": { "type": "int" },
+      "skipped": { "type": "int" }
+    }
+  },
+  "importCsvSuccessWithFailed": "已匯入 {imported}，略過 {skipped}，失敗 {failed}",
+  "@importCsvSuccessWithFailed": {
+    "placeholders": {
+      "imported": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "importCsvEmpty": "檔案中找不到項目",
+  "importCsvInvalid": "無法讀取此 CSV 檔案",
+  "importCsvPickFailed": "未選擇檔案",
   "onboardingTitle1": "一鍵複製",
   "onboardingBody1": "儲存任何值，輕觸一次即可立即複製。",
   "onboardingTitle2": "預設私密",

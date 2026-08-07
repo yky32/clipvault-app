@@ -303,6 +303,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportPlain => 'Export as plain text';
 
   @override
+  String get exportCsv => 'Export CSV';
+
+  @override
+  String get importCsv => 'Import CSV';
+
+  @override
   String get exportComingSoon => 'Export will be available in a future update.';
 
   @override
@@ -313,13 +319,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'Every vault value will be copied to the clipboard as plain text. Anyone with access to this device’s clipboard can read them. Continue?';
 
   @override
+  String get exportCsvConfirmTitle => 'Export vault as CSV?';
+
+  @override
+  String get exportCsvConfirmBody =>
+      'Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?';
+
+  @override
+  String get importCsvConfirmTitle => 'Import vault CSV?';
+
+  @override
+  String get importCsvConfirmBody =>
+      'Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?';
+
+  @override
   String get exportConfirmAction => 'Export';
+
+  @override
+  String get importConfirmAction => 'Import';
 
   @override
   String get exportAuthReason => 'Confirm to export vault values';
 
   @override
+  String get importAuthReason => 'Confirm to import vault values';
+
+  @override
   String get exportCancelled => 'Export cancelled';
+
+  @override
+  String get importCancelled => 'Import cancelled';
+
+  @override
+  String get exportCsvShared => 'CSV ready to share';
+
+  @override
+  String importCsvSuccess(int imported, int skipped) {
+    return 'Imported $imported, skipped $skipped';
+  }
+
+  @override
+  String importCsvSuccessWithFailed(int imported, int skipped, int failed) {
+    return 'Imported $imported, skipped $skipped, failed $failed';
+  }
+
+  @override
+  String get importCsvEmpty => 'No items found in that file';
+
+  @override
+  String get importCsvInvalid => 'Could not read that CSV file';
+
+  @override
+  String get importCsvPickFailed => 'No file selected';
 
   @override
   String get onboardingTitle1 => 'One-tap copy';

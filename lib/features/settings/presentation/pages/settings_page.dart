@@ -1,9 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -200,17 +206,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (confirmed != true || !context.mounted) return;
 
-    if (SettingsService.instance.biometricLockEnabled) {
-      final ok = await AppBootstrap.authService.authenticate(
-        reason: l10n.exportAuthReason,
-      );
-      if (!ok || !context.mounted) {
-        if (context.mounted) {
-          HapticFeedback.heavyImpact();
-          CopiedHud.show(context, message: l10n.exportCancelled);
-        }
-        return;
-      }
+    if (!await _confirmSensitiveAccess(
+      context,
+      reason: l10n.exportAuthReason,
+      cancelledMessage: l10n.exportCancelled,
+    )) {
+      return;
     }
 
     final text = await AppBootstrap.clipItemRepository.exportPlainText();
@@ -218,6 +219,185 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!context.mounted) return;
     HapticFeedback.lightImpact();
     CopiedHud.show(context, message: l10n.copied('export'));
+  }
+
+  /// CSV file share (Files / iCloud / AirDrop) for device migration.
+  Future<void> _exportCsv(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.exportCsvConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.exportCsvConfirmBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.exportConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    if (!await _confirmSensitiveAccess(
+      context,
+      reason: l10n.exportAuthReason,
+      cancelledMessage: l10n.exportCancelled,
+    )) {
+      return;
+    }
+
+    try {
+      final csv = await AppBootstrap.vaultMigrationService.exportCsv();
+      final dir = await getTemporaryDirectory();
+      final stamp = DateTime.now()
+          .toIso8601String()
+          .replaceAll(':', '-')
+          .split('.')
+          .first;
+      final file = File('${dir.path}/clipval-export-$stamp.csv');
+      await file.writeAsString(csv, flush: true);
+
+      if (!context.mounted) return;
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'text/csv', name: 'clipval-export.csv')],
+        subject: 'ClipVal export',
+        sharePositionOrigin: origin,
+      );
+      if (!context.mounted) return;
+      HapticFeedback.lightImpact();
+      CopiedHud.show(context, message: l10n.exportCsvShared);
+    } catch (_) {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.exportCancelled);
+    }
+  }
+
+  /// Pick a ClipVal CSV and merge items (skip exact title+value dupes).
+  Future<void> _importCsv(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.importCsvConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.importCsvConfirmBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.importConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    if (!await _confirmSensitiveAccess(
+      context,
+      reason: l10n.importAuthReason,
+      cancelledMessage: l10n.importCancelled,
+    )) {
+      return;
+    }
+
+    final pick = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['csv', 'txt'],
+      withData: true,
+    );
+    if (!context.mounted) return;
+    if (pick == null || pick.files.isEmpty) {
+      CopiedHud.show(context, message: l10n.importCsvPickFailed);
+      return;
+    }
+
+    final file = pick.files.single;
+    String? content;
+    if (file.bytes != null) {
+      content = utf8.decode(file.bytes!, allowMalformed: true);
+    } else if (file.path != null) {
+      content = await File(file.path!).readAsString();
+    }
+    if (!context.mounted) return;
+    if (content == null || content.trim().isEmpty) {
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+      return;
+    }
+
+    try {
+      final result =
+          await AppBootstrap.vaultMigrationService.importCsv(content);
+      if (!context.mounted) return;
+
+      try {
+        context.read<VaultBloc>().add(const VaultRefreshed());
+      } catch (_) {}
+
+      if (result.total == 0) {
+        CopiedHud.show(context, message: l10n.importCsvEmpty);
+        return;
+      }
+
+      HapticFeedback.lightImpact();
+      final message = result.failed > 0
+          ? l10n.importCsvSuccessWithFailed(
+              result.imported,
+              result.skipped,
+              result.failed,
+            )
+          : l10n.importCsvSuccess(result.imported, result.skipped);
+      CopiedHud.show(context, message: message);
+    } on FormatException {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+    } catch (_) {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+    }
+  }
+
+  /// Re-auth when app lock is on. Returns false if cancelled / failed.
+  Future<bool> _confirmSensitiveAccess(
+    BuildContext context, {
+    required String reason,
+    required String cancelledMessage,
+  }) async {
+    if (!SettingsService.instance.biometricLockEnabled) return true;
+    final ok = await AppBootstrap.authService.authenticate(reason: reason);
+    if (!ok || !context.mounted) {
+      if (context.mounted) {
+        HapticFeedback.heavyImpact();
+        CopiedHud.show(context, message: cancelledMessage);
+      }
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -483,6 +663,24 @@ class _SettingsPageState extends State<SettingsPage> {
                 IosGroup(
                   header: l10n.settingsData,
                   children: [
+                    IosGroupTile(
+                      title: l10n.exportCsv,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.arrow_up_doc_fill,
+                        color: AppColors.iconExport,
+                      ),
+                      trailing: const IosChevron(),
+                      onTap: () => _exportCsv(context),
+                    ),
+                    IosGroupTile(
+                      title: l10n.importCsv,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.arrow_down_doc_fill,
+                        color: AppColors.iconExport,
+                      ),
+                      trailing: const IosChevron(),
+                      onTap: () => _importCsv(context),
+                    ),
                     IosGroupTile(
                       title: l10n.exportPlain,
                       leading: _LeadingIcon(
