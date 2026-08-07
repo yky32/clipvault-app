@@ -205,8 +205,8 @@ class _VaultPageState extends State<VaultPage> {
             final gridCount = state.viewMode.gridCrossAxisCount;
             final filtered = state.filteredItems;
             final recent = state.recentlyCopied;
+            // Recently-copied strip for list and grid (hidden when filtering).
             final showRecent = !state.hasActiveFilter &&
-                !isGrid &&
                 recent.isNotEmpty &&
                 state.items.length > 1;
 
@@ -407,7 +407,7 @@ class _VaultPageState extends State<VaultPage> {
                             SliverPadding(
                               padding: EdgeInsets.fromLTRB(
                                 16,
-                                12,
+                                showRecent ? 8 : 12,
                                 16,
                                 24 + bottomInset,
                               ),
