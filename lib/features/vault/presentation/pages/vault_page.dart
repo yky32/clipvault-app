@@ -584,28 +584,30 @@ class _RecentStrip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
+    // ~15% tighter than the original strip so it doesn’t dominate the vault.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
           child: Text(
             l10n.recentSection.toUpperCase(),
             style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 13,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
               color: AppColors.secondaryLabel(context),
             ),
           ),
         ),
         SizedBox(
-          height: 44,
+          height: 37,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             physics: const BouncingScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, __) => const SizedBox(width: 7),
             itemBuilder: (context, index) {
               final item = items[index];
               return GestureDetector(
@@ -614,7 +616,7 @@ class _RecentStrip extends StatelessWidget {
                   onCopy(item);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground(context),
@@ -626,18 +628,20 @@ class _RecentStrip extends StatelessWidget {
                     children: [
                       Icon(
                         CupertinoIcons.doc_on_clipboard,
-                        size: 14,
+                        size: 12,
                         color: AppColors.primary,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 140),
+                        constraints: const BoxConstraints(maxWidth: 120),
                         child: Text(
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelLarge?.copyWith(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
+                            height: 1.1,
                           ),
                         ),
                       ),
