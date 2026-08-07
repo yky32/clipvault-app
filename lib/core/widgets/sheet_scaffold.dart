@@ -74,11 +74,11 @@ class SheetScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.viewInsetsOf(context);
-    final safePadding = MediaQuery.paddingOf(context);
+    // viewPadding is stable even when useSafeArea: false on the modal.
+    final viewPadding = MediaQuery.viewPaddingOf(context);
     final keyboardOpen = viewInsets.bottom > 0;
-    // When the keyboard is up, home-indicator inset is already consumed by
-    // the keyboard — don't reserve it again (avoids a gap above the keys).
-    final bottomSafe = keyboardOpen ? 0.0 : safePadding.bottom;
+    // Keyboard covers the home indicator — don't double-count it.
+    final bottomSafe = keyboardOpen ? 0.0 : viewPadding.bottom;
     final maxHeight =
         MediaQuery.sizeOf(context).height * 0.92 - viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -93,8 +93,6 @@ class SheetScaffold extends StatelessWidget {
       hugContent ? AppSpacing.sm : AppSpacing.lg,
     );
 
-    // Footer sits flush on the keyboard when open — no SafeArea bottom, no
-    // extra home-indicator padding that leaves empty corners above the keys.
     final footerWidget = hasFooter
         ? Container(
             width: double.infinity,
@@ -108,6 +106,7 @@ class SheetScaffold extends StatelessWidget {
               AppSpacing.lg,
               AppSpacing.md,
               AppSpacing.lg,
+              // Flush to keyboard when open; home indicator only when closed.
               keyboardOpen ? AppSpacing.md : AppSpacing.lg + bottomSafe,
             ),
             child: footer,
@@ -177,30 +176,30 @@ class SheetScaffold extends StatelessWidget {
       );
     }
 
-    final sheetBody = Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: sheetColor,
-        // Top corners only — square bottom so it meets the keyboard edge-to-edge.
-        borderRadius: AppRadii.sheet,
-      ),
+    final sheetPanel = Material(
+      color: sheetColor,
+      // Top corners only — square bottom meets keyboard / home bar cleanly.
+      borderRadius: AppRadii.sheet,
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
+          final hasSubtitle =
+              subtitle != null && subtitle!.trim().isNotEmpty;
           final headerH = (showDragHandle ? 18.0 : 0) +
               (title != null && title!.isNotEmpty
                   ? (hasSubtitle ? 52.0 : 36.0)
                   : 0);
+          // Button (~52) + paddings + optional home indicator.
           final footerH = hasFooter
-              ? 90.0 + (keyboardOpen ? 0.0 : bottomSafe)
-              : (hugContent ? bottomSafe : 0);
+              ? (12 + 52 + (keyboardOpen ? 12.0 : 16.0 + bottomSafe) + 1)
+              : (hugContent ? bottomSafe : 0.0);
           final bodyMax = (constraints.maxHeight - headerH - footerH)
-              .clamp(0.0, constraints.maxHeight);
+              .clamp(0.0, double.infinity);
 
           final scrollBody = ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: bodyMax),
+            constraints: BoxConstraints(
+              maxHeight: bodyMax.isFinite ? bodyMax : maxHeight,
+            ),
             child: SingleChildScrollView(
               keyboardDismissBehavior:
                   ScrollViewKeyboardDismissBehavior.onDrag,
@@ -213,21 +212,26 @@ class SheetScaffold extends StatelessWidget {
             ),
           );
 
-          if (hugContent) {
+          // Prefer Expanded when parent gives a bounded height (welcome sheet).
+          final expandBody = constraints.hasBoundedHeight &&
+              constraints.maxHeight < double.infinity &&
+              !hugContent;
+
+          if (expandBody) {
             return Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 buildHeader(),
-                scrollBody,
+                Expanded(child: scrollBody),
                 if (footerWidget != null) footerWidget,
               ],
             );
           }
 
           return Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               buildHeader(),
-              Expanded(child: scrollBody),
+              scrollBody,
               if (footerWidget != null) footerWidget,
             ],
           );
@@ -235,24 +239,29 @@ class SheetScaffold extends StatelessWidget {
       ),
     );
 
-    // Solid bridge under the sheet into the keyboard zone (same color as the
-    // sheet). Avoids transparent Padding holes where the barrier peeks through
-    // at the top-left / top-right of the keyboard.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
+    // Lift above keyboard with padding, and paint the same sheet color behind
+    // that lift so barrier never peeks through at keyboard corners.
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      clipBehavior: Clip.none,
       children: [
-        sheetBody,
         if (keyboardOpen)
-          ColoredBox(
-            color: sheetColor,
-            child: SizedBox(
-              height: viewInsets.bottom,
-              width: double.infinity,
-            ),
-          )
-        else
-          SizedBox(height: 0, width: double.infinity),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: viewInsets.bottom + 2,
+            child: ColoredBox(color: sheetColor),
+          ),
+        AnimatedPadding(
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: viewInsets.bottom),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: sheetPanel,
+          ),
+        ),
       ],
     );
   }

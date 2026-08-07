@@ -55,11 +55,14 @@ class WelcomeExplainerSheet extends StatelessWidget {
         : l10n.welcomeSubtitle;
     final cta = isUpgrade ? l10n.welcomeCtaContinue : l10n.welcomeCta;
 
-    // ~90% of screen — full-page explainer feel (SheetScaffold caps at ~92%).
-    final sheetHeight = MediaQuery.sizeOf(context).height * 0.90;
+    // ~90% of usable height (exclude home indicator via viewPadding).
+    final media = MediaQuery.of(context);
+    final usable = media.size.height - media.viewPadding.bottom;
+    final sheetHeight = usable * 0.90;
 
     return SizedBox(
       height: sheetHeight,
+      width: double.infinity,
       child: SheetScaffold(
         title: title,
         subtitle: subtitle,
