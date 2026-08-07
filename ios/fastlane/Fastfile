@@ -355,30 +355,61 @@ def prune_certificates_of_type(type, keep:, revoked_ids:)
   end
 end
 
-def increment_build_number_in_pubspec
+def read_pubspec_version
   pubspec_path = File.join(PROJECT_ROOT, "pubspec.yaml")
   unless File.exist?(pubspec_path)
     UI.user_error!("❌ pubspec.yaml not found at #{pubspec_path}")
   end
-
   content = File.read(pubspec_path)
   version_match = content.match(/^version:\s*(\d+\.\d+\.\d+)\+(\d+)/)
   unless version_match
     UI.user_error!("❌ Could not parse version from pubspec.yaml. Expected: version: 1.0.0+1")
   end
+  [pubspec_path, content, version_match[1], version_match[2].to_i]
+end
 
-  version_name = version_match[1]
-  current_build = version_match[2].to_i
+def write_pubspec_version(pubspec_path, content, version_name, build_number)
+  new_content = content.gsub(
+    /^version:\s*\d+\.\d+\.\d+\+\d+/,
+    "version: #{version_name}+#{build_number}"
+  )
+  File.write(pubspec_path, new_content)
+end
+
+def increment_build_number_in_pubspec
+  pubspec_path, content, version_name, current_build = read_pubspec_version
   new_build = current_build + 1
 
   UI.message("📦 Incrementing build number: #{current_build} → #{new_build}")
-  new_content = content.gsub(
-    /^version:\s*\d+\.\d+\.\d+\+\d+/,
-    "version: #{version_name}+#{new_build}"
-  )
-  File.write(pubspec_path, new_content)
-  UI.success("✅ Build number updated to #{new_build}")
+  write_pubspec_version(pubspec_path, content, version_name, new_build)
+  UI.success("✅ Build number updated to #{new_build} (#{version_name}+#{new_build})")
   new_build
+end
+
+# Bump CFBundleShortVersionString patch (1.0.2 → 1.0.3) + build number.
+# Used when ASC closes the pre-release train (90186 / 90062).
+def increment_marketing_version_in_pubspec
+  pubspec_path, content, version_name, current_build = read_pubspec_version
+  parts = version_name.split(".").map(&:to_i)
+  UI.user_error!("❌ Unexpected version name: #{version_name}") unless parts.length == 3
+
+  parts[2] += 1 # patch
+  new_version_name = parts.join(".")
+  new_build = current_build + 1
+
+  UI.message("📦 Marketing version closed on ASC — bumping #{version_name}+#{current_build} → #{new_version_name}+#{new_build}")
+  write_pubspec_version(pubspec_path, content, new_version_name, new_build)
+  UI.success("✅ Version updated to #{new_version_name}+#{new_build}")
+  [new_version_name, new_build]
+end
+
+def closed_app_store_train_error?(message)
+  msg = message.to_s
+  msg.include?("90186") ||
+    msg.include?("90062") ||
+    msg.include?("Invalid Pre-Release Train") ||
+    msg.include?("closed for new build submissions") ||
+    msg.include?("must contain a higher version than that of the previously approved version")
 end
 
 def generate_release_notes
@@ -417,8 +448,8 @@ def generate_release_notes
   end
 end
 
-def commit_and_push_build_number(new_build_number)
-  UI.message("📝 Committing build number change...")
+def commit_and_push_build_number(new_build_number, commit_subject: nil, commit_body: nil)
+  UI.message("📝 Committing pubspec version change...")
   begin
     unless system("cd #{PROJECT_ROOT} && git rev-parse --git-dir > /dev/null 2>&1")
       UI.important("⚠️  Not a git repository, skipping commit")
@@ -431,20 +462,28 @@ def commit_and_push_build_number(new_build_number)
       return
     end
 
+    subject = commit_subject ||
+              "chore: Auto-increment build number to #{new_build_number} [skip ci]"
+    body = commit_body ||
+           "Build number automatically incremented by Fastfile"
+
     sh("cd #{PROJECT_ROOT} && git add pubspec.yaml")
-    # [skip ci] prevents infinite Deploy loops on the build-bump commit (Triftly pattern).
+    # [skip ci] prevents infinite Deploy loops on the bump commit (Triftly pattern).
+    # Escape double-quotes in messages for the shell.
+    subject_q = subject.gsub('"', '\\"')
+    body_q = body.gsub('"', '\\"')
     sh(
       "cd #{PROJECT_ROOT} && git commit " \
-      "-m 'chore: Auto-increment build number to #{new_build_number} [skip ci]' " \
-      "-m 'Build number automatically incremented by Fastfile'"
+      "-m \"#{subject_q}\" " \
+      "-m \"#{body_q}\""
     )
-    UI.success("✅ Build number change committed")
+    UI.success("✅ Version change committed")
 
     UI.message("🚀 Pushing to remote repository...")
     sh("cd #{PROJECT_ROOT} && git push")
-    UI.success("✅ Build number change pushed to remote")
+    UI.success("✅ Version change pushed to remote")
   rescue => ex
-    UI.important("⚠️  Failed to commit/push build number: #{ex.message}")
+    UI.important("⚠️  Failed to commit/push version: #{ex.message}")
     UI.important("   On CI: ensure GH_PAT (or contents:write) can push to main")
   end
 end
@@ -660,6 +699,25 @@ platform :ios do
         create_app
         upload_to_testflight(pilot_opts)
         UI.success("✅ Successfully uploaded to TestFlight!")
+      elsif closed_app_store_train_error?(error_msg) && !skip_build
+        # ASC closed this marketing version (already approved / train locked).
+        # Bump CFBundleShortVersionString, rebuild, upload once more in-job.
+        UI.important("🚂 Pre-release train closed (ASC 90186/90062) — auto-bumping marketing version…")
+        UI.important("   #{error_msg.lines.first&.strip}")
+        new_name, new_build = increment_marketing_version_in_pubspec
+        commit_and_push_build_number(
+          new_build,
+          commit_subject: "chore: Auto-bump marketing version to #{new_name}+#{new_build} [skip ci]",
+          commit_body: "ASC closed the previous marketing-version train (90186/90062). Fastfile bumped patch + build and re-uploaded."
+        )
+        UI.important("📦 Rebuilding IPA at #{new_name}+#{new_build}…")
+        build_ipa(export_method: "app-store")
+        unless File.exist?(ipa_path)
+          UI.user_error!("❌ IPA missing after rebuild at #{ipa_path}")
+        end
+        upload_to_testflight(pilot_opts)
+        UI.success("✅ Uploaded to TestFlight after auto version bump (#{new_name}+#{new_build})")
+        UI.message("📱 Check App Store Connect for build processing status")
       else
         UI.error("❌ Failed to upload to TestFlight: #{error_msg}")
         raise
