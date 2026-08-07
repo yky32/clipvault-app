@@ -154,11 +154,11 @@ class _ListRow extends StatelessWidget {
 
 /// Compact grid cell as a floating glass island.
 ///
-/// Layout (use the full square cleanly):
+/// Layout:
 /// ```
-///                         [EN] 📌   ← status chrome (top-right)
-/// [icon]  Office WiFi               ← category icon bottom-left + title
-///         Wi-Fi · Just now          ← meta
+///                         [EN] 📌
+/// Office WiFi
+/// [icon] Wi-Fi · Just now     ← category icon on the meta row only
 /// ```
 class _GridTile extends StatelessWidget {
   const _GridTile({
@@ -209,7 +209,8 @@ class _GridTile extends StatelessWidget {
           builder: (context, titleSizePref, _) {
             final titleSize = titleSizePref.titleFontSize;
             final metaSize = titleSizePref.metaFontSize;
-            const iconSize = 30.0;
+            // Meta-row icon: compact, not a large glass well.
+            final metaIconSize = (metaSize + 4).clamp(14.0, 18.0);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -225,53 +226,47 @@ class _GridTile extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                // —— Foot: category icon (bottom-left) + title / meta ——
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _GlassIconWell(
-                      icon: icon,
-                      size: iconSize,
-                      iconSize: 15,
+                // —— Title (full width) ——
+                Tooltip(
+                  message: item.title,
+                  waitDuration: const Duration(milliseconds: 400),
+                  child: Text(
+                    item.title,
+                    maxLines: 2,
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Satoshi',
+                      fontSize: titleSize,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.35,
+                      height: 1.12,
                     ),
-                    const SizedBox(width: 10),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                // —— Meta: [icon] Wi-Fi · Just now ——
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: metaIconSize,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 5),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Tooltip(
-                            message: item.title,
-                            waitDuration: const Duration(milliseconds: 400),
-                            child: Text(
-                              item.title,
-                              maxLines: 2,
-                              softWrap: true,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Satoshi',
-                                fontSize: titleSize,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.35,
-                                height: 1.12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Satoshi',
-                              fontSize: metaSize,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -0.08,
-                              height: 1.15,
-                              color: AppColors.secondaryLabel(context),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Satoshi',
+                          fontSize: metaSize,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.08,
+                          height: 1.15,
+                          color: AppColors.secondaryLabel(context),
+                        ),
                       ),
                     ),
                   ],
