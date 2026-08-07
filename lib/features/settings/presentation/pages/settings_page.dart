@@ -30,6 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _biometric;
   late VaultViewMode _viewMode;
   late GridTitleSize _gridTitleSize;
+  late AppLocalePreference _localePref;
   late int _clipboardSeconds;
   String _versionLabel = '1.0.0';
 
@@ -40,6 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _biometric = s.biometricLockEnabled;
     _viewMode = s.defaultViewMode;
     _gridTitleSize = s.gridTitleSize;
+    _localePref = s.localePreference;
     _clipboardSeconds = s.clipboardClearSeconds;
     _loadVersion();
   }
@@ -318,6 +320,35 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       onTap: () => _pickTheme(themeController),
+                    ),
+                    IosGroupTile(
+                      title: l10n.language,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.globe,
+                        color: AppColors.iconTheme,
+                      ),
+                      below: SizedBox(
+                        width: double.infinity,
+                        child: CupertinoSlidingSegmentedControl<
+                            AppLocalePreference>(
+                          groupValue: _localePref,
+                          children: {
+                            AppLocalePreference.system:
+                                _SegmentLabel(l10n.languageSystem),
+                            AppLocalePreference.en:
+                                _SegmentLabel(l10n.languageEng),
+                            AppLocalePreference.zh:
+                                _SegmentLabel(l10n.languageZh),
+                          },
+                          onValueChanged: (pref) async {
+                            if (pref == null) return;
+                            HapticFeedback.selectionClick();
+                            await SettingsService.instance
+                                .setLocalePreference(pref);
+                            setState(() => _localePref = pref);
+                          },
+                        ),
+                      ),
                     ),
                     IosGroupTile(
                       title: l10n.defaultView,

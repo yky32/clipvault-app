@@ -173,6 +173,9 @@
   "noCategory": "None",
   "requiredField": "Required",
   "language": "Language",
+  "languageSystem": "System",
+  "languageEng": "ENG",
+  "languageZh": "中",
   "settingsFooterTagline": "Stored in local device only",
   "settingsFooterVersion": "v{version} · Stored in local device only",
   "@settingsFooterVersion": {

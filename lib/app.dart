@@ -79,11 +79,21 @@ class _ClipVaultAppState extends State<ClipVaultApp>
           listenable: Listenable.merge([
             widget.themeController,
             widget.paletteController,
+            SettingsService.instance.localePreferenceListenable,
           ]),
           builder: (context, _) {
             // Keep static AppColors in sync for this rebuild.
             PaletteControllerHolder.instance = widget.paletteController;
             final tokens = widget.paletteController.tokens;
+            final localePref =
+                SettingsService.instance.localePreferenceListenable.value;
+
+            // Explicit override, or null → resolve from device below.
+            final Locale? forcedLocale = switch (localePref) {
+              AppLocalePreference.en => const Locale('en'),
+              AppLocalePreference.zh => const Locale('zh'),
+              AppLocalePreference.system => null,
+            };
 
             return MaterialApp.router(
               title: 'ClipVal',
@@ -91,12 +101,15 @@ class _ClipVaultAppState extends State<ClipVaultApp>
               theme: AppTheme.light(tokens),
               darkTheme: AppTheme.dark(tokens),
               themeMode: widget.themeController.themeMode,
+              locale: forcedLocale,
               scrollBehavior: const MaterialScrollBehavior().copyWith(
                 physics: const BouncingScrollPhysics(
                   parent: AlwaysScrollableScrollPhysics(),
                 ),
               ),
               localeResolutionCallback: (deviceLocale, supported) {
+                // Settings override wins when set.
+                if (forcedLocale != null) return forcedLocale;
                 if (deviceLocale != null &&
                     deviceLocale.languageCode == 'zh') {
                   return const Locale('zh');

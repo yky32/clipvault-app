@@ -440,6 +440,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get language => '語言';
 
   @override
+  String get languageSystem => '系統';
+
+  @override
+  String get languageEng => 'ENG';
+
+  @override
+  String get languageZh => '中';
+
+  @override
   String get settingsFooterTagline => '僅儲存在本機裝置';
 
   @override

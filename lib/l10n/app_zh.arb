@@ -143,6 +143,9 @@
   "noCategory": "無",
   "requiredField": "必填",
   "language": "語言",
+  "languageSystem": "系統",
+  "languageEng": "ENG",
+  "languageZh": "中",
   "settingsFooterTagline": "僅儲存在本機裝置",
   "settingsFooterVersion": "v{version} · 僅儲存在本機裝置",
   "@settingsFooterVersion": {

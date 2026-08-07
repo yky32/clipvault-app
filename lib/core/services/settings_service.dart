@@ -42,6 +42,27 @@ enum GridTitleSize {
       };
 }
 
+/// In-app UI language preference.
+enum AppLocalePreference {
+  /// Follow device language (zh → Chinese, else English).
+  system,
+  en,
+  zh;
+
+  /// Stored prefs value (`null` key removed for system).
+  String? get storageCode => switch (this) {
+        system => null,
+        en => 'en',
+        zh => 'zh',
+      };
+
+  static AppLocalePreference fromStorage(String? code) => switch (code) {
+        'en' => en,
+        'zh' => zh,
+        _ => system,
+      };
+}
+
 class SettingsService {
   SettingsService._();
   static final SettingsService instance = SettingsService._();
@@ -63,6 +84,10 @@ class SettingsService {
   final ValueNotifier<GridTitleSize> gridTitleSizeListenable =
       ValueNotifier(GridTitleSize.large);
 
+  /// Listenable so [MaterialApp] rebuilds when language changes in Settings.
+  final ValueNotifier<AppLocalePreference> localePreferenceListenable =
+      ValueNotifier(AppLocalePreference.system);
+
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     // Drop legacy key that may have been set during forced onboarding prompt.
@@ -70,6 +95,7 @@ class SettingsService {
       await _prefs.remove('biometric_lock');
     }
     gridTitleSizeListenable.value = gridTitleSize;
+    localePreferenceListenable.value = localePreference;
   }
 
   bool get onboardingDone => _prefs.getBool(_onboardingKey) ?? false;
@@ -127,13 +153,20 @@ class SettingsService {
 
   String? get localeCode => _prefs.getString(_localeKey);
 
+  AppLocalePreference get localePreference =>
+      AppLocalePreference.fromStorage(localeCode);
+
   Future<void> setLocaleCode(String? code) async {
     if (code == null) {
       await _prefs.remove(_localeKey);
     } else {
       await _prefs.setString(_localeKey, code);
     }
+    localePreferenceListenable.value = AppLocalePreference.fromStorage(code);
   }
+
+  Future<void> setLocalePreference(AppLocalePreference pref) =>
+      setLocaleCode(pref.storageCode);
 
   /// Grid card title size. Default **large** (no auto-shrink).
   GridTitleSize get gridTitleSize {

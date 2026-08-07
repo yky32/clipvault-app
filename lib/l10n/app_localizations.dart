@@ -926,6 +926,24 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get languageSystem;
+
+  /// No description provided for @languageEng.
+  ///
+  /// In en, this message translates to:
+  /// **'ENG'**
+  String get languageEng;
+
+  /// No description provided for @languageZh.
+  ///
+  /// In en, this message translates to:
+  /// **'中'**
+  String get languageZh;
+
   /// No description provided for @settingsFooterTagline.
   ///
   /// In en, this message translates to:

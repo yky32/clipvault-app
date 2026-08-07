@@ -448,6 +448,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get language => 'Language';
 
   @override
+  String get languageSystem => 'System';
+
+  @override
+  String get languageEng => 'ENG';
+
+  @override
+  String get languageZh => '中';
+
+  @override
   String get settingsFooterTagline => 'Stored in local device only';
 
   @override
