@@ -156,9 +156,9 @@ class _ListRow extends StatelessWidget {
 ///
 /// Layout:
 /// ```
-///                         [EN] 📌
+/// [icon]                  [EN] 📌   ← category icon top-left
 /// Office WiFi
-/// [icon] Wi-Fi · Just now     ← category icon on the meta row only
+/// Wi-Fi · Just now
 /// ```
 class _GridTile extends StatelessWidget {
   const _GridTile({
@@ -209,24 +209,32 @@ class _GridTile extends StatelessWidget {
           builder: (context, titleSizePref, _) {
             final titleSize = titleSizePref.titleFontSize;
             final metaSize = titleSizePref.metaFontSize;
-            // Meta-row icon: compact, not a large glass well.
-            final metaIconSize = (metaSize + 4).clamp(14.0, 18.0);
+            const iconSize = 30.0;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // —— Top chrome: language + pin (top-right only) ——
-                Row(
-                  children: [
-                    const Spacer(),
-                    _StatusCluster(
-                      languageTag: item.languageTag,
-                      isPinned: item.isPinned,
-                    ),
-                  ],
+                // —— Top: category icon (left) | language + pin (right) ——
+                SizedBox(
+                  height: iconSize,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _GlassIconWell(
+                        icon: icon,
+                        size: iconSize,
+                        iconSize: 15,
+                      ),
+                      const Spacer(),
+                      _StatusCluster(
+                        languageTag: item.languageTag,
+                        isPinned: item.isPinned,
+                      ),
+                    ],
+                  ),
                 ),
                 const Spacer(),
-                // —— Title (full width) ——
+                // —— Title ——
                 Tooltip(
                   message: item.title,
                   waitDuration: const Duration(milliseconds: 400),
@@ -244,32 +252,20 @@ class _GridTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 5),
-                // —— Meta: [icon] Wi-Fi · Just now ——
-                Row(
-                  children: [
-                    Icon(
-                      icon,
-                      size: metaIconSize,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Satoshi',
-                          fontSize: metaSize,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.08,
-                          height: 1.15,
-                          color: AppColors.secondaryLabel(context),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                // —— Meta: Wi-Fi · Just now (no icon) ——
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Satoshi',
+                    fontSize: metaSize,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.08,
+                    height: 1.15,
+                    color: AppColors.secondaryLabel(context),
+                  ),
                 ),
               ],
             );
