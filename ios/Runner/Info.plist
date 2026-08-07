@@ -47,6 +47,17 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>ClipVal uses Face ID to protect your vault.</string>
+	<!--
+	  Required by App Store Connect (ITMS-90683) because file_picker / share_plus
+	  link APIs that access these resources. ClipVal only uses the system file
+	  picker to import a vault CSV backup and the share sheet to export one.
+	-->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ClipVal may access your photo library only when you choose a file to import a vault backup (CSV).</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ClipVal does not take photos. Camera access is only referenced by the system file picker used when importing a vault backup.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ClipVal does not use your location. This key is required because a system file/share component may reference location APIs.</string>
 	<!-- Same as Triftly/Depozio: skip App Store Connect export-compliance questionnaire. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
