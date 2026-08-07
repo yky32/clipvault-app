@@ -12,6 +12,8 @@ abstract final class ClipVaultBottomSheet {
       context: context,
       useRootNavigator: useRootNavigator,
       isScrollControlled: true,
+      // SheetScaffold owns bottom inset / keyboard bridge — don't double-pad.
+      useSafeArea: false,
       showDragHandle: false,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),

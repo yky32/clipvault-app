@@ -75,9 +75,14 @@ class SheetScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final safePadding = MediaQuery.paddingOf(context);
+    final keyboardOpen = viewInsets.bottom > 0;
+    // When the keyboard is up, home-indicator inset is already consumed by
+    // the keyboard — don't reserve it again (avoids a gap above the keys).
+    final bottomSafe = keyboardOpen ? 0.0 : safePadding.bottom;
     final maxHeight =
         MediaQuery.sizeOf(context).height * 0.92 - viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetColor = isDark ? AppColors.surfaceDimDark : AppColors.warmWhite;
     final hasFooter = footer != null;
     final hugContent = compactBody;
 
@@ -88,24 +93,24 @@ class SheetScaffold extends StatelessWidget {
       hugContent ? AppSpacing.sm : AppSpacing.lg,
     );
 
+    // Footer sits flush on the keyboard when open — no SafeArea bottom, no
+    // extra home-indicator padding that leaves empty corners above the keys.
     final footerWidget = hasFooter
-        ? SafeArea(
-            top: false,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: AppColors.hairline(context)),
-                ),
+        ? Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: sheetColor,
+              border: Border(
+                top: BorderSide(color: AppColors.hairline(context)),
               ),
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: footer,
             ),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              keyboardOpen ? AppSpacing.md : AppSpacing.lg + bottomSafe,
+            ),
+            child: footer,
           )
         : null;
 
@@ -172,64 +177,83 @@ class SheetScaffold extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: Container(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDimDark : AppColors.warmWhite,
-          borderRadius: AppRadii.sheet,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final hasSubtitle =
-                subtitle != null && subtitle!.trim().isNotEmpty;
-            final headerH = (showDragHandle ? 18.0 : 0) +
-                (title != null && title!.isNotEmpty
-                    ? (hasSubtitle ? 52.0 : 36.0)
-                    : 0);
-            final footerH = hasFooter
-                ? 90.0 + safePadding.bottom
-                : (hugContent ? safePadding.bottom : 0);
-            final bodyMax = (constraints.maxHeight - headerH - footerH)
-                .clamp(0.0, constraints.maxHeight);
+    final sheetBody = Container(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: sheetColor,
+        // Top corners only — square bottom so it meets the keyboard edge-to-edge.
+        borderRadius: AppRadii.sheet,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
+          final headerH = (showDragHandle ? 18.0 : 0) +
+              (title != null && title!.isNotEmpty
+                  ? (hasSubtitle ? 52.0 : 36.0)
+                  : 0);
+          final footerH = hasFooter
+              ? 90.0 + (keyboardOpen ? 0.0 : bottomSafe)
+              : (hugContent ? bottomSafe : 0);
+          final bodyMax = (constraints.maxHeight - headerH - footerH)
+              .clamp(0.0, constraints.maxHeight);
 
-            final scrollBody = ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: bodyMax),
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: hasFooter
-                    ? bodyPadding
-                    : bodyPadding.copyWith(
-                        bottom: AppSpacing.lg + safePadding.bottom,
-                      ),
-                child: child,
-              ),
-            );
+          final scrollBody = ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: bodyMax),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: hasFooter
+                  ? bodyPadding
+                  : bodyPadding.copyWith(
+                      bottom: AppSpacing.lg + bottomSafe,
+                    ),
+              child: child,
+            ),
+          );
 
-            if (hugContent) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  buildHeader(),
-                  scrollBody,
-                  if (footerWidget != null) footerWidget,
-                ],
-              );
-            }
-
+          if (hugContent) {
             return Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 buildHeader(),
-                Expanded(child: scrollBody),
+                scrollBody,
                 if (footerWidget != null) footerWidget,
               ],
             );
-          },
-        ),
+          }
+
+          return Column(
+            children: [
+              buildHeader(),
+              Expanded(child: scrollBody),
+              if (footerWidget != null) footerWidget,
+            ],
+          );
+        },
       ),
+    );
+
+    // Solid bridge under the sheet into the keyboard zone (same color as the
+    // sheet). Avoids transparent Padding holes where the barrier peeks through
+    // at the top-left / top-right of the keyboard.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        sheetBody,
+        if (keyboardOpen)
+          ColoredBox(
+            color: sheetColor,
+            child: SizedBox(
+              height: viewInsets.bottom,
+              width: double.infinity,
+            ),
+          )
+        else
+          SizedBox(height: 0, width: double.infinity),
+      ],
     );
   }
 }
