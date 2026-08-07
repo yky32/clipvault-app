@@ -156,9 +156,9 @@ class _ListRow extends StatelessWidget {
 ///
 /// Layout (use the full square cleanly):
 /// ```
-/// [icon]              [EN] 📌   ← status chrome
-/// Home Address                  ← title (up to 2 lines)
-/// Addresses · Just now          ← meta
+///                         [EN] 📌   ← status chrome (top-right)
+/// [icon]  Office WiFi               ← category icon bottom-left + title
+///         Wi-Fi · Just now          ← meta
 /// ```
 class _GridTile extends StatelessWidget {
   const _GridTile({
@@ -214,64 +214,67 @@ class _GridTile extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // —— Top chrome: category icon | language + pin ——
-                SizedBox(
-                  height: iconSize,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _GlassIconWell(
-                        icon: icon,
-                        size: iconSize,
-                        iconSize: 15,
-                      ),
-                      const Spacer(),
-                      _StatusCluster(
-                        languageTag: item.languageTag,
-                        isPinned: item.isPinned,
-                      ),
-                    ],
-                  ),
+                // —— Top chrome: language + pin (top-right only) ——
+                Row(
+                  children: [
+                    const Spacer(),
+                    _StatusCluster(
+                      languageTag: item.languageTag,
+                      isPinned: item.isPinned,
+                    ),
+                  ],
                 ),
-                // —— Flexible middle: title uses remaining height ——
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
-                    child: Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Tooltip(
-                        message: item.title,
-                        waitDuration: const Duration(milliseconds: 400),
-                        child: Text(
-                          item.title,
-                          maxLines: 2,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'Satoshi',
-                            fontSize: titleSize,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.35,
-                            height: 1.12,
+                const Spacer(),
+                // —— Foot: category icon (bottom-left) + title / meta ——
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _GlassIconWell(
+                      icon: icon,
+                      size: iconSize,
+                      iconSize: 15,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Tooltip(
+                            message: item.title,
+                            waitDuration: const Duration(milliseconds: 400),
+                            child: Text(
+                              item.title,
+                              maxLines: 2,
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Satoshi',
+                                fontSize: titleSize,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.35,
+                                height: 1.12,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 3),
+                          Text(
+                            meta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Satoshi',
+                              fontSize: metaSize,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -0.08,
+                              height: 1.15,
+                              color: AppColors.secondaryLabel(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-                // —— Foot meta: category · last used ——
-                Text(
-                  meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Satoshi',
-                    fontSize: metaSize,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.08,
-                    height: 1.15,
-                    color: AppColors.secondaryLabel(context),
-                  ),
+                  ],
                 ),
               ],
             );
