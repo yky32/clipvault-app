@@ -173,44 +173,6 @@ class SheetScaffold extends StatelessWidget {
       );
     }
 
-    // Panel fills whatever height the parent gives (welcome) or hugs content
-    // (item editor). Always uses a scroll body so chrome cannot overflow.
-    final panel = Material(
-      color: sheetColor,
-      borderRadius: AppRadii.sheet,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: hugContent ? MainAxisSize.min : MainAxisSize.max,
-        children: [
-          buildHeader(),
-          if (hugContent)
-            Flexible(
-              fit: FlexFit.loose,
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: hasFooter
-                    ? bodyPadding
-                    : bodyPadding.copyWith(
-                        bottom: AppSpacing.lg + bottomSafe,
-                      ),
-                child: child,
-              ),
-            )
-          else
-            Expanded(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: bodyPadding,
-                child: child,
-              ),
-            ),
-          if (footerWidget != null) footerWidget,
-        ],
-      ),
-    );
-
     // Keyboard lift: pad the panel up, and paint the same color under that
     // padding so the barrier never peeks through beside the keyboard.
     return Stack(
@@ -226,19 +188,58 @@ class SheetScaffold extends StatelessWidget {
           ),
         Padding(
           padding: EdgeInsets.only(bottom: viewInsets.bottom),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: maxHeight,
-              // When parent is a fixed-height SizedBox (welcome), expand to fill.
-              minHeight: 0,
-            ),
-            child: hugContent
-                ? panel
-                : SizedBox(
-                    width: double.infinity,
-                    height: maxHeight,
-                    child: panel,
+          child: LayoutBuilder(
+            builder: (context, outerConstraints) {
+              // Prefer parent-imposed height (welcome SizedBox); else cap at 92%.
+              final maxH = outerConstraints.hasBoundedHeight &&
+                      outerConstraints.maxHeight.isFinite
+                  ? outerConstraints.maxHeight
+                  : maxHeight;
+
+              final scroll = SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: hasFooter
+                    ? bodyPadding
+                    : bodyPadding.copyWith(
+                        bottom: AppSpacing.lg + bottomSafe,
+                      ),
+                child: child,
+              );
+
+              return Material(
+                color: sheetColor,
+                borderRadius: AppRadii.sheet,
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  width: double.infinity,
+                  // Hug forms: only as tall as content, but never past maxH.
+                  // Tall forms (welcome): fill maxH with Expanded body.
+                  height: hugContent ? null : maxH,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxH),
+                    child: Column(
+                      mainAxisSize:
+                          hugContent ? MainAxisSize.min : MainAxisSize.max,
+                      children: [
+                        buildHeader(),
+                        if (hugContent)
+                          ConstrainedBox(
+                            // Leave room for header + footer inside maxH.
+                            constraints: BoxConstraints(
+                              maxHeight: (maxH - 160).clamp(120.0, maxH),
+                            ),
+                            child: scroll,
+                          )
+                        else
+                          Expanded(child: scroll),
+                        if (footerWidget != null) footerWidget,
+                      ],
+                    ),
                   ),
+                ),
+              );
+            },
           ),
         ),
       ],
