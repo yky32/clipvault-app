@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
-import '../../../../core/constants/default_categories.dart';
+import '../../../../core/constants/address_languages.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
+import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/relative_time.dart';
@@ -65,11 +66,11 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   bool _obscureValue = true;
   bool _saving = false;
 
-  bool get _isAddressesCategory {
+  bool get _categorySupportsLanguageTag {
     final id = _selectedCategoryId;
     if (id == null) return false;
     final cat = AppBootstrap.categoryRepository.getById(id);
-    return cat?.systemKey == DefaultCategories.addresses;
+    return cat?.supportsLanguageTag ?? false;
   }
 
   @override
@@ -126,8 +127,8 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     if (!mounted || result == null) return;
     setState(() {
       _selectedCategoryId = result.category?.id;
-      // Language tag only applies to Addresses.
-      if (!_isAddressesCategory) {
+      // Language tag only when the category enables it.
+      if (!_categorySupportsLanguageTag) {
         _languageTag = null;
       }
     });
@@ -140,7 +141,8 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
 
     try {
       final categoryId = _selectedCategoryId;
-      final languageTag = _isAddressesCategory ? _languageTag : null;
+      final languageTag =
+          _categorySupportsLanguageTag ? _languageTag : null;
 
       if (_existing != null) {
         await AppBootstrap.clipItemRepository.update(
@@ -268,59 +270,64 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                 ),
                 onTap: _pickCategory,
               ),
-              if (_isAddressesCategory)
-                IosGroupTile(
-                  title: l10n.addressLanguageLabel,
-                  leading: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.textformat,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  below: Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _LanguageChip(
-                          label: l10n.addressLanguageNone,
-                          selected: _languageTag == null,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _languageTag = null);
-                          },
+              if (_categorySupportsLanguageTag)
+                ValueListenableBuilder<List<String>>(
+                  valueListenable:
+                      SettingsService.instance.addressLanguageTagsListenable,
+                  builder: (context, enabledTags, _) {
+                    // Offer Settings-enabled tags; keep current if disabled later.
+                    final codes = <String>[
+                      ...enabledTags,
+                      if (_languageTag != null &&
+                          !enabledTags.contains(_languageTag))
+                        _languageTag!,
+                    ];
+                    if (codes.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return IosGroupTile(
+                      title: l10n.addressLanguageLabel,
+                      leading: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(7),
                         ),
-                        _LanguageChip(
-                          label: l10n.addressLanguageZh,
-                          selected: _languageTag == ClipItem.languageZh,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(
-                              () => _languageTag = ClipItem.languageZh,
-                            );
-                          },
+                        child: Icon(
+                          CupertinoIcons.textformat,
+                          size: 16,
+                          color: AppColors.primary,
                         ),
-                        _LanguageChip(
-                          label: l10n.addressLanguageEn,
-                          selected: _languageTag == ClipItem.languageEn,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(
-                              () => _languageTag = ClipItem.languageEn,
-                            );
-                          },
+                      ),
+                      below: Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 4),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _LanguageChip(
+                              label: l10n.addressLanguageNone,
+                              selected: _languageTag == null,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _languageTag = null);
+                              },
+                            ),
+                            for (final code in codes)
+                              _LanguageChip(
+                                label: AddressLanguages.label(code, l10n),
+                                selected: _languageTag == code,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _languageTag = code);
+                                },
+                              ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               IosGroupTile(
                 title: l10n.pinItem,

@@ -119,6 +119,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameLabel => 'Name';
 
   @override
+  String get categoryLanguageTag => 'Language labels';
+
+  @override
+  String get categoryLanguageTagFooter =>
+      'When on, items in this category can pick a language tag (configure tags under Addresses).';
+
+  @override
   String get categoryNameHint => 'e.g. Client codes';
 
   @override
@@ -558,6 +565,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addressLanguageEn => 'English';
+
+  @override
+  String get addressLanguagesTitle => 'Address languages';
+
+  @override
+  String get addressLanguagesSubtitle =>
+      'Tags you can pick when saving an Addresses item.';
+
+  @override
+  String get addressLanguagesNoneEnabled => 'None enabled';
+
+  @override
+  String get addressLanguagesBuiltInHeader => 'Built-in';
+
+  @override
+  String get addressLanguagesCustomHeader => 'Custom';
+
+  @override
+  String get addressLanguagesCustomFooter =>
+      'Add short codes (e.g. ja, ko) for other languages you use on addresses.';
+
+  @override
+  String get addressLanguagesCustomEmpty => 'No custom languages yet';
+
+  @override
+  String get addressLanguageAdd => 'Add language';
+
+  @override
+  String get addressLanguageAddTitle => 'Add language code';
+
+  @override
+  String get addressLanguageAddBody =>
+      'Use a short code for the vault badge (letters, 1–8 characters).';
+
+  @override
+  String get addressLanguageAddHint => 'e.g. ja';
+
+  @override
+  String get addressLanguageAddAction => 'Add';
+
+  @override
+  String get addressLanguageAddInvalidTitle => 'Invalid code';
+
+  @override
+  String get addressLanguageAddInvalidBody =>
+      'Use 1–8 characters starting with a letter (a–z). Example: ja, ko, yue.';
+
+  @override
+  String get addressLanguageRemoveTitle => 'Remove language?';
+
+  @override
+  String addressLanguageRemoveBody(String name) {
+    return '\"$name\" will no longer be offered when tagging Addresses items. Existing tags on items are kept.';
+  }
 
   @override
   String get gridTitleSize => 'Grid title size';

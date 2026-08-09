@@ -302,6 +302,18 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get categoryNameLabel;
 
+  /// No description provided for @categoryLanguageTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Language labels'**
+  String get categoryLanguageTag;
+
+  /// No description provided for @categoryLanguageTagFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'When on, items in this category can pick a language tag (configure tags under Addresses).'**
+  String get categoryLanguageTagFooter;
+
   /// No description provided for @categoryNameHint.
   ///
   /// In en, this message translates to:
@@ -1117,6 +1129,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get addressLanguageEn;
+
+  /// No description provided for @addressLanguagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Address languages'**
+  String get addressLanguagesTitle;
+
+  /// No description provided for @addressLanguagesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags you can pick when saving an Addresses item.'**
+  String get addressLanguagesSubtitle;
+
+  /// No description provided for @addressLanguagesNoneEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'None enabled'**
+  String get addressLanguagesNoneEnabled;
+
+  /// No description provided for @addressLanguagesBuiltInHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get addressLanguagesBuiltInHeader;
+
+  /// No description provided for @addressLanguagesCustomHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get addressLanguagesCustomHeader;
+
+  /// No description provided for @addressLanguagesCustomFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Add short codes (e.g. ja, ko) for other languages you use on addresses.'**
+  String get addressLanguagesCustomFooter;
+
+  /// No description provided for @addressLanguagesCustomEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom languages yet'**
+  String get addressLanguagesCustomEmpty;
+
+  /// No description provided for @addressLanguageAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add language'**
+  String get addressLanguageAdd;
+
+  /// No description provided for @addressLanguageAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add language code'**
+  String get addressLanguageAddTitle;
+
+  /// No description provided for @addressLanguageAddBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a short code for the vault badge (letters, 1–8 characters).'**
+  String get addressLanguageAddBody;
+
+  /// No description provided for @addressLanguageAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. ja'**
+  String get addressLanguageAddHint;
+
+  /// No description provided for @addressLanguageAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addressLanguageAddAction;
+
+  /// No description provided for @addressLanguageAddInvalidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid code'**
+  String get addressLanguageAddInvalidTitle;
+
+  /// No description provided for @addressLanguageAddInvalidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 1–8 characters starting with a letter (a–z). Example: ja, ko, yue.'**
+  String get addressLanguageAddInvalidBody;
+
+  /// No description provided for @addressLanguageRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove language?'**
+  String get addressLanguageRemoveTitle;
+
+  /// No description provided for @addressLanguageRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will no longer be offered when tagging Addresses items. Existing tags on items are kept.'**
+  String addressLanguageRemoveBody(String name);
 
   /// No description provided for @gridTitleSize.
   ///

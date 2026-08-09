@@ -40,8 +40,19 @@ class CategoryRepository {
         name: def.name,
         systemKey: def.systemKey,
         createdAt: now.add(Duration(milliseconds: def.sortOrder)),
+        supportsLanguageTag: def.systemKey == DefaultCategories.addresses,
       );
       await _box.put(category.id, category.toMap());
+    }
+
+    // Persist language flag for Addresses if older installs lack the field.
+    for (final c in getAll()) {
+      if (c.systemKey != DefaultCategories.addresses) continue;
+      if (c.supportsLanguageTag) continue;
+      await _box.put(
+        c.id,
+        c.copyWith(supportsLanguageTag: true).toMap(),
+      );
     }
   }
 
@@ -68,7 +79,10 @@ class CategoryRepository {
     return 500;
   }
 
-  Future<Category> create(String name) async {
+  Future<Category> create(
+    String name, {
+    bool supportsLanguageTag = false,
+  }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
       throw ArgumentError('Category name is required');
@@ -82,21 +96,26 @@ class CategoryRepository {
       id: _uuid.v4(),
       name: trimmed,
       createdAt: DateTime.now(),
+      supportsLanguageTag: supportsLanguageTag,
     );
     await _box.put(category.id, category.toMap());
     return category;
   }
 
-  /// Rename a **custom** category. System defaults keep product names.
-  Future<Category> rename(String id, String newName) async {
+  /// Update a **custom** category (name and/or language-tag support).
+  Future<Category> updateCustom(
+    String id, {
+    String? name,
+    bool? supportsLanguageTag,
+  }) async {
     final existing = getById(id);
     if (existing == null) {
       throw StateError('Category not found: $id');
     }
     if (existing.isSystem) {
-      throw StateError('System categories cannot be renamed');
+      throw StateError('System categories cannot be edited');
     }
-    final trimmed = newName.trim();
+    final trimmed = (name ?? existing.name).trim();
     if (trimmed.isEmpty) {
       throw ArgumentError('Category name is required');
     }
@@ -106,15 +125,17 @@ class CategoryRepository {
     if (clash.isNotEmpty) {
       throw StateError('A category with that name already exists');
     }
-    final updated = Category(
-      id: existing.id,
+    final updated = existing.copyWith(
       name: trimmed,
-      systemKey: existing.systemKey,
-      createdAt: existing.createdAt,
+      supportsLanguageTag: supportsLanguageTag ?? existing.supportsLanguageTag,
     );
     await _box.put(updated.id, updated.toMap());
     return updated;
   }
+
+  /// Rename a **custom** category. System defaults keep product names.
+  Future<Category> rename(String id, String newName) =>
+      updateCustom(id, name: newName);
 
   /// Delete a **custom** category only. Product defaults are kept.
   Future<void> delete(String id) async {

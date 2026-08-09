@@ -77,7 +77,10 @@ class ClipItem extends Equatable {
     required String plaintextValue,
   }) {
     final rawTag = map['languageTag'] as String?;
-    final tag = rawTag == languageZh || rawTag == languageEn ? rawTag : null;
+    // Accept built-in (zh/en) and custom short codes from Settings.
+    final tag = rawTag == null || rawTag.trim().isEmpty
+        ? null
+        : rawTag.trim().toLowerCase();
     return ClipItem(
       id: map['id'] as String,
       title: map['title'] as String,

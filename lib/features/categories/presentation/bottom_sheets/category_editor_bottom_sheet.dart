@@ -1,19 +1,21 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/models/category.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/clipvault_bottom_sheet.dart';
 import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Add or rename a **custom** category.
+/// Add or edit a **custom** category (name + optional language labels).
 class CategoryEditorBottomSheet extends StatefulWidget {
   const CategoryEditorBottomSheet({this.category, super.key});
 
-  /// Null = create; non-null custom category = rename.
+  /// Null = create; non-null custom category = edit.
   final Category? category;
 
   bool get isNew => category == null;
@@ -35,6 +37,7 @@ class CategoryEditorBottomSheet extends StatefulWidget {
 
 class _CategoryEditorBottomSheetState extends State<CategoryEditorBottomSheet> {
   final _controller = TextEditingController();
+  bool _supportsLanguageTag = false;
   bool _saving = false;
   String? _error;
 
@@ -42,6 +45,7 @@ class _CategoryEditorBottomSheetState extends State<CategoryEditorBottomSheet> {
   void initState() {
     super.initState();
     _controller.text = widget.category?.name ?? '';
+    _supportsLanguageTag = widget.category?.supportsLanguageTag ?? false;
     _controller.addListener(() => setState(() {}));
   }
 
@@ -54,7 +58,10 @@ class _CategoryEditorBottomSheetState extends State<CategoryEditorBottomSheet> {
   bool get _canSave {
     final name = _controller.text.trim();
     if (name.isEmpty || _saving) return false;
-    if (widget.category != null && name == widget.category!.name) {
+    final existing = widget.category;
+    if (existing != null &&
+        name == existing.name &&
+        _supportsLanguageTag == existing.supportsLanguageTag) {
       return false;
     }
     return true;
@@ -72,11 +79,15 @@ class _CategoryEditorBottomSheetState extends State<CategoryEditorBottomSheet> {
       final name = _controller.text.trim();
       final Category result;
       if (widget.isNew) {
-        result = await AppBootstrap.categoryRepository.create(name);
-      } else {
-        result = await AppBootstrap.categoryRepository.rename(
-          widget.category!.id,
+        result = await AppBootstrap.categoryRepository.create(
           name,
+          supportsLanguageTag: _supportsLanguageTag,
+        );
+      } else {
+        result = await AppBootstrap.categoryRepository.updateCustom(
+          widget.category!.id,
+          name: name,
+          supportsLanguageTag: _supportsLanguageTag,
         );
       }
       if (!mounted) return;
@@ -142,6 +153,37 @@ class _CategoryEditorBottomSheetState extends State<CategoryEditorBottomSheet> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          IosGroup(
+            inset: false,
+            footer: l10n.categoryLanguageTagFooter,
+            children: [
+              IosGroupTile(
+                title: l10n.categoryLanguageTag,
+                leading: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.textformat,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                ),
+                trailing: CupertinoSwitch(
+                  value: _supportsLanguageTag,
+                  activeTrackColor: AppColors.primary,
+                  onChanged: (v) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _supportsLanguageTag = v);
+                  },
                 ),
               ),
             ],

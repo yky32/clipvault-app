@@ -117,6 +117,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryNameLabel => '名稱';
 
   @override
+  String get categoryLanguageTag => '語言標籤';
+
+  @override
+  String get categoryLanguageTagFooter => '開啟後，此分類的項目可選擇語言標籤（標籤清單在「地址」中設定）。';
+
+  @override
   String get categoryNameHint => '例如：客戶代碼';
 
   @override
@@ -550,6 +556,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addressLanguageEn => 'English';
+
+  @override
+  String get addressLanguagesTitle => '地址語言標籤';
+
+  @override
+  String get addressLanguagesSubtitle => '儲存「地址」項目時可選擇的語言標籤。';
+
+  @override
+  String get addressLanguagesNoneEnabled => '尚未啟用';
+
+  @override
+  String get addressLanguagesBuiltInHeader => '內建';
+
+  @override
+  String get addressLanguagesCustomHeader => '自訂';
+
+  @override
+  String get addressLanguagesCustomFooter => '新增短代碼（例如 ja、ko）作為其他地址語言標籤。';
+
+  @override
+  String get addressLanguagesCustomEmpty => '尚未新增自訂語言';
+
+  @override
+  String get addressLanguageAdd => '新增語言';
+
+  @override
+  String get addressLanguageAddTitle => '新增語言代碼';
+
+  @override
+  String get addressLanguageAddBody => '使用短代碼作為保險庫角標（字母開頭，1–8 個字元）。';
+
+  @override
+  String get addressLanguageAddHint => '例如 ja';
+
+  @override
+  String get addressLanguageAddAction => '新增';
+
+  @override
+  String get addressLanguageAddInvalidTitle => '代碼無效';
+
+  @override
+  String get addressLanguageAddInvalidBody =>
+      '請使用以字母開頭、1–8 個字元的代碼。例如：ja、ko、yue。';
+
+  @override
+  String get addressLanguageRemoveTitle => '移除語言？';
+
+  @override
+  String addressLanguageRemoveBody(String name) {
+    return '之後儲存「地址」項目時將不再提供「$name」。已標記的項目會保留原標籤。';
+  }
 
   @override
   String get gridTitleSize => '網格標題大小';

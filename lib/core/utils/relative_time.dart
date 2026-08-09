@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../constants/address_languages.dart';
 
 /// Formats a vault item's last-used (last-copied) timestamp for compact UI.
 String formatLastUsed(DateTime? at, AppLocalizations l10n, {String? locale}) {
@@ -53,14 +54,8 @@ String vaultItemMetaLine({
   return parts.join(' · ');
 }
 
-/// Short label for Addresses language tag (`zh` / `en`), or null if unmarked.
+/// Short label for Addresses language tag, or null if unmarked.
 String? languageTagLabel(String? tag, AppLocalizations l10n) {
-  switch (tag) {
-    case 'zh':
-      return l10n.addressLanguageZh;
-    case 'en':
-      return l10n.addressLanguageEn;
-    default:
-      return null;
-  }
+  if (tag == null || tag.trim().isEmpty) return null;
+  return AddressLanguages.label(tag.trim().toLowerCase(), l10n);
 }

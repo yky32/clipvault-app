@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/address_languages.dart';
+
 enum VaultViewMode {
   list,
   grid2,
@@ -77,6 +79,8 @@ class SettingsService {
   static const _clipboardClearKey = 'clipboard_clear_seconds';
   static const _localeKey = 'locale_code';
   static const _gridTitleSizeKey = 'grid_title_size';
+  /// Enabled address language tag codes (e.g. `zh`, `en`). Order = chip order.
+  static const _addressLanguageTagsKey = 'address_language_tags';
 
   late SharedPreferences _prefs;
 
@@ -88,6 +92,10 @@ class SettingsService {
   final ValueNotifier<AppLocalePreference> localePreferenceListenable =
       ValueNotifier(AppLocalePreference.system);
 
+  /// Listenable so Add/Edit item chips refresh when tags change in Settings.
+  final ValueNotifier<List<String>> addressLanguageTagsListenable =
+      ValueNotifier(List<String>.from(AddressLanguages.defaults));
+
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     // Drop legacy key that may have been set during forced onboarding prompt.
@@ -96,6 +104,7 @@ class SettingsService {
     }
     gridTitleSizeListenable.value = gridTitleSize;
     localePreferenceListenable.value = localePreference;
+    addressLanguageTagsListenable.value = addressLanguageTags;
   }
 
   bool get onboardingDone => _prefs.getBool(_onboardingKey) ?? false;
@@ -188,5 +197,48 @@ class SettingsService {
       },
     );
     gridTitleSizeListenable.value = size;
+  }
+
+  /// Language codes offered when tagging an Addresses item. Default zh + en.
+  /// Empty list = language row hidden (no tags to pick).
+  List<String> get addressLanguageTags {
+    final raw = _prefs.getStringList(_addressLanguageTagsKey);
+    if (raw == null) {
+      return List<String>.from(AddressLanguages.defaults);
+    }
+    final seen = <String>{};
+    final out = <String>[];
+    for (final e in raw) {
+      final code = AddressLanguages.normalizeCode(e);
+      if (code == null || seen.contains(code)) continue;
+      seen.add(code);
+      out.add(code);
+    }
+    return out;
+  }
+
+  Future<void> setAddressLanguageTags(List<String> codes) async {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final e in codes) {
+      final code = AddressLanguages.normalizeCode(e);
+      if (code == null || seen.contains(code)) continue;
+      seen.add(code);
+      out.add(code);
+    }
+    await _prefs.setStringList(_addressLanguageTagsKey, out);
+    addressLanguageTagsListenable.value = List<String>.from(out);
+  }
+
+  Future<void> setAddressLanguageEnabled(String code, bool enabled) async {
+    final normalized = AddressLanguages.normalizeCode(code);
+    if (normalized == null) return;
+    final next = List<String>.from(addressLanguageTags);
+    if (enabled) {
+      if (!next.contains(normalized)) next.add(normalized);
+    } else {
+      next.remove(normalized);
+    }
+    await setAddressLanguageTags(next);
   }
 }

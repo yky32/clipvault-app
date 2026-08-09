@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/constants/address_languages.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/settings_service.dart';
@@ -319,11 +320,7 @@ class _LanguageCornerBadge extends StatelessWidget {
     final full = languageTagLabel(tag, l10n);
     if (full == null) return const SizedBox.shrink();
 
-    final short = switch (tag) {
-      ClipItem.languageZh => '中',
-      ClipItem.languageEn => 'EN',
-      _ => full,
-    };
+    final short = AddressLanguages.shortBadge(tag);
 
     return Tooltip(
       message: full,

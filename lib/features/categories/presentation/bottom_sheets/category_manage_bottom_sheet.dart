@@ -12,6 +12,7 @@ import '../../../../core/widgets/clipvault_bottom_sheet.dart';
 import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../settings/presentation/bottom_sheets/address_language_settings_sheet.dart';
 import 'category_editor_bottom_sheet.dart';
 
 /// Manage custom categories; product defaults are read-only.
@@ -93,6 +94,13 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
     if (mounted) _reload();
   }
 
+  /// Addresses is the only product default with extra setup (language tags).
+  Future<void> _openAddressLanguages() async {
+    HapticFeedback.selectionClick();
+    await AddressLanguageSettingsSheet.show(context);
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -118,7 +126,13 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                 _CategoryTile(
                   icon: categoryIcon(c),
                   label: categoryDisplayName(c, l10n),
-                  trailing: _DefaultBadge(l10n.categoryDefaultBadge),
+                  // Single-line rows so Default badges share one column.
+                  // Language tags are configured by tapping Addresses.
+                  onTap: c.supportsLanguageTag ? _openAddressLanguages : null,
+                  trailing: _DefaultTrailing(
+                    badgeLabel: l10n.categoryDefaultBadge,
+                    showChevron: c.supportsLanguageTag,
+                  ),
                 ),
             ],
           ),
@@ -187,6 +201,43 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
   }
 }
 
+/// Default badge + optional chevron. Chevron slot is always reserved so
+/// badges line up across product-default rows.
+class _DefaultTrailing extends StatelessWidget {
+  const _DefaultTrailing({
+    required this.badgeLabel,
+    this.showChevron = false,
+  });
+
+  final String badgeLabel;
+  final bool showChevron;
+
+  static const double _chevronSlot = 22;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _DefaultBadge(badgeLabel),
+        SizedBox(
+          width: _chevronSlot,
+          child: showChevron
+              ? Align(
+                  alignment: Alignment.centerRight,
+                  child: Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 16,
+                    color: AppColors.tertiaryLabel(context),
+                  ),
+                )
+              : null,
+        ),
+      ],
+    );
+  }
+}
+
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.icon,
@@ -211,6 +262,7 @@ class _CategoryTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 30,
