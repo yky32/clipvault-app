@@ -6,6 +6,7 @@ IOS_DIR = File.expand_path("..", FASTLANE_DIR)
 PROJECT_ROOT = File.expand_path("..", IOS_DIR)
 
 APP_IDENTIFIER = "com.clipval"
+WIDGET_IDENTIFIER = "com.clipval.ClipValWidget"
 APP_NAME = "ClipVal"
 TEAM_ID = ENV["FASTLANE_TEAM_ID"] || "3G34999H3A"
 APPLE_ID = ENV["FASTLANE_USER"] || "wayneyu.dev@gmail.com"
@@ -260,7 +261,11 @@ end
 
 def write_ci_export_options_plist!
   profile_name = ENV["SIGH_NAME"]
+  widget_profile = ENV["SIGH_NAME_WIDGET"]
   UI.user_error!("SIGH_NAME is required to export the App Store IPA on CI.") unless profile_name
+  UI.user_error!(
+    "SIGH_NAME_WIDGET is required (ClipValWidget extension). Run setup_appstore_signing."
+  ) unless widget_profile
 
   plist_path = File.join(IOS_DIR, "ExportOptions.ci.plist")
   plist_content = <<~PLIST
@@ -278,6 +283,8 @@ def write_ci_export_options_plist!
       <dict>
         <key>#{APP_IDENTIFIER}</key>
         <string>#{profile_name}</string>
+        <key>#{WIDGET_IDENTIFIER}</key>
+        <string>#{widget_profile}</string>
       </dict>
     </dict>
     </plist>
@@ -292,6 +299,7 @@ def persist_ci_signing_env!
 
   File.open(ENV["GITHUB_ENV"], "a") do |file|
     file.puts "SIGH_NAME=#{ENV['SIGH_NAME']}"
+    file.puts "SIGH_NAME_WIDGET=#{ENV['SIGH_NAME_WIDGET']}" if ENV["SIGH_NAME_WIDGET"]
   end
 end
 
@@ -548,6 +556,9 @@ platform :ios do
       UI.user_error!(
         "SIGH_NAME must be set. Run setup_appstore_signing first (workflow step)."
       ) unless ENV["SIGH_NAME"]
+      UI.user_error!(
+        "SIGH_NAME_WIDGET must be set for ClipValWidget. Run setup_appstore_signing."
+      ) unless ENV["SIGH_NAME_WIDGET"]
 
       update_code_signing_settings(
         use_automatic_signing: false,
@@ -557,6 +568,15 @@ platform :ios do
         profile_name: ENV["SIGH_NAME"],
         code_sign_identity: "Apple Distribution",
         targets: ["Runner"]
+      )
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "#{IOS_DIR}/Runner.xcodeproj",
+        team_id: TEAM_ID,
+        bundle_identifier: WIDGET_IDENTIFIER,
+        profile_name: ENV["SIGH_NAME_WIDGET"],
+        code_sign_identity: "Apple Distribution",
+        targets: ["ClipValWidget"]
       )
 
       export_plist = write_ci_export_options_plist!
@@ -877,9 +897,22 @@ platform :ios do
         force: ENV["CI"] == "true"
       )
       ENV["SIGH_NAME"] = main_profile
+
+      UI.message("📋 Getting App Store provisioning profile for #{WIDGET_IDENTIFIER}...")
+      widget_profile = fetch_appstore_profile!(
+        app_identifier: WIDGET_IDENTIFIER,
+        force: ENV["CI"] == "true"
+      )
+      ENV["SIGH_NAME_WIDGET"] = widget_profile
+      # Restore main SIGH_NAME (fetch overwrites it)
+      ENV["SIGH_NAME"] = main_profile
+
       persist_ci_signing_env!
 
-      UI.success("✅ Certificates and profiles ready! (SIGH_NAME=#{main_profile})")
+      UI.success(
+        "✅ Profiles ready! SIGH_NAME=#{main_profile} " \
+        "SIGH_NAME_WIDGET=#{widget_profile}"
+      )
     rescue => ex
       UI.important("⚠️  Automatic setup failed: #{ex.message}")
       UI.important("   open ios/Runner.xcworkspace → Signing & Capabilities → team #{TEAM_ID}")
@@ -910,6 +943,109 @@ platform :ios do
   end
 end
 
+# --- Android / Google Play (Internal Testing ≈ TestFlight) ---
+
+ANDROID_PACKAGE_NAME = "com.clipval"
+ANDROID_DIR = File.join(PROJECT_ROOT, "android")
+ANDROID_AAB_PATH = File.join(
+  PROJECT_ROOT,
+  "build/app/outputs/bundle/release/app-release.aab"
+)
+
+def android_has_release_signing?
+  props = File.join(ANDROID_DIR, "key.properties")
+  return true if File.exist?(props)
+
+  %w[
+    ANDROID_KEYSTORE_PATH
+    ANDROID_KEYSTORE_PASSWORD
+    ANDROID_KEY_ALIAS
+    ANDROID_KEY_PASSWORD
+  ].all? { |k| !ENV[k].to_s.strip.empty? }
+end
+
+def ensure_android_release_signing!
+  return if android_has_release_signing?
+
+  UI.user_error!(
+    "Missing Android release signing.\n" \
+    "  Local:  ./scripts/create_android_keystore.sh  → android/key.properties\n" \
+    "  CI:     secrets ANDROID_KEYSTORE_BASE64 + ANDROID_KEYSTORE_PASSWORD + " \
+    "ANDROID_KEY_ALIAS + ANDROID_KEY_PASSWORD\n" \
+    "  Docs:   docs/CI_PLAY.md"
+  )
+end
+
+# Resolve Google Play service-account JSON for supply / upload_to_play_store.
+# Prefer file path; support raw JSON or base64 env for CI.
+def play_store_json_key_path!
+  path = ENV["PLAY_STORE_JSON_KEY_PATH"].to_s.strip
+  return path if !path.empty? && File.exist?(path)
+
+  # Common local drop locations
+  [
+    File.join(ANDROID_DIR, "play-store-key.json"),
+    File.expand_path("~/.config/clipval/play-store-key.json"),
+  ].each do |candidate|
+    return candidate if File.exist?(candidate)
+  end
+
+  content = ENV["PLAY_STORE_JSON_KEY"].to_s.strip
+  is_b64 = ENV["PLAY_STORE_JSON_KEY_IS_BASE64"] == "true" ||
+           ENV["PLAY_STORE_JSON_KEY_BASE64"].to_s.strip != ""
+
+  if content.empty? && ENV["PLAY_STORE_JSON_KEY_BASE64"].to_s.strip != ""
+    content = ENV["PLAY_STORE_JSON_KEY_BASE64"].to_s.strip
+    is_b64 = true
+  end
+
+  UI.user_error!(
+    "Missing Google Play service-account key.\n" \
+    "  Set PLAY_STORE_JSON_KEY_PATH to a JSON file, or\n" \
+    "  PLAY_STORE_JSON_KEY / PLAY_STORE_JSON_KEY_BASE64 (CI secret).\n" \
+    "  See docs/CI_PLAY.md"
+  ) if content.empty?
+
+  out = File.join(ANDROID_DIR, "play-store-key.ci.json")
+  FileUtils.mkdir_p(File.dirname(out))
+  if is_b64
+    require "base64"
+    File.binwrite(out, Base64.decode64(content))
+  else
+    File.write(out, content)
+  end
+  File.chmod(0600, out)
+  out
+end
+
+def flutter_build_appbundle!
+  ensure_android_release_signing!
+  sh("cd #{PROJECT_ROOT} && flutter pub get")
+  git_def = flutter_git_define_args
+  UI.message("📦 Building Android App Bundle (release)…")
+  sh("cd #{PROJECT_ROOT} && flutter build appbundle --release #{git_def}")
+  UI.user_error!("❌ AAB not found at #{ANDROID_AAB_PATH}") unless File.exist?(ANDROID_AAB_PATH)
+  UI.success("✅ AAB ready: #{ANDROID_AAB_PATH}")
+  ANDROID_AAB_PATH
+end
+
+# supply reads en-US/changelogs/{versionCode}.txt under metadata_path (max 500 chars).
+def play_metadata_path_with_changelog!(notes)
+  root = File.join(ANDROID_DIR, ".play_metadata")
+  FileUtils.rm_rf(root)
+  dir = File.join(root, "en-US", "changelogs")
+  FileUtils.mkdir_p(dir)
+
+  text = notes.to_s.strip
+  text = "ClipVal build" if text.empty?
+  text = text[0, 500]
+
+  _, _, _, build = read_pubspec_version
+  File.write(File.join(dir, "#{build}.txt"), text)
+  File.write(File.join(dir, "default.txt"), text)
+  root
+end
+
 platform :android do
   desc "Build Android debug APK"
   lane :build_debug do
@@ -919,20 +1055,83 @@ platform :android do
     UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/flutter-apk/app-debug.apk")
   end
 
-  desc "Build Android release APK"
+  desc "Build Android release APK (requires release signing for Play-ready binary)"
   lane :build_release_apk do
+    ensure_android_release_signing!
     sh("cd #{PROJECT_ROOT} && flutter pub get")
-    sh("cd #{PROJECT_ROOT} && flutter build apk --release")
+    git_def = flutter_git_define_args
+    sh("cd #{PROJECT_ROOT} && flutter build apk --release #{git_def}")
     UI.success("✅ Android Release APK built")
     UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/flutter-apk/app-release.apk")
   end
 
-  desc "Build Android release App Bundle"
+  desc "Build Android release App Bundle (.aab) for Play Console"
   lane :build_release_bundle do
-    sh("cd #{PROJECT_ROOT} && flutter pub get")
-    sh("cd #{PROJECT_ROOT} && flutter build appbundle --release")
-    UI.success("✅ Android App Bundle built")
-    UI.message("📦 #{PROJECT_ROOT}/build/app/outputs/bundle/release/app-release.aab")
+    flutter_build_appbundle!
+  end
+
+  desc "Build AAB and upload to Google Play Internal Testing (TestFlight equivalent)"
+  desc "Options: skip_build:true — upload existing AAB only; track: internal|alpha|beta|production"
+  lane :upload_internal do |options|
+    skip_build = options[:skip_build] || false
+    track = (options[:track] || ENV["PLAY_TRACK"] || "internal").to_s
+
+    unless skip_build
+      UI.important("🔢 Auto-incrementing build number…")
+      new_build_number = increment_build_number_in_pubspec
+      commit_and_push_build_number(new_build_number)
+      UI.important("")
+
+      flutter_build_appbundle!
+    end
+
+    UI.user_error!(
+      "❌ AAB not found at #{ANDROID_AAB_PATH}. Build first or omit skip_build."
+    ) unless File.exist?(ANDROID_AAB_PATH)
+
+    json_key = play_store_json_key_path!
+    release_notes = generate_release_notes
+    metadata_path = play_metadata_path_with_changelog!(release_notes)
+    UI.message("📝 Play release notes:\n#{release_notes}\n")
+    UI.message("🚀 Uploading to Play track=#{track} (package=#{ANDROID_PACKAGE_NAME})…")
+
+    # Internal / closed testing = closest to TestFlight. Store listing /
+    # screenshots stay in Play Console (or a future metadata lane).
+    begin
+      upload_to_play_store(
+        package_name: ANDROID_PACKAGE_NAME,
+        track: track,
+        aab: ANDROID_AAB_PATH,
+        json_key: json_key,
+        metadata_path: metadata_path,
+        skip_upload_metadata: true,
+        skip_upload_changelogs: false,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        skip_upload_apk: true,
+        release_status: "completed"
+      )
+      UI.success("✅ Uploaded to Google Play (#{track})")
+      UI.message("📱 Play Console → Testing → Internal testing → manage testers / share link")
+    rescue => ex
+      msg = ex.message.to_s
+      if msg.include?("Package not found") || msg.include?("404") ||
+         (msg.downcase.include?("not found") && msg.include?("com.clipval"))
+        UI.error("❌ Play app not found for package #{ANDROID_PACKAGE_NAME}")
+        UI.error("   Create the app once in Play Console with applicationId com.clipval")
+        UI.error("   Docs: docs/CI_PLAY.md")
+      elsif msg.include?("Version code") && msg.include?("already been used")
+        UI.error("❌ versionCode already on Play — bump pubspec build and re-run")
+      end
+      raise
+    ensure
+      FileUtils.rm_rf(File.join(ANDROID_DIR, ".play_metadata"))
+    end
+  end
+
+  desc "Alias: upload to Play production track (use with care)"
+  lane :upload_production do |options|
+    upload_internal(options.merge(track: "production"))
   end
 
   desc "Clean Android build artifacts"
