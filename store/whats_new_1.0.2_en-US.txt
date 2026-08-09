@@ -1,0 +1,7 @@
+What's new in ClipVal 1.0.2
+
+• Backup & Recovery — export and import your vault as CSV (save to Files / iCloud, restore on a new phone)
+• Language labels — mark Addresses (and any category you enable) with Chinese, English, or your own short tags
+• Smoother add/edit sheets when the keyboard is open
+• “Copied” toast every time you tap an item — even when copying the same value again
+• Privacy and stability fixes for App Store delivery
