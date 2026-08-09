@@ -6,7 +6,15 @@ import '../theme/app_spacing.dart';
 class CopiedHud {
   CopiedHud._();
 
+  static OverlayEntry? _active;
+
+  /// Always shows (or re-shows) the black “Copied” toast — safe to call on
+  /// every grid/list tap, including re-copying the same item.
   static void show(BuildContext context, {required String message}) {
+    // Drop any in-flight HUD so rapid taps always flash a fresh toast.
+    _active?.remove();
+    _active = null;
+
     final overlay = Overlay.of(context);
     late OverlayEntry entry;
 
@@ -14,11 +22,15 @@ class CopiedHud {
       builder: (ctx) => _CopiedHudView(
         message: message,
         onDismiss: () {
-          entry.remove();
+          if (_active == entry) {
+            entry.remove();
+            _active = null;
+          }
         },
       ),
     );
 
+    _active = entry;
     overlay.insert(entry);
   }
 }

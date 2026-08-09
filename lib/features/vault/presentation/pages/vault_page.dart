@@ -164,6 +164,10 @@ class _VaultPageState extends State<VaultPage> {
   }
 
   void _copy(ClipItem item) {
+    // Show HUD immediately on every tap (including re-copy same title).
+    // BlocListener alone skipped when lastCopiedTitle was unchanged.
+    final l10n = AppLocalizations.of(context);
+    CopiedHud.show(context, message: l10n.copied(item.title));
     context.read<VaultBloc>().add(VaultItemCopied(item.id));
   }
 
@@ -182,18 +186,11 @@ class _VaultPageState extends State<VaultPage> {
     final theme = Theme.of(context);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    return BlocListener<VaultBloc, VaultState>(
-      listenWhen: (prev, next) =>
-          next.lastCopiedTitle != null &&
-          next.lastCopiedTitle != prev.lastCopiedTitle,
-      listener: (context, state) {
-        final title = state.lastCopiedTitle;
-        if (title == null) return;
-        CopiedHud.show(context, message: l10n.copied(title));
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.groupedBackground(context),
-        body: BlocBuilder<VaultBloc, VaultState>(
+    // Copy HUD is shown in [_copy] so every grid/list/recent tap gets
+    // feedback, even when re-copying the same title.
+    return Scaffold(
+      backgroundColor: AppColors.groupedBackground(context),
+      body: BlocBuilder<VaultBloc, VaultState>(
           builder: (context, state) {
             if (state.status == VaultStatus.loading ||
                 state.status == VaultStatus.initial) {
@@ -486,7 +483,6 @@ class _VaultPageState extends State<VaultPage> {
             );
           },
         ),
-      ),
     );
   }
 }
