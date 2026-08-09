@@ -7,6 +7,7 @@ import '../services/clipboard_service.dart';
 import '../services/encryption_service.dart';
 import '../services/settings_service.dart';
 import '../services/vault_migration_service.dart';
+import '../services/widget_snapshot_service.dart';
 
 /// Central startup wiring (pattern from Triftly AppBootstrap).
 class AppBootstrap {
@@ -18,6 +19,7 @@ class AppBootstrap {
   static late final ClipboardService clipboardService;
   static late final AuthService authService;
   static late final VaultMigrationService vaultMigrationService;
+  static late final WidgetSnapshotService widgetSnapshotService;
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -38,5 +40,10 @@ class AppBootstrap {
       items: clipItemRepository,
       categories: categoryRepository,
     );
+
+    widgetSnapshotService = WidgetSnapshotService(clipItemRepository);
+    await widgetSnapshotService.init();
+    // Best-effort: keep home-screen widget in sync after cold start.
+    await widgetSnapshotService.sync();
   }
 }

@@ -41,6 +41,9 @@ dependencies:
   share_plus: ^10.1.4
   file_picker: ^8.3.7
 
+  # Home Screen widget (iOS WidgetKit via App Group snapshot)
+  home_widget: ^0.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

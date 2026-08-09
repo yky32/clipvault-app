@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/bootstrap/app_bootstrap.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/models/category.dart';
 import '../../../core/models/clip_item.dart';
@@ -36,6 +37,14 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   final ClipItemRepository _items;
   final CategoryRepository _categories;
   final ClipboardService _clipboard;
+
+  Future<void> _syncWidget() async {
+    try {
+      await AppBootstrap.widgetSnapshotService.sync();
+    } catch (_) {
+      // Widget is best-effort; never fail vault actions.
+    }
+  }
 
   void _onStarted(VaultStarted event, Emitter<VaultState> emit) {
     emit(state.copyWith(status: VaultStatus.loading));
@@ -91,6 +100,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         clearError: true,
       ),
     );
+    await _syncWidget();
   }
 
   Future<void> _onItemDeleted(
@@ -99,6 +109,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   ) async {
     await _items.delete(event.itemId);
     emit(state.copyWith(items: _items.getAll()));
+    await _syncWidget();
   }
 
   Future<void> _onItemPinToggled(
@@ -109,14 +120,19 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     if (item == null) return;
     await _items.update(item.copyWith(isPinned: !item.isPinned));
     emit(state.copyWith(items: _items.getAll()));
+    await _syncWidget();
   }
 
-  void _onRefreshed(VaultRefreshed event, Emitter<VaultState> emit) {
+  Future<void> _onRefreshed(
+    VaultRefreshed event,
+    Emitter<VaultState> emit,
+  ) async {
     emit(
       state.copyWith(
         items: _items.getAll(),
         categories: _categories.getAll(),
       ),
     );
+    await _syncWidget();
   }
 }

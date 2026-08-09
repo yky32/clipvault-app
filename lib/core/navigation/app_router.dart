@@ -8,6 +8,8 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/vault/bloc/vault_bloc.dart';
 import '../../features/vault/presentation/pages/vault_page.dart';
 import '../bootstrap/app_bootstrap.dart';
+import '../constants/app_constants.dart';
+import '../services/widget_deep_link.dart';
 
 class AppRouter {
   AppRouter._();
@@ -24,6 +26,38 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: rootKey,
     initialLocation: initialLocation,
+    // Widget opens clipval://copy?id=… — treat as action, not a page route.
+    redirect: (context, state) {
+      final uri = state.uri;
+      if (uri.scheme == AppConstants.urlScheme ||
+          WidgetDeepLink.isWidgetCopyUri(uri)) {
+        // Fire-and-forget copy; do not await inside redirect.
+        WidgetDeepLink.handle(uri);
+        return WidgetDeepLink.landingLocation;
+      }
+      // go_router sometimes passes full custom-scheme URI as the location.
+      final loc = state.matchedLocation;
+      if (loc.startsWith('${AppConstants.urlScheme}:')) {
+        final parsed = Uri.tryParse(loc);
+        if (parsed != null && WidgetDeepLink.isWidgetCopyUri(parsed)) {
+          WidgetDeepLink.handle(parsed);
+          return WidgetDeepLink.landingLocation;
+        }
+        return WidgetDeepLink.landingLocation;
+      }
+      return null;
+    },
+    onException: (context, state, router) {
+      final uri = state.uri;
+      if (WidgetDeepLink.isWidgetCopyUri(uri) ||
+          uri.scheme == AppConstants.urlScheme) {
+        WidgetDeepLink.handle(uri);
+        router.go(WidgetDeepLink.landingLocation);
+        return;
+      }
+      // Fallback: unknown routes → vault
+      router.go(initialLocation);
+    },
     routes: [
       GoRoute(
         path: '/onboarding',

@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:home_widget/home_widget.dart';
 
 import 'core/navigation/app_router.dart';
 import 'core/services/settings_service.dart';
+import 'core/services/widget_deep_link.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/palette_controller.dart';
@@ -27,15 +31,23 @@ class _ClipVaultAppState extends State<ClipVaultApp>
     with WidgetsBindingObserver {
   /// True after the app was fully backgrounded (not just inactive for Face ID).
   bool _needsRelock = false;
+  StreamSubscription<Uri?>? _widgetClickSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Backup delivery path; GoRouter redirect also handles clipval://copy.
+    _widgetClickSub = HomeWidget.widgetClicked.listen(WidgetDeepLink.handle);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      HomeWidget.initiallyLaunchedFromHomeWidget()
+          .then(WidgetDeepLink.handle);
+    });
   }
 
   @override
   void dispose() {
+    _widgetClickSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
