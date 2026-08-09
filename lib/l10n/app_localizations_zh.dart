@@ -231,7 +231,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsClipboard => '剪貼簿';
 
   @override
-  String get settingsData => '資料';
+  String get settingsData => '備份與還原';
 
   @override
   String get biometricLock => '應用程式鎖定';

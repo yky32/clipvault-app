@@ -70,7 +70,7 @@
   "settingsSecurity": "安全性",
   "settingsAppearance": "外觀",
   "settingsClipboard": "剪貼簿",
-  "settingsData": "資料",
+  "settingsData": "備份與還原",
   "biometricLock": "應用程式鎖定",
   "biometricLockSubtitle": "需要 Face ID／指紋／裝置 PIN",
   "themeMode": "主題",

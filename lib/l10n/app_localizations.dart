@@ -521,7 +521,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsData.
   ///
   /// In en, this message translates to:
-  /// **'Data'**
+  /// **'Backup & Recovery'**
   String get settingsData;
 
   /// No description provided for @biometricLock.

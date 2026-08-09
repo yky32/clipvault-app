@@ -18,9 +18,9 @@ abstract final class ClipVaultBottomSheet {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),
       builder: (ctx) {
-        // Give tall sheets a bounded max height (90% of screen above keyboard).
-        final media = MediaQuery.of(ctx);
-        final maxH = media.size.height * 0.92 - media.viewInsets.bottom;
+        // Cap against full screen only. SheetScaffold owns keyboard lift
+        // (Padding bottom: viewInsets) so we don't subtract keyboard twice.
+        final maxH = MediaQuery.sizeOf(ctx).height * 0.92;
         return _SheetKeyboardDismiss(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH),

@@ -100,7 +100,7 @@
   "settingsSecurity": "Security",
   "settingsAppearance": "Appearance",
   "settingsClipboard": "Clipboard",
-  "settingsData": "Data",
+  "settingsData": "Backup & Recovery",
   "biometricLock": "App lock",
   "biometricLockSubtitle": "Require Face ID / fingerprint / device PIN",
   "themeMode": "Theme",

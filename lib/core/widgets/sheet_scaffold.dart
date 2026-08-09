@@ -196,16 +196,37 @@ class SheetScaffold extends StatelessWidget {
                   ? outerConstraints.maxHeight
                   : maxHeight;
 
-              final scroll = SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: hasFooter
-                    ? bodyPadding
-                    : bodyPadding.copyWith(
-                        bottom: AppSpacing.lg + bottomSafe,
-                      ),
-                child: child,
-              );
+              final scrollPadding = hasFooter
+                  ? bodyPadding
+                  : bodyPadding.copyWith(
+                      bottom: AppSpacing.lg + bottomSafe,
+                    );
+
+              // Compact forms hug content height (no empty stretch above footer).
+              // shrinkWrap + Flexible(loose) sizes to content until maxH, then
+              // scrolls — works with keyboard without forcing full-height sheet.
+              final Widget body;
+              if (hugContent) {
+                body = Flexible(
+                  fit: FlexFit.loose,
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: scrollPadding,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    children: [child],
+                  ),
+                );
+              } else {
+                body = Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: scrollPadding,
+                    child: child,
+                  ),
+                );
+              }
 
               return Material(
                 color: sheetColor,
@@ -213,7 +234,7 @@ class SheetScaffold extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: SizedBox(
                   width: double.infinity,
-                  // Hug forms: only as tall as content, but never past maxH.
+                  // Hug forms: only as tall as content (capped by maxH).
                   // Tall forms (welcome): fill maxH with Expanded body.
                   height: hugContent ? null : maxH,
                   child: ConstrainedBox(
@@ -223,16 +244,7 @@ class SheetScaffold extends StatelessWidget {
                           hugContent ? MainAxisSize.min : MainAxisSize.max,
                       children: [
                         buildHeader(),
-                        if (hugContent)
-                          ConstrainedBox(
-                            // Leave room for header + footer inside maxH.
-                            constraints: BoxConstraints(
-                              maxHeight: (maxH - 160).clamp(120.0, maxH),
-                            ),
-                            child: scroll,
-                          )
-                        else
-                          Expanded(child: scroll),
+                        body,
                         if (footerWidget != null) footerWidget,
                       ],
                     ),

@@ -233,7 +233,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsClipboard => 'Clipboard';
 
   @override
-  String get settingsData => 'Data';
+  String get settingsData => 'Backup & Recovery';
 
   @override
   String get biometricLock => 'App lock';
