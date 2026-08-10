@@ -75,12 +75,12 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Let UIDocumentPicker enable .clipval (and open-in / Files association). -->
+	<!-- Document types for import / open-in. ASC rejects Owner + public.data (90746). -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>ClipVal Backup</string>
+			<string>ClipVal Secure Backup</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
@@ -88,10 +88,20 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.clipval.backup</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>ClipVal CSV Backup</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
 				<string>public.comma-separated-values-text</string>
 				<string>public.plain-text</string>
 				<string>public.json</string>
-				<string>public.data</string>
 			</array>
 		</dict>
 	</array>
