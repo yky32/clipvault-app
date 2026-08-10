@@ -1,0 +1,16 @@
+ClipVal 1.1 — App Review notes (iCloud)
+
+ClipVal is a local one-tap vault. There is no ClipVal account or ClipVal server for vault data.
+
+Optional iCloud sync (Settings → iCloud → Sync with iCloud):
+• Off by default; user must turn it on.
+• Uses the user’s private CloudKit database only (container iCloud.com.clipval).
+• Item values are AES-encrypted on device before any upload. ClipVal never receives plaintext.
+• Reviewer path: sign into iCloud on the device → open ClipVal → Settings → enable Sync with iCloud → Sync now → create/edit an item and sync again.
+
+Also available without iCloud:
+• Password-encrypted .clipval export/import for backup and phone swap.
+
+Core flow to review without iCloud:
+• Add item → tap to copy → paste in another app.
+• Optional: Settings → App lock; long-press item → Sensitive / Duplicate; Home Screen widget.

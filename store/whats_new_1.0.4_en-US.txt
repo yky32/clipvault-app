@@ -1,0 +1,16 @@
+What's new in ClipVal 1.0.4
+
+Faster one-tap
+• Home Screen widget — favorites only, hide titles when app lock is on, medium & large sizes
+• Recently copied strip — denser; hold to pin
+• Duplicate any item from the action sheet
+• Sort vault — recently updated, recently copied, or A–Z
+
+Trust surface
+• Face ID / device passcode to reveal values in the editor (when app lock is on)
+• Auto-lock after 1, 5, or 15 minutes away — or immediately
+• Mark items Sensitive — titles stay masked in the vault and widget
+• Undo delete for a few seconds
+
+Still ClipVal
+• No account. Data stays on your device unless you export a password-locked .clipval backup.

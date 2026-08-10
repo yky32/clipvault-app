@@ -1,0 +1,18 @@
+What's new in ClipVal 1.1
+
+Optional iCloud sync
+• Sync with iCloud — opt-in, off by default
+• Your private CloudKit only — goes to your iCloud, never to ClipVal servers
+• Values stay encrypted on device before upload
+• Phone + second device stay aligned without creating a ClipVal account
+• .clipval password backups still work for off-Apple or disaster recovery
+
+Faster one-tap
+• Widget favorites, hide titles when locked, medium & large widgets
+• Recent strip, duplicate item, vault sort (updated / last used / A–Z)
+
+Trust surface
+• Face ID to reveal values when app lock is on
+• Auto-lock timeout · Sensitive flag · Undo delete
+
+No account. One job: store once, tap once, paste anywhere.
