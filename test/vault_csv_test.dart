@@ -20,6 +20,7 @@ void main() {
         categoryId: cat.id,
         languageTag: 'en',
         isPinned: true,
+        isSensitive: true,
         createdAt: now,
         updatedAt: now,
         lastCopiedAt: now,
@@ -30,6 +31,7 @@ void main() {
         categoriesById: {cat.id: cat},
       );
       expect(csv, contains('# clipval_export_version=1'));
+      expect(csv, contains('sensitive'));
 
       final rows = VaultCsv.decode(csv);
       expect(rows, hasLength(1));
@@ -39,6 +41,7 @@ void main() {
       expect(rows.single.categorySystemKey, 'passwords');
       expect(rows.single.languageTag, 'en');
       expect(rows.single.isPinned, isTrue);
+      expect(rows.single.isSensitive, isTrue);
       expect(rows.single.createdAt, now);
       expect(rows.single.lastCopiedAt, now);
     });

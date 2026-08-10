@@ -74,8 +74,11 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   /// Addresses only: `zh` | `en` | null.
   String? _languageTag;
   bool _isPinned = false;
+  bool _isSensitive = false;
   bool _obscureValue = true;
   bool _saving = false;
+  /// After Face ID (or if not required), user may show the value.
+  bool _revealUnlocked = false;
 
   /// Long / multi-line values get a taller field when revealed.
   bool get _valueIsLong {
@@ -94,6 +97,9 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     return cat?.supportsLanguageTag ?? false;
   }
 
+  bool get _mustAuthToReveal =>
+      !widget.isNew && SettingsService.instance.requireAuthToReveal;
+
   @override
   void initState() {
     super.initState();
@@ -103,6 +109,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         _titleController.text = _existing!.title;
         _valueController.text = _existing!.value;
         _isPinned = _existing!.isPinned;
+        _isSensitive = _existing!.isSensitive;
         _selectedCategoryId = _existing!.categoryId;
         _languageTag = _existing!.languageTag;
       }
@@ -118,13 +125,34 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
       if (seedValue != null && seedValue.isNotEmpty) {
         _valueController.text = seedValue;
       }
+      // New items: author already sees what they type.
+      _revealUnlocked = true;
     }
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);
-    // Long templates: show plaintext multi-line by default when opening.
-    if (_valueIsLong) {
+    // Long templates: expand when reveal is free; stay hidden if auth required.
+    if (_valueIsLong && !_mustAuthToReveal) {
       _obscureValue = false;
+      _revealUnlocked = true;
     }
+  }
+
+  Future<void> _toggleObscure() async {
+    HapticFeedback.selectionClick();
+    if (!_obscureValue) {
+      setState(() => _obscureValue = true);
+      return;
+    }
+    if (_mustAuthToReveal && !_revealUnlocked) {
+      final l10n = AppLocalizations.of(context);
+      final ok = await AppBootstrap.authService.authenticate(
+        reason: l10n.revealValueAuthReason,
+      );
+      if (!ok || !mounted) return;
+      _revealUnlocked = true;
+    }
+    if (!mounted) return;
+    setState(() => _obscureValue = false);
   }
 
   void _onChanged() => setState(() {});
@@ -160,10 +188,25 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           TextSelection.collapsed(offset: _valueController.text.length);
     }
     // Reveal after paste so the user can review; eye still hides to stars.
-    setState(() => _obscureValue = false);
+    // Paste is user-initiated content — no extra Face ID.
+    setState(() {
+      _revealUnlocked = true;
+      _obscureValue = false;
+    });
   }
 
   Future<void> _openExpandedValueEditor() async {
+    if (_obscureValue && _mustAuthToReveal && !_revealUnlocked) {
+      final l10n = AppLocalizations.of(context);
+      final ok = await AppBootstrap.authService.authenticate(
+        reason: l10n.revealValueAuthReason,
+      );
+      if (!ok || !mounted) return;
+      setState(() {
+        _revealUnlocked = true;
+        _obscureValue = false;
+      });
+    }
     // Controller is owned by the sheet widget so it is disposed only after
     // the route unmounts (avoids "used after disposed" during pop animation).
     final result = await showModalBottomSheet<String>(
@@ -182,6 +225,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         selection: TextSelection.collapsed(offset: result.length),
       );
       if (result.contains('\n') || result.length > 48) {
+        _revealUnlocked = true;
         _obscureValue = false;
       }
     });
@@ -236,6 +280,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
             languageTag: languageTag,
             clearLanguageTag: languageTag == null,
             isPinned: _isPinned,
+            isSensitive: _isSensitive,
           ),
         );
       } else {
@@ -245,6 +290,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
           categoryId: categoryId,
           languageTag: languageTag,
           isPinned: _isPinned,
+          isSensitive: _isSensitive,
         );
       }
 
@@ -303,10 +349,7 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                 multiline: _valueMultiline,
                 tall: _valueIsLong && _valueMultiline,
                 hint: l10n.valueHint,
-                onToggleObscure: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _obscureValue = !_obscureValue);
-                },
+                onToggleObscure: _toggleObscure,
                 onExpand: _openExpandedValueEditor,
                 onPaste: _pasteIntoValue,
               ),
@@ -410,6 +453,31 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   onChanged: (v) {
                     HapticFeedback.selectionClick();
                     setState(() => _isPinned = v);
+                  },
+                ),
+              ),
+              IosGroupTile(
+                title: l10n.sensitiveItem,
+                subtitle: l10n.sensitiveItemSubtitle,
+                leading: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppColors.iconSecurity.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.eye_slash_fill,
+                    size: 16,
+                    color: AppColors.iconSecurity,
+                  ),
+                ),
+                trailing: CupertinoSwitch(
+                  value: _isSensitive,
+                  activeTrackColor: AppColors.primary,
+                  onChanged: (v) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _isSensitive = v);
                   },
                 ),
               ),

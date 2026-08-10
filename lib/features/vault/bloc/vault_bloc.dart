@@ -34,6 +34,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<VaultItemCopied>(_onItemCopied);
     on<VaultItemDeleted>(_onItemDeleted);
     on<VaultItemsDeleted>(_onItemsDeleted);
+    on<VaultItemsRestored>(_onItemsRestored);
     on<VaultItemPinToggled>(_onItemPinToggled);
     on<VaultItemDuplicated>(_onItemDuplicated);
     on<VaultRefreshed>(_onRefreshed);
@@ -128,6 +129,16 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _syncWidget();
   }
 
+  Future<void> _onItemsRestored(
+    VaultItemsRestored event,
+    Emitter<VaultState> emit,
+  ) async {
+    if (event.items.isEmpty) return;
+    await _items.restoreMany(event.items);
+    emit(state.copyWith(items: _items.getAll()));
+    await _syncWidget();
+  }
+
   Future<void> _onItemPinToggled(
     VaultItemPinToggled event,
     Emitter<VaultState> emit,
@@ -153,6 +164,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       categoryId: item.categoryId,
       languageTag: item.languageTag,
       isPinned: false,
+      isSensitive: item.isSensitive,
     );
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();

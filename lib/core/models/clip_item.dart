@@ -11,6 +11,8 @@ class ClipItem extends Equatable {
     /// Optional display tag for Addresses only: `zh` | `en`. Null = unmarked.
     this.languageTag,
     this.isPinned = false,
+    /// Phase D: blur title in vault/widget until user opens & reveals.
+    this.isSensitive = false,
     required this.createdAt,
     required this.updatedAt,
     this.lastCopiedAt,
@@ -19,15 +21,22 @@ class ClipItem extends Equatable {
   static const languageZh = 'zh';
   static const languageEn = 'en';
 
+  /// Masked title shown for sensitive items in lists / recent strip.
+  static const maskedTitle = '••••';
+
   final String id;
   final String title;
   final String value;
   final String? categoryId;
   final String? languageTag;
   final bool isPinned;
+  final bool isSensitive;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? lastCopiedAt;
+
+  /// Title safe for list/grid/recent UI (masked when sensitive).
+  String get displayTitle => isSensitive ? maskedTitle : title;
 
   ClipItem copyWith({
     String? id,
@@ -38,6 +47,7 @@ class ClipItem extends Equatable {
     String? languageTag,
     bool clearLanguageTag = false,
     bool? isPinned,
+    bool? isSensitive,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? lastCopiedAt,
@@ -51,6 +61,7 @@ class ClipItem extends Equatable {
       languageTag:
           clearLanguageTag ? null : (languageTag ?? this.languageTag),
       isPinned: isPinned ?? this.isPinned,
+      isSensitive: isSensitive ?? this.isSensitive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       lastCopiedAt:
@@ -66,6 +77,7 @@ class ClipItem extends Equatable {
       'categoryId': categoryId,
       'languageTag': languageTag,
       'isPinned': isPinned,
+      'isSensitive': isSensitive,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'lastCopiedAt': lastCopiedAt?.toIso8601String(),
@@ -88,6 +100,7 @@ class ClipItem extends Equatable {
       categoryId: map['categoryId'] as String?,
       languageTag: tag,
       isPinned: map['isPinned'] as bool? ?? false,
+      isSensitive: map['isSensitive'] as bool? ?? false,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
       lastCopiedAt: map['lastCopiedAt'] != null
@@ -104,6 +117,7 @@ class ClipItem extends Equatable {
         categoryId,
         languageTag,
         isPinned,
+        isSensitive,
         createdAt,
         updatedAt,
         lastCopiedAt,

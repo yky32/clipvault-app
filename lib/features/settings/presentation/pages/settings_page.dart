@@ -36,6 +36,8 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late bool _biometric;
+  late bool _requireAuthToReveal;
+  late int _autoLockTimeout;
   late VaultViewMode _viewMode;
   late GridTitleSize _gridTitleSize;
   late AppLocalePreference _localePref;
@@ -50,6 +52,8 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     final s = SettingsService.instance;
     _biometric = s.biometricLockEnabled;
+    _requireAuthToReveal = s.requireAuthToRevealStored;
+    _autoLockTimeout = s.autoLockTimeoutSeconds;
     _viewMode = s.defaultViewMode;
     _gridTitleSize = s.gridTitleSize;
     _localePref = s.localePreference;
@@ -109,6 +113,53 @@ class _SettingsPageState extends State<SettingsPage> {
     HapticFeedback.selectionClick();
     setState(() => _biometric = value);
     await _syncWidgetPrefs();
+  }
+
+  String _autoLockLabel(AppLocalizations l10n) {
+    return switch (_autoLockTimeout) {
+      60 => l10n.autoLockAfter1Min,
+      300 => l10n.autoLockAfter5Min,
+      900 => l10n.autoLockAfter15Min,
+      _ => l10n.autoLockImmediate,
+    };
+  }
+
+  Future<void> _pickAutoLockTimeout() async {
+    final l10n = AppLocalizations.of(context);
+    final value = await showCupertinoModalPopup<int>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(l10n.autoLockTimeout),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 0),
+            child: Text(l10n.autoLockImmediate),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 60),
+            child: Text(l10n.autoLockAfter1Min),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 300),
+            child: Text(l10n.autoLockAfter5Min),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 900),
+            child: Text(l10n.autoLockAfter15Min),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+    if (value == null || !mounted) return;
+    await SettingsService.instance.setAutoLockTimeoutSeconds(value);
+    if (!mounted) return;
+    HapticFeedback.selectionClick();
+    setState(() => _autoLockTimeout = value);
   }
 
   String _vaultSortLabel(VaultSortMode mode, AppLocalizations l10n) {
@@ -719,10 +770,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 8),
                   IosGroup(
                   header: l10n.settingsSecurity,
-                  footer: l10n.biometricLockSubtitle,
+                  footer: l10n.securitySectionFooter,
                   children: [
                     IosGroupTile(
                       title: l10n.biometricLock,
+                      subtitle: l10n.biometricLockSubtitle,
                       leading: _LeadingIcon(
                         icon: CupertinoIcons.lock_shield_fill,
                         color: AppColors.iconSecurity,
@@ -733,6 +785,50 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: _toggleBiometric,
                       ),
                     ),
+                    if (_biometric) ...[
+                      IosGroupTile(
+                        title: l10n.requireAuthToReveal,
+                        subtitle: l10n.requireAuthToRevealSubtitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.eye_slash_fill,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: CupertinoSwitch(
+                          value: _requireAuthToReveal,
+                          activeTrackColor: AppColors.primary,
+                          onChanged: (v) async {
+                            HapticFeedback.selectionClick();
+                            await SettingsService.instance
+                                .setRequireAuthToReveal(v);
+                            if (!mounted) return;
+                            setState(() => _requireAuthToReveal = v);
+                          },
+                        ),
+                      ),
+                      IosGroupTile(
+                        title: l10n.autoLockTimeout,
+                        subtitle: l10n.autoLockTimeoutSubtitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.timer,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _autoLockLabel(l10n),
+                              style: TextStyle(
+                                fontFamily: 'Satoshi',
+                                fontSize: 17,
+                                color: AppColors.secondaryLabel(context),
+                              ),
+                            ),
+                            const IosChevron(),
+                          ],
+                        ),
+                        onTap: _pickAutoLockTimeout,
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 28),

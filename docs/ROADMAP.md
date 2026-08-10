@@ -78,13 +78,13 @@
 
 **Goal:** Feel safer than Notes without becoming a password manager.
 
-| Item | Notes |
+| Item | Status |
 |------|--------|
-| Require Face ID to **reveal** value in editor | Default off or on when app lock on |
-| Hide titles/values on lock screen widget | Snapshot policy |
-| Auto-lock timeout options | Already re-lock on resume — refine |
-| Undo delete (few seconds) | Local only |
-| Optional “sensitive” flag | Blur title until unlock (careful scope) |
+| Require Face ID to **reveal** value in editor | Done — Settings (when app lock on; default on) |
+| Hide titles on widget when locked / sensitive | Done — monogram; sensitive always masks |
+| Auto-lock timeout options | Done — immediate · 1m · 5m · 15m |
+| Undo delete (few seconds) | Done — snackbar Undo · 5s |
+| Optional “sensitive” flag | Done — mask title in vault/recent/widget |
 
 **Exit:** Power users trust ClipVal for codes/API keys, not just grocery codes.
 
@@ -123,8 +123,7 @@
 ## Suggested near-term sequence
 
 ```
-Now ──► Phase C: Widget favorites + vault speed (done in tree)
-     ──► Phase D: Reveal-with-Face-ID / lock polish
+Now ──► Phase D: Trust surface (done in tree — try on device)
      ──► App Store 1.1 / 1.2 marketing if needed
      ──► Phase E: iCloud private sync (big project)
      ──► Phase F: Android parity

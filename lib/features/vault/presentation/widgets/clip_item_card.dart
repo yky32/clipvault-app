@@ -134,9 +134,17 @@ class _ListRow extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                       ],
+                      if (item.isSensitive) ...[
+                        Icon(
+                          CupertinoIcons.eye_slash_fill,
+                          size: 12,
+                          color: AppColors.secondaryLabel(context),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
                       Expanded(
                         child: Text(
-                          item.title,
+                          item.displayTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyLarge?.copyWith(
@@ -295,11 +303,11 @@ class _GridTile extends StatelessWidget {
                                   child: Align(
                                     alignment: Alignment.bottomLeft,
                                     child: Tooltip(
-                                      message: item.title,
+                                      message: item.displayTitle,
                                       waitDuration:
                                           const Duration(milliseconds: 400),
                                       child: Text(
-                                        item.title,
+                                        item.displayTitle,
                                         maxLines: 2,
                                         softWrap: true,
                                         overflow: TextOverflow.ellipsis,

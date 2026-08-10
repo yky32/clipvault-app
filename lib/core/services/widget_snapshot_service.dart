@@ -46,10 +46,12 @@ class WidgetSnapshotService {
           for (final item in selected)
             {
               'id': item.id,
-              'title': hideTitles ? '' : item.title,
+              // Sensitive always masks titles; app-lock hide applies to all.
+              'title': (hideTitles || item.isSensitive) ? '' : item.title,
               'monogram': _monogram(item.title),
               'value': item.value,
               'pinned': item.isPinned,
+              'sensitive': item.isSensitive,
             },
         ],
         'hideTitles': hideTitles,

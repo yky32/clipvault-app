@@ -704,6 +704,96 @@ abstract class AppLocalizations {
   /// **'Require Face ID / fingerprint / device PIN'**
   String get biometricLockSubtitle;
 
+  /// No description provided for @securitySectionFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.'**
+  String get securitySectionFooter;
+
+  /// No description provided for @requireAuthToReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Face ID to reveal values'**
+  String get requireAuthToReveal;
+
+  /// No description provided for @requireAuthToRevealSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask again before showing a value in the editor'**
+  String get requireAuthToRevealSubtitle;
+
+  /// No description provided for @revealValueAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal this value'**
+  String get revealValueAuthReason;
+
+  /// No description provided for @autoLockTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-lock'**
+  String get autoLockTimeout;
+
+  /// No description provided for @autoLockTimeoutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-lock after the app is in the background'**
+  String get autoLockTimeoutSubtitle;
+
+  /// No description provided for @autoLockImmediate.
+  ///
+  /// In en, this message translates to:
+  /// **'Immediately'**
+  String get autoLockImmediate;
+
+  /// No description provided for @autoLockAfter1Min.
+  ///
+  /// In en, this message translates to:
+  /// **'After 1 minute'**
+  String get autoLockAfter1Min;
+
+  /// No description provided for @autoLockAfter5Min.
+  ///
+  /// In en, this message translates to:
+  /// **'After 5 minutes'**
+  String get autoLockAfter5Min;
+
+  /// No description provided for @autoLockAfter15Min.
+  ///
+  /// In en, this message translates to:
+  /// **'After 15 minutes'**
+  String get autoLockAfter15Min;
+
+  /// No description provided for @sensitiveItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensitive'**
+  String get sensitiveItem;
+
+  /// No description provided for @sensitiveItemSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide title in the vault and widget'**
+  String get sensitiveItemSubtitle;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @itemDeletedUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Item deleted'**
+  String get itemDeletedUndo;
+
+  /// No description provided for @itemsDeletedUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items deleted'**
+  String itemsDeletedUndo(int count);
+
   /// No description provided for @themeMode.
   ///
   /// In en, this message translates to:

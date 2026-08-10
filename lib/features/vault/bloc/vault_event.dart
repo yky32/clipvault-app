@@ -55,6 +55,15 @@ final class VaultItemsDeleted extends VaultEvent {
   List<Object?> get props => [itemIds];
 }
 
+/// Restore items after undo-delete (Phase D).
+final class VaultItemsRestored extends VaultEvent {
+  const VaultItemsRestored(this.items);
+  final List<ClipItem> items;
+
+  @override
+  List<Object?> get props => [items];
+}
+
 final class VaultItemPinToggled extends VaultEvent {
   const VaultItemPinToggled(this.itemId);
   final String itemId;

@@ -78,6 +78,7 @@ class VaultMigrationService {
           categoryId: categoryId,
           languageTag: row.languageTag,
           isPinned: row.isPinned,
+          isSensitive: row.isSensitive,
           createdAt: row.createdAt ?? now,
           updatedAt: row.updatedAt ?? now,
           lastCopiedAt: row.lastCopiedAt,
@@ -172,6 +173,7 @@ class VaultMigrationService {
           categorySystemKey: row.categorySystemKey,
           languageTag: row.languageTag,
           isPinned: row.isPinned,
+          isSensitive: row.isSensitive,
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
           lastCopiedAt: row.lastCopiedAt,
@@ -259,6 +261,7 @@ class _PreparedRow {
     this.categorySystemKey,
     this.languageTag,
     this.isPinned = false,
+    this.isSensitive = false,
     this.createdAt,
     this.updatedAt,
     this.lastCopiedAt,
@@ -270,6 +273,7 @@ class _PreparedRow {
   final String? categorySystemKey;
   final String? languageTag;
   final bool isPinned;
+  final bool isSensitive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? lastCopiedAt;

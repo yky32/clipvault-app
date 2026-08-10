@@ -40,24 +40,39 @@ class ClipItemRepository {
     String? categoryId,
     String? languageTag,
     bool isPinned = false,
+    bool isSensitive = false,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? lastCopiedAt,
+    String? id,
   }) async {
     final now = DateTime.now();
     final item = ClipItem(
-      id: _uuid.v4(),
+      id: id ?? _uuid.v4(),
       title: title.trim(),
       value: value,
       categoryId: categoryId,
       languageTag: languageTag,
       isPinned: isPinned,
+      isSensitive: isSensitive,
       createdAt: createdAt ?? now,
       updatedAt: updatedAt ?? now,
       lastCopiedAt: lastCopiedAt,
     );
     await _save(item);
     return item;
+  }
+
+  /// Restore a previously deleted item (undo). Keeps the original id.
+  Future<ClipItem> restore(ClipItem item) async {
+    await _save(item);
+    return item;
+  }
+
+  Future<void> restoreMany(Iterable<ClipItem> items) async {
+    for (final item in items) {
+      await _save(item);
+    }
   }
 
   Future<ClipItem> update(ClipItem item) async {

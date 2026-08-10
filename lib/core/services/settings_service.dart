@@ -126,6 +126,10 @@ class SettingsService {
   static const _widgetHideTitlesWhenLockedKey = 'widget_hide_titles_locked';
   /// Vault list sort (pin always first).
   static const _vaultSortKey = 'vault_sort';
+  /// Face ID / passcode required to show value in editor (when app lock on).
+  static const _requireAuthToRevealKey = 'require_auth_to_reveal';
+  /// Seconds after backgrounding before re-lock; 0 = immediate.
+  static const _autoLockTimeoutKey = 'auto_lock_timeout_seconds';
 
   late SharedPreferences _prefs;
 
@@ -180,6 +184,33 @@ class SettingsService {
 
   Future<void> setBiometricLockEnabled(bool value) =>
       _prefs.setBool(_biometricKey, value);
+
+  /// When app lock is on, require biometrics to reveal values in the editor.
+  /// Defaults to **true** (only applies while [biometricLockEnabled]).
+  bool get requireAuthToRevealStored =>
+      _prefs.getBool(_requireAuthToRevealKey) ?? true;
+
+  bool get requireAuthToReveal =>
+      biometricLockEnabled && requireAuthToRevealStored;
+
+  Future<void> setRequireAuthToReveal(bool value) =>
+      _prefs.setBool(_requireAuthToRevealKey, value);
+
+  /// Auto re-lock delay after leaving the app. `0` = on next resume.
+  /// Allowed: 0, 60, 300, 900.
+  int get autoLockTimeoutSeconds {
+    final raw = _prefs.getInt(_autoLockTimeoutKey) ?? 0;
+    if (raw == 60 || raw == 300 || raw == 900) return raw;
+    return 0;
+  }
+
+  Future<void> setAutoLockTimeoutSeconds(int seconds) {
+    final allowed = {0, 60, 300, 900};
+    return _prefs.setInt(
+      _autoLockTimeoutKey,
+      allowed.contains(seconds) ? seconds : 0,
+    );
+  }
 
   /// Widget shows only pinned items (default false = pinned + recent + rest).
   bool get widgetPinnedOnly => _prefs.getBool(_widgetPinnedOnlyKey) ?? false;

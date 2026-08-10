@@ -116,6 +116,26 @@
   "settingsData": "備份與還原",
   "biometricLock": "應用程式鎖定",
   "biometricLockSubtitle": "需要 Face ID／指紋／裝置 PIN",
+  "securitySectionFooter": "鎖定保護保險庫；顯示驗證與自動鎖定控制暴露時間。",
+  "requireAuthToReveal": "顯示內容需 Face ID",
+  "requireAuthToRevealSubtitle": "在編輯器中顯示內容前再次驗證",
+  "revealValueAuthReason": "顯示此內容",
+  "autoLockTimeout": "自動鎖定",
+  "autoLockTimeoutSubtitle": "應用程式進入背景後多久重新鎖定",
+  "autoLockImmediate": "立即",
+  "autoLockAfter1Min": "1 分鐘後",
+  "autoLockAfter5Min": "5 分鐘後",
+  "autoLockAfter15Min": "15 分鐘後",
+  "sensitiveItem": "敏感",
+  "sensitiveItemSubtitle": "在保險庫與小工具隱藏標題",
+  "undo": "復原",
+  "itemDeletedUndo": "已刪除項目",
+  "itemsDeletedUndo": "已刪除 {count} 個項目",
+  "@itemsDeletedUndo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "themeMode": "主題",
   "themeSystem": "跟隨系統",
   "themeLight": "淺色",

@@ -146,6 +146,26 @@
   "settingsData": "Backup & Recovery",
   "biometricLock": "App lock",
   "biometricLockSubtitle": "Require Face ID / fingerprint / device PIN",
+  "securitySectionFooter": "Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.",
+  "requireAuthToReveal": "Face ID to reveal values",
+  "requireAuthToRevealSubtitle": "Ask again before showing a value in the editor",
+  "revealValueAuthReason": "Reveal this value",
+  "autoLockTimeout": "Auto-lock",
+  "autoLockTimeoutSubtitle": "Re-lock after the app is in the background",
+  "autoLockImmediate": "Immediately",
+  "autoLockAfter1Min": "After 1 minute",
+  "autoLockAfter5Min": "After 5 minutes",
+  "autoLockAfter15Min": "After 15 minutes",
+  "sensitiveItem": "Sensitive",
+  "sensitiveItemSubtitle": "Hide title in the vault and widget",
+  "undo": "Undo",
+  "itemDeletedUndo": "Item deleted",
+  "itemsDeletedUndo": "{count} items deleted",
+  "@itemsDeletedUndo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "themeMode": "Theme",
   "themeSystem": "System",
   "themeLight": "Light",

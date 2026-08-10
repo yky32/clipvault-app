@@ -5,7 +5,7 @@ import '../models/clip_item.dart';
 ///
 /// Header row plus optional leading `# clipval_export_version=1` metadata.
 /// Columns: title, value, category_name, category_system_key, language,
-/// pinned, created_at, updated_at, last_copied_at.
+/// pinned, sensitive, created_at, updated_at, last_copied_at.
 abstract final class VaultCsv {
   static const exportVersion = 1;
   static const versionPrefix = 'clipval_export_version=';
@@ -17,6 +17,7 @@ abstract final class VaultCsv {
     'category_system_key',
     'language',
     'pinned',
+    'sensitive',
     'created_at',
     'updated_at',
     'last_copied_at',
@@ -42,6 +43,7 @@ abstract final class VaultCsv {
         cat?.systemKey ?? '',
         item.languageTag ?? '',
         item.isPinned ? 'true' : 'false',
+        item.isSensitive ? 'true' : 'false',
         item.createdAt.toIso8601String(),
         item.updatedAt.toIso8601String(),
         item.lastCopiedAt?.toIso8601String() ?? '',
@@ -92,6 +94,7 @@ abstract final class VaultCsv {
     final categoryKeyCol = col('category_system_key') ?? col('category_key');
     final languageCol = col('language') ?? col('language_tag');
     final pinnedCol = col('pinned') ?? col('is_pinned');
+    final sensitiveCol = col('sensitive') ?? col('is_sensitive');
     final createdCol = col('created_at');
     final updatedCol = col('updated_at');
     final lastCopiedCol = col('last_copied_at');
@@ -120,6 +123,7 @@ abstract final class VaultCsv {
           categorySystemKey: _nullIfEmpty(at(categoryKeyCol).trim()),
           languageTag: _normalizeLanguage(_nullIfEmpty(at(languageCol).trim())),
           isPinned: _parseBool(at(pinnedCol)),
+          isSensitive: _parseBool(at(sensitiveCol)),
           createdAt: _parseDate(at(createdCol)),
           updatedAt: _parseDate(at(updatedCol)),
           lastCopiedAt: _parseDate(at(lastCopiedCol)),
@@ -230,6 +234,7 @@ class VaultCsvRow {
     this.categorySystemKey,
     this.languageTag,
     this.isPinned = false,
+    this.isSensitive = false,
     this.createdAt,
     this.updatedAt,
     this.lastCopiedAt,
@@ -241,6 +246,7 @@ class VaultCsvRow {
   final String? categorySystemKey;
   final String? languageTag;
   final bool isPinned;
+  final bool isSensitive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? lastCopiedAt;

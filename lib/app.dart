@@ -32,6 +32,8 @@ class _ClipVaultAppState extends State<ClipVaultApp>
     with WidgetsBindingObserver {
   /// True after the app was fully backgrounded (not just inactive for Face ID).
   bool _needsRelock = false;
+  /// When we entered paused/hidden — used for auto-lock timeout (Phase D).
+  DateTime? _backgroundedAt;
   StreamSubscription<Uri?>? _widgetClickSub;
 
   @override
@@ -62,6 +64,7 @@ class _ClipVaultAppState extends State<ClipVaultApp>
         state == AppLifecycleState.hidden) {
       if (SettingsService.instance.biometricLockEnabled) {
         _needsRelock = true;
+        _backgroundedAt ??= DateTime.now();
       }
       return;
     }
@@ -71,13 +74,24 @@ class _ClipVaultAppState extends State<ClipVaultApp>
       ShareIntakeService.consumePending();
       if (_needsRelock) {
         _needsRelock = false;
-        _relockIfNeeded();
+        final started = _backgroundedAt;
+        _backgroundedAt = null;
+        _relockIfNeeded(backgroundedAt: started);
       }
     }
   }
 
-  void _relockIfNeeded() {
+  void _relockIfNeeded({DateTime? backgroundedAt}) {
     if (!SettingsService.instance.biometricLockEnabled) return;
+
+    final timeout = SettingsService.instance.autoLockTimeoutSeconds;
+    if (timeout > 0 && backgroundedAt != null) {
+      final elapsed = DateTime.now().difference(backgroundedAt);
+      if (elapsed < Duration(seconds: timeout)) {
+        // Still within grace window — stay unlocked.
+        return;
+      }
+    }
 
     final location =
         AppRouter.router.routerDelegate.currentConfiguration.uri.path;

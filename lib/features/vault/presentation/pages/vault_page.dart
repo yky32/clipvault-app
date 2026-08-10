@@ -145,6 +145,12 @@ class _VaultPageState extends State<VaultPage> {
     String title,
   ) async {
     final l10n = AppLocalizations.of(context);
+    final snapshot = context
+        .read<VaultBloc>()
+        .state
+        .items
+        .where((i) => i.id == itemId)
+        .toList();
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -169,7 +175,33 @@ class _VaultPageState extends State<VaultPage> {
     if (confirmed == true && context.mounted) {
       HapticFeedback.mediumImpact();
       context.read<VaultBloc>().add(VaultItemDeleted(itemId));
+      if (snapshot.isNotEmpty) {
+        _showDeleteUndo(context, snapshot);
+      }
     }
+  }
+
+  void _showDeleteUndo(BuildContext context, List<ClipItem> items) {
+    if (items.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          items.length == 1
+              ? l10n.itemDeletedUndo
+              : l10n.itemsDeletedUndo(items.length),
+        ),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: l10n.undo,
+          onPressed: () {
+            context.read<VaultBloc>().add(VaultItemsRestored(items));
+          },
+        ),
+      ),
+    );
   }
 
   void _showItemActions(BuildContext context, ClipItem item) {
@@ -177,7 +209,7 @@ class _VaultPageState extends State<VaultPage> {
     showCupertinoModalPopup<void>(
       context: context,
       builder: (ctx) => CupertinoActionSheet(
-        title: Text(item.title),
+        title: Text(item.displayTitle),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
@@ -213,7 +245,7 @@ class _VaultPageState extends State<VaultPage> {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(ctx);
-              _confirmDelete(context, item.id, item.title);
+              _confirmDelete(context, item.id, item.displayTitle);
             },
             child: Text(l10n.delete),
           ),
@@ -296,20 +328,26 @@ class _VaultPageState extends State<VaultPage> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-
     final ids = _selectedIds.toList(growable: false);
+    final snapshots = context
+        .read<VaultBloc>()
+        .state
+        .items
+        .where((i) => ids.contains(i.id))
+        .toList();
     HapticFeedback.mediumImpact();
     context.read<VaultBloc>().add(VaultItemsDeleted(ids));
     _exitSelectMode();
     if (!context.mounted) return;
-    CopiedHud.show(context, message: l10n.deleteSelectedSuccess(count));
+    _showDeleteUndo(context, snapshots);
   }
 
   void _copy(ClipItem item) {
     // Show HUD immediately on every tap (including re-copy same title).
     // BlocListener alone skipped when lastCopiedTitle was unchanged.
     final l10n = AppLocalizations.of(context);
-    CopiedHud.show(context, message: l10n.copied(item.title));
+    // HUD uses display title so sensitive items stay masked in toast.
+    CopiedHud.show(context, message: l10n.copied(item.displayTitle));
     context.read<VaultBloc>().add(VaultItemCopied(item.id));
   }
 
@@ -892,7 +930,7 @@ class _RecentStrip extends StatelessWidget {
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 100),
                         child: Text(
-                          item.title,
+                          item.displayTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelLarge?.copyWith(

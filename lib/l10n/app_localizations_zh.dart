@@ -330,6 +330,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get biometricLockSubtitle => '需要 Face ID／指紋／裝置 PIN';
 
   @override
+  String get securitySectionFooter => '鎖定保護保險庫；顯示驗證與自動鎖定控制暴露時間。';
+
+  @override
+  String get requireAuthToReveal => '顯示內容需 Face ID';
+
+  @override
+  String get requireAuthToRevealSubtitle => '在編輯器中顯示內容前再次驗證';
+
+  @override
+  String get revealValueAuthReason => '顯示此內容';
+
+  @override
+  String get autoLockTimeout => '自動鎖定';
+
+  @override
+  String get autoLockTimeoutSubtitle => '應用程式進入背景後多久重新鎖定';
+
+  @override
+  String get autoLockImmediate => '立即';
+
+  @override
+  String get autoLockAfter1Min => '1 分鐘後';
+
+  @override
+  String get autoLockAfter5Min => '5 分鐘後';
+
+  @override
+  String get autoLockAfter15Min => '15 分鐘後';
+
+  @override
+  String get sensitiveItem => '敏感';
+
+  @override
+  String get sensitiveItemSubtitle => '在保險庫與小工具隱藏標題';
+
+  @override
+  String get undo => '復原';
+
+  @override
+  String get itemDeletedUndo => '已刪除項目';
+
+  @override
+  String itemsDeletedUndo(int count) {
+    return '已刪除 $count 個項目';
+  }
+
+  @override
   String get themeMode => '主題';
 
   @override

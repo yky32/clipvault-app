@@ -336,6 +336,56 @@ class AppLocalizationsEn extends AppLocalizations {
       'Require Face ID / fingerprint / device PIN';
 
   @override
+  String get securitySectionFooter =>
+      'Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.';
+
+  @override
+  String get requireAuthToReveal => 'Face ID to reveal values';
+
+  @override
+  String get requireAuthToRevealSubtitle =>
+      'Ask again before showing a value in the editor';
+
+  @override
+  String get revealValueAuthReason => 'Reveal this value';
+
+  @override
+  String get autoLockTimeout => 'Auto-lock';
+
+  @override
+  String get autoLockTimeoutSubtitle =>
+      'Re-lock after the app is in the background';
+
+  @override
+  String get autoLockImmediate => 'Immediately';
+
+  @override
+  String get autoLockAfter1Min => 'After 1 minute';
+
+  @override
+  String get autoLockAfter5Min => 'After 5 minutes';
+
+  @override
+  String get autoLockAfter15Min => 'After 15 minutes';
+
+  @override
+  String get sensitiveItem => 'Sensitive';
+
+  @override
+  String get sensitiveItemSubtitle => 'Hide title in the vault and widget';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get itemDeletedUndo => 'Item deleted';
+
+  @override
+  String itemsDeletedUndo(int count) {
+    return '$count items deleted';
+  }
+
+  @override
   String get themeMode => 'Theme';
 
   @override
