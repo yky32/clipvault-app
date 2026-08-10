@@ -339,10 +339,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportPlain => '匯出為純文字';
 
   @override
-  String get exportCsv => '匯出 CSV';
+  String get exportCsv => '匯出 CSV（純文字）';
 
   @override
-  String get importCsv => '匯入 CSV';
+  String get importCsv => '匯入備份';
+
+  @override
+  String get exportSecureBackup => '匯出加密備份';
+
+  @override
+  String get importSecureBackup => '匯入加密備份';
 
   @override
   String get exportComingSoon => '匯出功能將於未來版本提供。';
@@ -361,7 +367,47 @@ class AppLocalizationsZh extends AppLocalizations {
       '保險庫內容會以純文字寫入 CSV 檔，方便儲存至「檔案」、iCloud 或分享。任何取得此檔案的人都能讀取內容。確定繼續？';
 
   @override
-  String get importCsvConfirmTitle => '匯入保險庫 CSV？';
+  String get exportSecureConfirmTitle => '匯出加密備份？';
+
+  @override
+  String get exportSecureConfirmBody =>
+      '保險庫會以你設定的密碼加密，儲存為 .clipval 檔。取得檔案的人仍需密碼才能開啟。若忘記密碼，備份將無法還原。';
+
+  @override
+  String get exportSecurePasswordTitle => '設定備份密碼';
+
+  @override
+  String get exportSecurePasswordBody => '請設定至少 8 個字元的密碼。在任何裝置還原此備份時都需要此密碼。';
+
+  @override
+  String get exportSecurePassword => '密碼';
+
+  @override
+  String get exportSecurePasswordConfirm => '確認密碼';
+
+  @override
+  String get exportSecurePasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get exportSecurePasswordTooShort => '請至少使用 8 個字元';
+
+  @override
+  String get exportSecureShared => '加密備份已準備分享';
+
+  @override
+  String get importPasswordTitle => '輸入備份密碼';
+
+  @override
+  String get importPasswordBody => '此檔案已加密。請輸入匯出時設定的密碼。';
+
+  @override
+  String get importPassword => '密碼';
+
+  @override
+  String get importWrongPassword => '密碼錯誤或檔案已損壞';
+
+  @override
+  String get importCsvConfirmTitle => '匯入保險庫備份？';
 
   @override
   String get importCsvConfirmBody =>

@@ -123,8 +123,8 @@ Local Fastlane details: [ios/fastlane/README.md](./ios/fastlane/README.md)
 - [x] Theme: System / Light / Dark
 - [x] Clipboard auto-clear
 - [x] Plain-text export (confirm + re-auth)
+- [x] Encrypted export file (password + AES-GCM `.clipval`)
 - [x] Onboarding
 - [x] en + zh l10n
 - [x] Fastlane → TestFlight
-- [ ] Encrypted export file
 - [ ] iCloud sync (Phase 2)

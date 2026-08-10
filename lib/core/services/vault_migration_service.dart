@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import '../constants/default_categories.dart';
 import 'category_repository.dart';
 import 'clip_item_repository.dart';
+import 'vault_backup.dart';
 import 'vault_csv.dart';
 
-/// Export / import vault items as ClipVal CSV for device migration.
+/// Export / import vault items as ClipVal CSV or encrypted `.clipval` backup.
 class VaultMigrationService {
   VaultMigrationService({
     required ClipItemRepository items,
@@ -20,6 +23,20 @@ class VaultMigrationService {
     final cats = _categories.getAll();
     final byId = {for (final c in cats) c.id: c};
     return VaultCsv.encode(items: items, categoriesById: byId);
+  }
+
+  /// Password-protected backup bytes (JSON envelope around CSV).
+  Future<Uint8List> exportEncryptedBackup(String password) async {
+    final csv = await exportCsv();
+    return VaultBackup.encode(csv: csv, password: password);
+  }
+
+  /// Decrypt a `.clipval` file to CSV (throws on wrong password / format).
+  String decryptBackupToCsv({
+    required List<int> bytes,
+    required String password,
+  }) {
+    return VaultBackup.decode(bytes: bytes, password: password);
   }
 
   /// Dry-run: how many rows would be added vs skipped (no writes).

@@ -344,10 +344,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportPlain => 'Export as plain text';
 
   @override
-  String get exportCsv => 'Export CSV';
+  String get exportCsv => 'Export CSV (plain text)';
 
   @override
-  String get importCsv => 'Import CSV';
+  String get importCsv => 'Import backup';
+
+  @override
+  String get exportSecureBackup => 'Export secure backup';
+
+  @override
+  String get importSecureBackup => 'Import secure backup';
 
   @override
   String get exportComingSoon => 'Export will be available in a future update.';
@@ -367,7 +373,49 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?';
 
   @override
-  String get importCsvConfirmTitle => 'Import vault CSV?';
+  String get exportSecureConfirmTitle => 'Export secure backup?';
+
+  @override
+  String get exportSecureConfirmBody =>
+      'Your vault will be encrypted with a password you choose and saved as a .clipval file. Anyone with the file still needs the password. If you forget the password, the backup cannot be recovered.';
+
+  @override
+  String get exportSecurePasswordTitle => 'Set backup password';
+
+  @override
+  String get exportSecurePasswordBody =>
+      'Choose a password of at least 8 characters. You will need it to restore this backup on any device.';
+
+  @override
+  String get exportSecurePassword => 'Password';
+
+  @override
+  String get exportSecurePasswordConfirm => 'Confirm password';
+
+  @override
+  String get exportSecurePasswordMismatch => 'Passwords do not match';
+
+  @override
+  String get exportSecurePasswordTooShort => 'Use at least 8 characters';
+
+  @override
+  String get exportSecureShared => 'Secure backup ready to share';
+
+  @override
+  String get importPasswordTitle => 'Enter backup password';
+
+  @override
+  String get importPasswordBody =>
+      'This file is encrypted. Enter the password used when it was exported.';
+
+  @override
+  String get importPassword => 'Password';
+
+  @override
+  String get importWrongPassword => 'Wrong password or damaged file';
+
+  @override
+  String get importCsvConfirmTitle => 'Import vault backup?';
 
   @override
   String get importCsvConfirmBody =>
