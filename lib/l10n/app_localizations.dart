@@ -725,14 +725,26 @@ abstract class AppLocalizations {
   /// No description provided for @exportCsv.
   ///
   /// In en, this message translates to:
-  /// **'Export CSV'**
+  /// **'Export CSV (plain text)'**
   String get exportCsv;
 
   /// No description provided for @importCsv.
   ///
   /// In en, this message translates to:
-  /// **'Import CSV'**
+  /// **'Import backup'**
   String get importCsv;
+
+  /// No description provided for @exportSecureBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export secure backup'**
+  String get exportSecureBackup;
+
+  /// No description provided for @importSecureBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Import secure backup'**
+  String get importSecureBackup;
 
   /// No description provided for @exportComingSoon.
   ///
@@ -764,10 +776,88 @@ abstract class AppLocalizations {
   /// **'Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?'**
   String get exportCsvConfirmBody;
 
+  /// No description provided for @exportSecureConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export secure backup?'**
+  String get exportSecureConfirmTitle;
+
+  /// No description provided for @exportSecureConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault will be encrypted with a password you choose and saved as a .clipval file. Anyone with the file still needs the password. If you forget the password, the backup cannot be recovered.'**
+  String get exportSecureConfirmBody;
+
+  /// No description provided for @exportSecurePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set backup password'**
+  String get exportSecurePasswordTitle;
+
+  /// No description provided for @exportSecurePasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password of at least 8 characters. You will need it to restore this backup on any device.'**
+  String get exportSecurePasswordBody;
+
+  /// No description provided for @exportSecurePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get exportSecurePassword;
+
+  /// No description provided for @exportSecurePasswordConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get exportSecurePasswordConfirm;
+
+  /// No description provided for @exportSecurePasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get exportSecurePasswordMismatch;
+
+  /// No description provided for @exportSecurePasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 8 characters'**
+  String get exportSecurePasswordTooShort;
+
+  /// No description provided for @exportSecureShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure backup ready to share'**
+  String get exportSecureShared;
+
+  /// No description provided for @importPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter backup password'**
+  String get importPasswordTitle;
+
+  /// No description provided for @importPasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is encrypted. Enter the password used when it was exported.'**
+  String get importPasswordBody;
+
+  /// No description provided for @importPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get importPassword;
+
+  /// No description provided for @importWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password or damaged file'**
+  String get importWrongPassword;
+
   /// No description provided for @importCsvConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Import vault CSV?'**
+  /// **'Import vault backup?'**
   String get importCsvConfirmTitle;
 
   /// No description provided for @importCsvConfirmBody.

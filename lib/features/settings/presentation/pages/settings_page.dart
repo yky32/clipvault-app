@@ -15,6 +15,7 @@ import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/build_info.dart';
 import '../../../../core/services/settings_service.dart';
+import '../../../../core/services/vault_backup.dart';
 import '../../../../core/services/vault_migration_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/brand_palette.dart';
@@ -180,7 +181,105 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${_clipboardSeconds}s';
   }
 
-  /// CSV file share (Files / iCloud / AirDrop) for device migration.
+  String _exportTimestamp() {
+    return DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .split('.')
+        .first;
+  }
+
+  Future<void> _shareTempFile({
+    required BuildContext context,
+    required File file,
+    required String mimeType,
+    required String displayName,
+    required String subject,
+    required String successMessage,
+  }) async {
+    if (!context.mounted) return;
+    final box = context.findRenderObject() as RenderBox?;
+    final origin =
+        box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: mimeType, name: displayName)],
+      subject: subject,
+      sharePositionOrigin: origin,
+    );
+    if (!context.mounted) return;
+    HapticFeedback.lightImpact();
+    CopiedHud.show(context, message: successMessage);
+  }
+
+  /// Password-protected `.clipval` backup (preferred migration path).
+  Future<void> _exportSecureBackup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.exportSecureConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.exportSecureConfirmBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.exportConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    if (!await _confirmSensitiveAccess(
+      context,
+      reason: l10n.exportAuthReason,
+      cancelledMessage: l10n.exportCancelled,
+    )) {
+      return;
+    }
+    if (!context.mounted) return;
+
+    final password = await _promptBackupPassword(
+      context,
+      title: l10n.exportSecurePasswordTitle,
+      body: l10n.exportSecurePasswordBody,
+      requireConfirm: true,
+    );
+    if (password == null || !context.mounted) return;
+
+    try {
+      final bytes = await AppBootstrap.vaultMigrationService
+          .exportEncryptedBackup(password);
+      final dir = await getTemporaryDirectory();
+      final stamp = _exportTimestamp();
+      final file = File('${dir.path}/clipval-backup-$stamp.clipval');
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!context.mounted) return;
+      await _shareTempFile(
+        context: context,
+        file: file,
+        mimeType: 'application/octet-stream',
+        displayName: 'clipval-backup.clipval',
+        subject: 'ClipVal secure backup',
+        successMessage: l10n.exportSecureShared,
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.exportCancelled);
+    }
+  }
+
+  /// CSV file share (plain text — anyone with the file can read values).
   Future<void> _exportCsv(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
 
@@ -218,28 +317,19 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final csv = await AppBootstrap.vaultMigrationService.exportCsv();
       final dir = await getTemporaryDirectory();
-      final stamp = DateTime.now()
-          .toIso8601String()
-          .replaceAll(':', '-')
-          .split('.')
-          .first;
+      final stamp = _exportTimestamp();
       final file = File('${dir.path}/clipval-export-$stamp.csv');
       await file.writeAsString(csv, flush: true);
 
       if (!context.mounted) return;
-      final box = context.findRenderObject() as RenderBox?;
-      final origin = box != null
-          ? box.localToGlobal(Offset.zero) & box.size
-          : null;
-
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/csv', name: 'clipval-export.csv')],
+      await _shareTempFile(
+        context: context,
+        file: file,
+        mimeType: 'text/csv',
+        displayName: 'clipval-export.csv',
         subject: 'ClipVal export',
-        sharePositionOrigin: origin,
+        successMessage: l10n.exportCsvShared,
       );
-      if (!context.mounted) return;
-      HapticFeedback.lightImpact();
-      CopiedHud.show(context, message: l10n.exportCsvShared);
     } catch (_) {
       if (!context.mounted) return;
       HapticFeedback.heavyImpact();
@@ -247,13 +337,13 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  /// Pick a ClipVal CSV, preview counts, then merge on confirm.
-  Future<void> _importCsv(BuildContext context) async {
+  /// Pick encrypted `.clipval` or plain CSV, preview, then merge.
+  Future<void> _importBackup(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
 
     final pick = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['csv', 'txt'],
+      allowedExtensions: const ['clipval', 'csv', 'txt', 'json'],
       withData: true,
     );
     if (!context.mounted) return;
@@ -263,18 +353,66 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     final file = pick.files.single;
-    String? content;
+    List<int>? bytes;
     if (file.bytes != null) {
-      content = utf8.decode(file.bytes!, allowMalformed: true);
+      bytes = file.bytes!;
     } else if (file.path != null) {
-      content = await File(file.path!).readAsString();
+      bytes = await File(file.path!).readAsBytes();
     }
     if (!context.mounted) return;
-    if (content == null || content.trim().isEmpty) {
+    if (bytes == null || bytes.isEmpty) {
       HapticFeedback.heavyImpact();
       CopiedHud.show(context, message: l10n.importCsvInvalid);
       return;
     }
+
+    String? csvContent;
+    if (VaultBackup.looksLikeBackup(bytes)) {
+      final password = await _promptBackupPassword(
+        context,
+        title: l10n.importPasswordTitle,
+        body: l10n.importPasswordBody,
+        requireConfirm: false,
+      );
+      if (password == null || !context.mounted) return;
+
+      try {
+        csvContent = AppBootstrap.vaultMigrationService.decryptBackupToCsv(
+          bytes: bytes,
+          password: password,
+        );
+      } on VaultBackupWrongPasswordException {
+        if (!context.mounted) return;
+        HapticFeedback.heavyImpact();
+        CopiedHud.show(context, message: l10n.importWrongPassword);
+        return;
+      } on VaultBackupFormatException {
+        if (!context.mounted) return;
+        HapticFeedback.heavyImpact();
+        CopiedHud.show(context, message: l10n.importCsvInvalid);
+        return;
+      } catch (_) {
+        if (!context.mounted) return;
+        HapticFeedback.heavyImpact();
+        CopiedHud.show(context, message: l10n.importWrongPassword);
+        return;
+      }
+    } else {
+      csvContent = utf8.decode(bytes, allowMalformed: true);
+    }
+
+    if (!context.mounted) return;
+    if (csvContent.trim().isEmpty) {
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+      return;
+    }
+
+    await _previewAndImportCsv(context, csvContent);
+  }
+
+  Future<void> _previewAndImportCsv(BuildContext context, String content) async {
+    final l10n = AppLocalizations.of(context);
 
     late final CsvImportPreview preview;
     try {
@@ -391,6 +529,123 @@ class _SettingsPageState extends State<SettingsPage> {
     lines.add('');
     lines.add(l10n.importCsvPreviewFooter);
     return lines.join('\n');
+  }
+
+  /// Password prompt. [requireConfirm] asks for password twice (export).
+  Future<String?> _promptBackupPassword(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required bool requireConfirm,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final passwordCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    String? errorText;
+
+    final result = await showCupertinoDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return CupertinoAlertDialog(
+              title: Text(title),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(body, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(height: 12),
+                    CupertinoTextField(
+                      controller: passwordCtrl,
+                      obscureText: true,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      placeholder: requireConfirm
+                          ? l10n.exportSecurePassword
+                          : l10n.importPassword,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    if (requireConfirm) ...[
+                      const SizedBox(height: 8),
+                      CupertinoTextField(
+                        controller: confirmCtrl,
+                        obscureText: true,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        placeholder: l10n.exportSecurePasswordConfirm,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                    ],
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        errorText!,
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.cancel),
+                ),
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  onPressed: () {
+                    final pw = passwordCtrl.text;
+                    if (requireConfirm) {
+                      if (pw.length < VaultBackup.minPasswordLength) {
+                        setLocal(
+                          () => errorText = l10n.exportSecurePasswordTooShort,
+                        );
+                        return;
+                      }
+                      if (pw != confirmCtrl.text) {
+                        setLocal(
+                          () => errorText = l10n.exportSecurePasswordMismatch,
+                        );
+                        return;
+                      }
+                    } else if (pw.isEmpty) {
+                      setLocal(
+                        () => errorText = l10n.exportSecurePasswordTooShort,
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx, pw);
+                  },
+                  child: Text(
+                    requireConfirm
+                        ? l10n.exportConfirmAction
+                        : l10n.importConfirmAction,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    passwordCtrl.dispose();
+    confirmCtrl.dispose();
+    return result;
   }
 
   /// Re-auth when app lock is on. Returns false if cancelled / failed.
@@ -675,13 +930,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   header: l10n.settingsData,
                   children: [
                     IosGroupTile(
-                      title: l10n.exportCsv,
+                      title: l10n.exportSecureBackup,
                       leading: _LeadingIcon(
-                        icon: CupertinoIcons.arrow_up_doc_fill,
+                        icon: CupertinoIcons.lock_shield_fill,
                         color: AppColors.iconExport,
                       ),
                       trailing: const IosChevron(),
-                      onTap: () => _exportCsv(context),
+                      onTap: () => _exportSecureBackup(context),
                     ),
                     IosGroupTile(
                       title: l10n.importCsv,
@@ -690,7 +945,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         color: AppColors.iconExport,
                       ),
                       trailing: const IosChevron(),
-                      onTap: () => _importCsv(context),
+                      onTap: () => _importBackup(context),
+                    ),
+                    IosGroupTile(
+                      title: l10n.exportCsv,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.arrow_up_doc_fill,
+                        color: AppColors.iconExport,
+                      ),
+                      trailing: const IosChevron(),
+                      onTap: () => _exportCsv(context),
                     ),
                   ],
                 ),
