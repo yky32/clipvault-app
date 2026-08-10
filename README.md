@@ -108,7 +108,7 @@ Local Fastlane details: [ios/fastlane/README.md](./ios/fastlane/README.md)
 - **Values** encrypted at rest (AES-256); key in Keychain / secure storage
 - **Titles / metadata** are not encrypted
 - App lock is **opt-in**; when enabled, vault re-locks after background
-- Plain-text export requires confirm (+ biometrics if lock is on)
+- Secure backup export requires confirm (+ biometrics if lock is on)
 
 ## MVP status
 
@@ -122,7 +122,6 @@ Local Fastlane details: [ios/fastlane/README.md](./ios/fastlane/README.md)
 - [x] Biometric app lock + re-lock on resume
 - [x] Theme: System / Light / Dark
 - [x] Clipboard auto-clear
-- [x] Plain-text export (confirm + re-auth)
 - [x] Encrypted export file (password + AES-GCM `.clipval`)
 - [x] Onboarding
 - [x] en + zh l10n

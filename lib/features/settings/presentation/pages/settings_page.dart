@@ -279,64 +279,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  /// CSV file share (plain text — anyone with the file can read values).
-  Future<void> _exportCsv(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.exportCsvConfirmTitle),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(l10n.exportCsvConfirmBody),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.exportConfirmAction),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    if (!await _confirmSensitiveAccess(
-      context,
-      reason: l10n.exportAuthReason,
-      cancelledMessage: l10n.exportCancelled,
-    )) {
-      return;
-    }
-
-    try {
-      final csv = await AppBootstrap.vaultMigrationService.exportCsv();
-      final dir = await getTemporaryDirectory();
-      final stamp = _exportTimestamp();
-      final file = File('${dir.path}/clipval-export-$stamp.csv');
-      await file.writeAsString(csv, flush: true);
-
-      if (!context.mounted) return;
-      await _shareTempFile(
-        context: context,
-        file: file,
-        mimeType: 'text/csv',
-        displayName: 'clipval-export.csv',
-        subject: 'ClipVal export',
-        successMessage: l10n.exportCsvShared,
-      );
-    } catch (_) {
-      if (!context.mounted) return;
-      HapticFeedback.heavyImpact();
-      CopiedHud.show(context, message: l10n.exportCancelled);
-    }
-  }
-
   /// Pick encrypted `.clipval` or plain CSV, preview, then merge.
   Future<void> _importBackup(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
@@ -948,15 +890,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       trailing: const IosChevron(),
                       onTap: () => _importBackup(context),
-                    ),
-                    IosGroupTile(
-                      title: l10n.exportCsv,
-                      leading: _LeadingIcon(
-                        icon: CupertinoIcons.arrow_up_doc_fill,
-                        color: AppColors.iconExport,
-                      ),
-                      trailing: const IosChevron(),
-                      onTap: () => _exportCsv(context),
                     ),
                   ],
                 ),
