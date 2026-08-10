@@ -123,6 +123,7 @@ Local Fastlane details: [ios/fastlane/README.md](./ios/fastlane/README.md)
 - [x] Theme: System / Light / Dark
 - [x] Clipboard auto-clear
 - [x] Encrypted export file (password + AES-GCM `.clipval`)
+- [x] Share → Save to ClipVal (iOS Share Extension, App Group, local only)
 - [x] Onboarding
 - [x] en + zh l10n
 - [x] Fastlane → TestFlight

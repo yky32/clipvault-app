@@ -6,6 +6,7 @@ import 'package:home_widget/home_widget.dart';
 
 import 'core/navigation/app_router.dart';
 import 'core/services/settings_service.dart';
+import 'core/services/share_intake_service.dart';
 import 'core/services/widget_deep_link.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -42,6 +43,8 @@ class _ClipVaultAppState extends State<ClipVaultApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       HomeWidget.initiallyLaunchedFromHomeWidget()
           .then(WidgetDeepLink.handle);
+      // Share Extension may have written App Group before cold start.
+      ShareIntakeService.consumePending();
     });
   }
 
@@ -63,9 +66,13 @@ class _ClipVaultAppState extends State<ClipVaultApp>
       return;
     }
 
-    if (state == AppLifecycleState.resumed && _needsRelock) {
-      _needsRelock = false;
-      _relockIfNeeded();
+    if (state == AppLifecycleState.resumed) {
+      // Share Extension opens host while we were backgrounded.
+      ShareIntakeService.consumePending();
+      if (_needsRelock) {
+        _needsRelock = false;
+        _relockIfNeeded();
+      }
     }
   }
 

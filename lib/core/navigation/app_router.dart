@@ -9,6 +9,7 @@ import '../../features/vault/bloc/vault_bloc.dart';
 import '../../features/vault/presentation/pages/vault_page.dart';
 import '../bootstrap/app_bootstrap.dart';
 import '../constants/app_constants.dart';
+import '../services/share_intake_service.dart';
 import '../services/widget_deep_link.dart';
 
 class AppRouter {
@@ -29,6 +30,10 @@ class AppRouter {
     // Widget opens clipval://copy?id=… — treat as action, not a page route.
     redirect: (context, state) {
       final uri = state.uri;
+      if (ShareIntakeService.isShareUri(uri)) {
+        ShareIntakeService.consumePending();
+        return WidgetDeepLink.landingLocation;
+      }
       if (uri.scheme == AppConstants.urlScheme ||
           WidgetDeepLink.isWidgetCopyUri(uri)) {
         // Fire-and-forget copy; do not await inside redirect.
@@ -39,9 +44,15 @@ class AppRouter {
       final loc = state.matchedLocation;
       if (loc.startsWith('${AppConstants.urlScheme}:')) {
         final parsed = Uri.tryParse(loc);
-        if (parsed != null && WidgetDeepLink.isWidgetCopyUri(parsed)) {
-          WidgetDeepLink.handle(parsed);
-          return WidgetDeepLink.landingLocation;
+        if (parsed != null) {
+          if (ShareIntakeService.isShareUri(parsed)) {
+            ShareIntakeService.consumePending();
+            return WidgetDeepLink.landingLocation;
+          }
+          if (WidgetDeepLink.isWidgetCopyUri(parsed)) {
+            WidgetDeepLink.handle(parsed);
+            return WidgetDeepLink.landingLocation;
+          }
         }
         return WidgetDeepLink.landingLocation;
       }
@@ -49,6 +60,11 @@ class AppRouter {
     },
     onException: (context, state, router) {
       final uri = state.uri;
+      if (ShareIntakeService.isShareUri(uri)) {
+        ShareIntakeService.consumePending();
+        router.go(WidgetDeepLink.landingLocation);
+        return;
+      }
       if (WidgetDeepLink.isWidgetCopyUri(uri) ||
           uri.scheme == AppConstants.urlScheme) {
         WidgetDeepLink.handle(uri);

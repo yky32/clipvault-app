@@ -1,5 +1,8 @@
 # ClipVal Home Screen Widget
 
+> Related: system **Share → ClipVal** uses the same App Group (`group.com.clipval`)
+> with keys `pending_share_value` / `pending_share_title` (see `ClipValShare`).
+
 ## What it does
 
 Shows up to **4** vault items (pinned first, then recently copied) on the iOS Home Screen.

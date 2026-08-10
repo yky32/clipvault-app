@@ -9,6 +9,7 @@ import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/settings_service.dart';
+import '../../../../core/services/share_intake_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/apple_search_field.dart';
@@ -36,7 +37,44 @@ class _VaultPageState extends State<VaultPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowWelcome());
+    ShareIntakeService.attach(_openSharedPayload);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowWelcome();
+      ShareIntakeService.consumePending();
+    });
+  }
+
+  @override
+  void dispose() {
+    ShareIntakeService.detach();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openSharedPayload(SharedClipPayload payload) {
+    if (!mounted) return;
+    // Defer until after route transitions (share deep link → vault).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final title = payload.title?.trim();
+      final value = payload.value;
+      // Derive a short title from first line when share had none.
+      final derivedTitle = (title != null && title.isNotEmpty)
+          ? title
+          : _titleFromSharedValue(value);
+      ItemEditorBottomSheet.show(
+        context,
+        initialTitle: derivedTitle,
+        initialValue: value,
+      );
+    });
+  }
+
+  static String _titleFromSharedValue(String value) {
+    final oneLine = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (oneLine.isEmpty) return '';
+    if (oneLine.length <= 40) return oneLine;
+    return '${oneLine.substring(0, 37)}…';
   }
 
   void _enterSelectMode({String? initialId}) {
@@ -194,12 +232,6 @@ class _VaultPageState extends State<VaultPage> {
     } catch (_) {
       // Fail open — vault stays usable if package info fails.
     }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   String? _categoryName(

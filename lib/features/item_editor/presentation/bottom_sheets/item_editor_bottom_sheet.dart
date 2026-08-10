@@ -24,11 +24,17 @@ class ItemEditorBottomSheet extends StatefulWidget {
   const ItemEditorBottomSheet({
     this.itemId,
     this.initialCategoryId,
+    this.initialTitle,
+    this.initialValue,
     super.key,
   });
 
   final String? itemId;
   final String? initialCategoryId;
+
+  /// Prefill for new items (e.g. Share Extension intake).
+  final String? initialTitle;
+  final String? initialValue;
 
   bool get isNew => itemId == null || itemId == 'new';
 
@@ -36,6 +42,8 @@ class ItemEditorBottomSheet extends StatefulWidget {
     BuildContext context, {
     String? itemId,
     String? initialCategoryId,
+    String? initialTitle,
+    String? initialValue,
   }) {
     final vaultBloc = context.read<VaultBloc>();
     return ClipVaultBottomSheet.show<void>(
@@ -45,6 +53,8 @@ class ItemEditorBottomSheet extends StatefulWidget {
         child: ItemEditorBottomSheet(
           itemId: itemId,
           initialCategoryId: initialCategoryId,
+          initialTitle: initialTitle,
+          initialValue: initialValue,
         ),
       ),
     );
@@ -96,8 +106,18 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
         _selectedCategoryId = _existing!.categoryId;
         _languageTag = _existing!.languageTag;
       }
-    } else if (widget.initialCategoryId != null) {
-      _selectedCategoryId = widget.initialCategoryId;
+    } else {
+      if (widget.initialCategoryId != null) {
+        _selectedCategoryId = widget.initialCategoryId;
+      }
+      final seedTitle = widget.initialTitle?.trim();
+      final seedValue = widget.initialValue;
+      if (seedTitle != null && seedTitle.isNotEmpty) {
+        _titleController.text = seedTitle;
+      }
+      if (seedValue != null && seedValue.isNotEmpty) {
+        _valueController.text = seedValue;
+      }
     }
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);

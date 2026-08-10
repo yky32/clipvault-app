@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C15A010000000000000004 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C15A010000000000000001 /* ShareViewController.swift */; };
 		09F6F6A57828CDEDC21056A9 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A9E88CEB441BB2A3B3E52DA /* Pods_RunnerTests.framework */; };
 		0EDB1714AE909B1EA248CC07 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6FC8B51D611287851AC56918 /* Foundation.framework */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
@@ -22,6 +23,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		C15A01000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C15A010000000000000007;
+			remoteInfo = ClipValShare;
+		};
 		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -52,6 +60,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C15A010000000000000001 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		C15A010000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C15A010000000000000003 /* ClipValShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipValShare.entitlements; sourceTree = "<group>"; };
+		C15A010000000000000005 /* ClipValShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipValShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1329455B84AA2D48005B7C7B /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
@@ -85,6 +97,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C15A010000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3160199220C2499D6EBDB234 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -163,6 +182,7 @@
 				E93A0E1B1D26B5EB39BBF7E1 /* Pods */,
 				11B3FF81F5302CF2998AE6BF /* Frameworks */,
 				15D15B06666738124F6314CA /* ClipValWidget */,
+				C15A010000000000000006 /* ClipValShare */,
 			);
 			sourceTree = "<group>";
 		};
@@ -172,6 +192,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				52DA7AD744E2DABC97C2996E /* ClipValWidget.appex */,
+				C15A010000000000000005 /* ClipValShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -214,6 +235,16 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		C15A010000000000000006 /* ClipValShare */ = {
+			isa = PBXGroup;
+			children = (
+				C15A010000000000000001 /* ShareViewController.swift */,
+				C15A010000000000000002 /* Info.plist */,
+				C15A010000000000000003 /* ClipValShare.entitlements */,
+			);
+			path = ClipValShare;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -235,6 +266,23 @@
 			productName = RunnerTests;
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C15A010000000000000007 /* ClipValShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C15A010000000000000011 /* Build configuration list for PBXNativeTarget "ClipValShare" */;
+			buildPhases = (
+				C15A010000000000000008 /* Sources */,
+				C15A010000000000000009 /* Frameworks */,
+				C15A01000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ClipValShare;
+			productName = ClipValShare;
+			productReference = C15A010000000000000005 /* ClipValShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		8CF31E178B258F53CF7A5815 /* ClipValWidget */ = {
 			isa = PBXNativeTarget;
@@ -266,11 +314,13 @@
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				278DBA7687800B6527A58229 /* [CP] Embed Pods Frameworks */,
 				2A8382B932C181E384AFD0C9 /* Embed ClipVal Widget */,
+				C15A01000000000000000D /* Embed ClipVal Share */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				F28C58B5093A57CD9744189C /* PBXTargetDependency */,
+				C15A01000000000000000B /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -313,11 +363,19 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				8CF31E178B258F53CF7A5815 /* ClipValWidget */,
+				C15A010000000000000007 /* ClipValShare */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C15A01000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807F294A63A400263BE5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -384,6 +442,27 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		C15A01000000000000000D /* Embed ClipVal Share */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/ClipValShare.appex",
+			);
+			name = "Embed ClipVal Share";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/PlugIns/ClipValShare.appex",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nAPPEX_SRC=\"${BUILT_PRODUCTS_DIR}/ClipValShare.appex\"\nAPPEX_DST=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/ClipValShare.appex\"\nif [ ! -d \"$APPEX_SRC\" ]; then\n  echo \"warning: ClipValShare.appex not found at $APPEX_SRC (skip embed)\"\n  exit 0\nfi\nmkdir -p \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns\"\nrsync -a --delete \"${APPEX_SRC}/\" \"${APPEX_DST}/\"\necho \"Embedded ClipValShare.appex\"\n";
 		};
 		2A8382B932C181E384AFD0C9 /* Embed ClipVal Widget */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -462,6 +541,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C15A010000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C15A010000000000000004 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -491,6 +578,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C15A01000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C15A010000000000000007 /* ClipValShare */;
+			targetProxy = C15A01000000000000000C /* PBXContainerItemProxy */;
+		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
@@ -524,6 +616,101 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		C15A01000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ClipValShare/ClipValShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 46;
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValShare;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClipVal;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValShare;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_MODULE_NAME = ClipValShare;
+				PRODUCT_NAME = ClipValShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = appex;
+			};
+			name = Debug;
+		};
+		C15A01000000000000000F /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ClipValShare/ClipValShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 46;
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValShare;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClipVal;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValShare;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_MODULE_NAME = ClipValShare;
+				PRODUCT_NAME = ClipValShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = appex;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		C15A010000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ClipValShare/ClipValShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 46;
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValShare;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClipVal;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValShare;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_MODULE_NAME = ClipValShare;
+				PRODUCT_NAME = ClipValShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = appex;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -914,6 +1101,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C15A010000000000000011 /* Build configuration list for PBXNativeTarget "ClipValShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C15A01000000000000000E /* Debug */,
+				C15A010000000000000010 /* Release */,
+				C15A01000000000000000F /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		1A18F22DEE321E78A996450F /* Build configuration list for PBXNativeTarget "ClipValWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

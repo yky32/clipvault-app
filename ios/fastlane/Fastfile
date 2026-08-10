@@ -7,6 +7,7 @@ PROJECT_ROOT = File.expand_path("..", IOS_DIR)
 
 APP_IDENTIFIER = "com.clipval"
 WIDGET_IDENTIFIER = "com.clipval.ClipValWidget"
+SHARE_IDENTIFIER = "com.clipval.ClipValShare"
 APP_NAME = "ClipVal"
 TEAM_ID = ENV["FASTLANE_TEAM_ID"] || "3G34999H3A"
 APPLE_ID = ENV["FASTLANE_USER"] || "wayneyu.dev@gmail.com"
@@ -262,10 +263,14 @@ end
 def write_ci_export_options_plist!
   profile_name = ENV["SIGH_NAME"]
   widget_profile = ENV["SIGH_NAME_WIDGET"]
+  share_profile = ENV["SIGH_NAME_SHARE"]
   UI.user_error!("SIGH_NAME is required to export the App Store IPA on CI.") unless profile_name
   UI.user_error!(
     "SIGH_NAME_WIDGET is required (ClipValWidget extension). Run setup_appstore_signing."
   ) unless widget_profile
+  UI.user_error!(
+    "SIGH_NAME_SHARE is required (ClipValShare extension). Run setup_appstore_signing."
+  ) unless share_profile
 
   plist_path = File.join(IOS_DIR, "ExportOptions.ci.plist")
   plist_content = <<~PLIST
@@ -285,6 +290,8 @@ def write_ci_export_options_plist!
         <string>#{profile_name}</string>
         <key>#{WIDGET_IDENTIFIER}</key>
         <string>#{widget_profile}</string>
+        <key>#{SHARE_IDENTIFIER}</key>
+        <string>#{share_profile}</string>
       </dict>
     </dict>
     </plist>
@@ -300,6 +307,7 @@ def persist_ci_signing_env!
   File.open(ENV["GITHUB_ENV"], "a") do |file|
     file.puts "SIGH_NAME=#{ENV['SIGH_NAME']}"
     file.puts "SIGH_NAME_WIDGET=#{ENV['SIGH_NAME_WIDGET']}" if ENV["SIGH_NAME_WIDGET"]
+    file.puts "SIGH_NAME_SHARE=#{ENV['SIGH_NAME_SHARE']}" if ENV["SIGH_NAME_SHARE"]
   end
 end
 
@@ -559,6 +567,9 @@ platform :ios do
       UI.user_error!(
         "SIGH_NAME_WIDGET must be set for ClipValWidget. Run setup_appstore_signing."
       ) unless ENV["SIGH_NAME_WIDGET"]
+      UI.user_error!(
+        "SIGH_NAME_SHARE must be set for ClipValShare. Run setup_appstore_signing."
+      ) unless ENV["SIGH_NAME_SHARE"]
 
       update_code_signing_settings(
         use_automatic_signing: false,
@@ -577,6 +588,15 @@ platform :ios do
         profile_name: ENV["SIGH_NAME_WIDGET"],
         code_sign_identity: "Apple Distribution",
         targets: ["ClipValWidget"]
+      )
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "#{IOS_DIR}/Runner.xcodeproj",
+        team_id: TEAM_ID,
+        bundle_identifier: SHARE_IDENTIFIER,
+        profile_name: ENV["SIGH_NAME_SHARE"],
+        code_sign_identity: "Apple Distribution",
+        targets: ["ClipValShare"]
       )
 
       export_plist = write_ci_export_options_plist!
@@ -904,6 +924,13 @@ platform :ios do
         force: ENV["CI"] == "true"
       )
       ENV["SIGH_NAME_WIDGET"] = widget_profile
+
+      UI.message("📋 Getting App Store provisioning profile for #{SHARE_IDENTIFIER}...")
+      share_profile = fetch_appstore_profile!(
+        app_identifier: SHARE_IDENTIFIER,
+        force: ENV["CI"] == "true"
+      )
+      ENV["SIGH_NAME_SHARE"] = share_profile
       # Restore main SIGH_NAME (fetch overwrites it)
       ENV["SIGH_NAME"] = main_profile
 
@@ -911,7 +938,7 @@ platform :ios do
 
       UI.success(
         "✅ Profiles ready! SIGH_NAME=#{main_profile} " \
-        "SIGH_NAME_WIDGET=#{widget_profile}"
+        "SIGH_NAME_WIDGET=#{widget_profile} SIGH_NAME_SHARE=#{share_profile}"
       )
     rescue => ex
       UI.important("⚠️  Automatic setup failed: #{ex.message}")
