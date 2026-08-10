@@ -132,6 +132,59 @@ class ClipItemRepository {
     await _box.put(item.id, item.toMap(encryptedValue: encrypted));
   }
 
+  /// Raw Hive row including ciphertext (for CloudKit push).
+  Map<String, dynamic>? getRawMap(String id) {
+    final raw = _box.get(id);
+    if (raw is! Map) return null;
+    return Map<String, dynamic>.from(
+      raw.map((k, v) => MapEntry(k.toString(), v)),
+    );
+  }
+
+  /// All raw rows (ciphertext intact) for full sync push.
+  List<Map<String, dynamic>> getAllRawMaps() {
+    return _box.values
+        .whereType<Map>()
+        .map(
+          (raw) => Map<String, dynamic>.from(
+            raw.map((k, v) => MapEntry(k.toString(), v)),
+          ),
+        )
+        .toList();
+  }
+
+  /// Write a CloudKit / backup row without re-encrypting [value] ciphertext.
+  Future<void> putRawMap(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    await _box.put(id, raw);
+  }
+
+  /// Apply LWW merge from sync without bumping updatedAt.
+  Future<void> upsertFromSync(ClipItem item) async {
+    final encrypted = _encryption.encryptText(item.value);
+    await _box.put(item.id, item.toMap(encryptedValue: encrypted));
+  }
+
+  /// Re-encrypt every stored value (key rotation for iCloud key adopt).
+  Future<void> reencryptAllValues({
+    required String Function(String ciphertext) decryptWithOld,
+    required String Function(String plaintext) encryptWithNew,
+  }) async {
+    for (final raw in getAllRawMaps()) {
+      final id = raw['id'] as String?;
+      final cipher = raw['value'] as String?;
+      if (id == null || cipher == null) continue;
+      try {
+        final plain = decryptWithOld(cipher);
+        raw['value'] = encryptWithNew(plain);
+        await _box.put(id, raw);
+      } catch (_) {
+        // Skip undecryptable rows rather than wipe the vault.
+      }
+    }
+  }
+
   ClipItem _fromStored(Map<dynamic, dynamic> raw) {
     final encrypted = raw['value'] as String;
     final plaintext = _encryption.decryptText(encrypted);

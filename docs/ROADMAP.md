@@ -22,7 +22,7 @@
 | CSV import + dry-run preview | Done |
 | Secure backup (`.clipval`, password + AES-GCM) | Done |
 | Plain CSV export | Removed (leak surface) |
-| iCloud sync | Not started (PRD Phase 2) |
+| iCloud sync | Done in tree (opt-in CloudKit private) |
 
 ---
 
@@ -90,16 +90,21 @@
 
 ---
 
-## Phase E — Optional iCloud (PRD Phase 2)
+## Phase E — Optional iCloud (PRD Phase 2) — shipped in tree
 
 **Goal:** Multi-device without ClipVal servers.
 
-- Toggle: **Sync with iCloud**  
-- **CloudKit private database** only  
-- Client-side encryption; ClipVal never sees plaintext  
-- Clear copy: *“Goes to **your** iCloud, never to us.”*  
-- Conflict rule: last-write-wins or item-level merge (define before build)  
-- Still support `.clipval` for off-Apple / disaster recovery  
+| Item | Status |
+|------|--------|
+| Toggle: **Sync with iCloud** | Done — Settings (iOS only, default off) |
+| CloudKit **private** database | Done — container `iCloud.com.clipval` |
+| Client-side AES before upload | Done — ciphertext + VaultMeta master key |
+| Privacy copy | Done — EN/ZH |
+| Conflict rule | Done — **last-write-wins** by `updatedAt` |
+| Tombstones for deletes | Done |
+| `.clipval` backup still available | Done |
+
+See `docs/ICLOUD_SYNC.md` for Apple portal / schema setup.
 
 **Exit:** Two iPhones stay in sync; no account screen in ClipVal.
 
@@ -123,9 +128,8 @@
 ## Suggested near-term sequence
 
 ```
-Now ──► Phase D: Trust surface (done in tree — try on device)
-     ──► App Store 1.1 / 1.2 marketing if needed
-     ──► Phase E: iCloud private sync (big project)
+Now ──► Phase E: iCloud private sync (done in tree — enable CloudKit container)
+     ──► App Store marketing if needed
      ──► Phase F: Android parity
 ```
 

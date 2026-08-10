@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:home_widget/home_widget.dart';
 
+import 'core/bootstrap/app_bootstrap.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/settings_service.dart';
 import 'core/services/share_intake_service.dart';
@@ -77,6 +78,12 @@ class _ClipVaultAppState extends State<ClipVaultApp>
         final started = _backgroundedAt;
         _backgroundedAt = null;
         _relockIfNeeded(backgroundedAt: started);
+      }
+      // Phase E: pull remote vault when returning to foreground.
+      if (SettingsService.instance.iCloudSyncEnabled) {
+        try {
+          AppBootstrap.iCloudSyncService.scheduleSync();
+        } catch (_) {}
       }
     }
   }

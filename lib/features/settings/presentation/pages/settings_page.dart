@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,6 +46,9 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _widgetPinnedOnly;
   late bool _widgetHideTitlesWhenLocked;
   late VaultSortMode _vaultSort;
+  late bool _iCloudSync;
+  DateTime? _iCloudLastSync;
+  bool _iCloudBusy = false;
   String _versionLabel = '1.0.0';
 
   @override
@@ -61,7 +65,113 @@ class _SettingsPageState extends State<SettingsPage> {
     _widgetPinnedOnly = s.widgetPinnedOnly;
     _widgetHideTitlesWhenLocked = s.widgetHideTitlesWhenLocked;
     _vaultSort = s.vaultSortMode;
+    _iCloudSync = s.iCloudSyncEnabled;
+    _iCloudLastSync = s.iCloudLastSyncAt;
     _loadVersion();
+  }
+
+  Future<void> _toggleICloudSync(bool value) async {
+    final l10n = AppLocalizations.of(context);
+    if (!value) {
+      await AppBootstrap.iCloudSyncService.disable();
+      if (!mounted) return;
+      HapticFeedback.selectionClick();
+      setState(() {
+        _iCloudSync = false;
+      });
+      return;
+    }
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.iCloudSyncEnableTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.iCloudSyncEnableBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.iCloudSyncTurnOn),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _iCloudBusy = true);
+    final result = await AppBootstrap.iCloudSyncService.enableAndSync();
+    if (!mounted) return;
+    setState(() {
+      _iCloudBusy = false;
+      _iCloudSync = SettingsService.instance.iCloudSyncEnabled;
+      _iCloudLastSync = SettingsService.instance.iCloudLastSyncAt;
+    });
+    HapticFeedback.selectionClick();
+    if (result.ok) {
+      CopiedHud.show(context, message: l10n.iCloudSyncSuccess);
+      try {
+        context.read<VaultBloc>().add(const VaultRefreshed());
+      } catch (_) {}
+    } else {
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: Text(l10n.iCloudSyncFailedTitle),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(result.message ?? l10n.iCloudSyncFailedBody),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _syncICloudNow() async {
+    final l10n = AppLocalizations.of(context);
+    if (!_iCloudSync || _iCloudBusy) return;
+    setState(() => _iCloudBusy = true);
+    final result = await AppBootstrap.iCloudSyncService.syncNow();
+    if (!mounted) return;
+    setState(() {
+      _iCloudBusy = false;
+      _iCloudLastSync = SettingsService.instance.iCloudLastSyncAt;
+    });
+    HapticFeedback.selectionClick();
+    if (result.ok) {
+      CopiedHud.show(context, message: l10n.iCloudSyncSuccess);
+      try {
+        context.read<VaultBloc>().add(const VaultRefreshed());
+      } catch (_) {}
+    } else {
+      CopiedHud.show(
+        context,
+        message: result.message ?? l10n.iCloudSyncFailedBody,
+      );
+    }
+  }
+
+  String _iCloudLastSyncLabel(AppLocalizations l10n) {
+    final at = _iCloudLastSync;
+    if (at == null) return l10n.iCloudSyncNever;
+    final local = at.toLocal();
+    final hh = local.hour.toString().padLeft(2, '0');
+    final mm = local.minute.toString().padLeft(2, '0');
+    return l10n.iCloudSyncLastAt(
+      '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} $hh:$mm',
+    );
   }
 
   Future<void> _syncWidgetPrefs() async {
@@ -1085,6 +1195,42 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
                 const SizedBox(height: 28),
+                if (!kIsWeb && Platform.isIOS)
+                  IosGroup(
+                    header: l10n.iCloudSyncSection,
+                    footer: l10n.iCloudSyncFooter,
+                    children: [
+                      IosGroupTile(
+                        title: l10n.iCloudSync,
+                        subtitle: l10n.iCloudSyncSubtitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.cloud_fill,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: _iCloudBusy
+                            ? const CupertinoActivityIndicator()
+                            : CupertinoSwitch(
+                                value: _iCloudSync,
+                                activeTrackColor: AppColors.primary,
+                                onChanged: _toggleICloudSync,
+                              ),
+                      ),
+                      if (_iCloudSync)
+                        IosGroupTile(
+                          title: l10n.iCloudSyncNow,
+                          subtitle: _iCloudLastSyncLabel(l10n),
+                          leading: _LeadingIcon(
+                            icon: CupertinoIcons.arrow_2_circlepath,
+                            color: AppColors.iconView,
+                          ),
+                          trailing: _iCloudBusy
+                              ? const CupertinoActivityIndicator()
+                              : const IosChevron(),
+                          onTap: _iCloudBusy ? null : _syncICloudNow,
+                        ),
+                    ],
+                  ),
+                if (!kIsWeb && Platform.isIOS) const SizedBox(height: 28),
                 IosGroup(
                   header: l10n.settingsData,
                   children: [

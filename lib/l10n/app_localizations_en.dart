@@ -336,6 +336,50 @@ class AppLocalizationsEn extends AppLocalizations {
       'Require Face ID / fingerprint / device PIN';
 
   @override
+  String get iCloudSyncSection => 'iCloud';
+
+  @override
+  String get iCloudSync => 'Sync with iCloud';
+
+  @override
+  String get iCloudSyncSubtitle => 'Private CloudKit — your iCloud, never ours';
+
+  @override
+  String get iCloudSyncFooter =>
+      'Goes to your iCloud account only. Values stay encrypted on device before upload. You can still use .clipval backups anytime.';
+
+  @override
+  String get iCloudSyncEnableTitle => 'Turn on iCloud sync?';
+
+  @override
+  String get iCloudSyncEnableBody =>
+      'Your vault will sync through your private iCloud database. ClipVal never runs a server that sees your values.';
+
+  @override
+  String get iCloudSyncTurnOn => 'Turn On';
+
+  @override
+  String get iCloudSyncNow => 'Sync now';
+
+  @override
+  String get iCloudSyncNever => 'Not synced yet';
+
+  @override
+  String iCloudSyncLastAt(String when) {
+    return 'Last sync $when';
+  }
+
+  @override
+  String get iCloudSyncSuccess => 'Vault synced';
+
+  @override
+  String get iCloudSyncFailedTitle => 'Couldn’t sync';
+
+  @override
+  String get iCloudSyncFailedBody =>
+      'Check that you’re signed into iCloud and try again.';
+
+  @override
   String get securitySectionFooter =>
       'Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.';
 

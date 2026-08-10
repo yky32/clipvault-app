@@ -146,6 +146,24 @@
   "settingsData": "Backup & Recovery",
   "biometricLock": "App lock",
   "biometricLockSubtitle": "Require Face ID / fingerprint / device PIN",
+  "iCloudSyncSection": "iCloud",
+  "iCloudSync": "Sync with iCloud",
+  "iCloudSyncSubtitle": "Private CloudKit — your iCloud, never ours",
+  "iCloudSyncFooter": "Goes to your iCloud account only. Values stay encrypted on device before upload. You can still use .clipval backups anytime.",
+  "iCloudSyncEnableTitle": "Turn on iCloud sync?",
+  "iCloudSyncEnableBody": "Your vault will sync through your private iCloud database. ClipVal never runs a server that sees your values.",
+  "iCloudSyncTurnOn": "Turn On",
+  "iCloudSyncNow": "Sync now",
+  "iCloudSyncNever": "Not synced yet",
+  "iCloudSyncLastAt": "Last sync {when}",
+  "@iCloudSyncLastAt": {
+    "placeholders": {
+      "when": { "type": "String" }
+    }
+  },
+  "iCloudSyncSuccess": "Vault synced",
+  "iCloudSyncFailedTitle": "Couldn’t sync",
+  "iCloudSyncFailedBody": "Check that you’re signed into iCloud and try again.",
   "securitySectionFooter": "Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.",
   "requireAuthToReveal": "Face ID to reveal values",
   "requireAuthToRevealSubtitle": "Ask again before showing a value in the editor",

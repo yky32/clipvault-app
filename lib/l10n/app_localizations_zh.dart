@@ -330,6 +330,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get biometricLockSubtitle => '需要 Face ID／指紋／裝置 PIN';
 
   @override
+  String get iCloudSyncSection => 'iCloud';
+
+  @override
+  String get iCloudSync => '透過 iCloud 同步';
+
+  @override
+  String get iCloudSyncSubtitle => '私有 CloudKit — 只在你的 iCloud，不在我們';
+
+  @override
+  String get iCloudSyncFooter =>
+      '只會進入你的 iCloud 帳號。內容在上傳前已於裝置加密。仍可隨時使用 .clipval 備份。';
+
+  @override
+  String get iCloudSyncEnableTitle => '開啟 iCloud 同步？';
+
+  @override
+  String get iCloudSyncEnableBody =>
+      '保險庫會透過你的私有 iCloud 資料庫同步。ClipVal 沒有伺服器能看見你的內容。';
+
+  @override
+  String get iCloudSyncTurnOn => '開啟';
+
+  @override
+  String get iCloudSyncNow => '立即同步';
+
+  @override
+  String get iCloudSyncNever => '尚未同步';
+
+  @override
+  String iCloudSyncLastAt(String when) {
+    return '上次同步 $when';
+  }
+
+  @override
+  String get iCloudSyncSuccess => '已同步';
+
+  @override
+  String get iCloudSyncFailedTitle => '無法同步';
+
+  @override
+  String get iCloudSyncFailedBody => '請確認已登入 iCloud 後再試。';
+
+  @override
   String get securitySectionFooter => '鎖定保護保險庫；顯示驗證與自動鎖定控制暴露時間。';
 
   @override

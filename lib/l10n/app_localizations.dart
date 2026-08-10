@@ -704,6 +704,84 @@ abstract class AppLocalizations {
   /// **'Require Face ID / fingerprint / device PIN'**
   String get biometricLockSubtitle;
 
+  /// No description provided for @iCloudSyncSection.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud'**
+  String get iCloudSyncSection;
+
+  /// No description provided for @iCloudSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with iCloud'**
+  String get iCloudSync;
+
+  /// No description provided for @iCloudSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private CloudKit — your iCloud, never ours'**
+  String get iCloudSyncSubtitle;
+
+  /// No description provided for @iCloudSyncFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes to your iCloud account only. Values stay encrypted on device before upload. You can still use .clipval backups anytime.'**
+  String get iCloudSyncFooter;
+
+  /// No description provided for @iCloudSyncEnableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on iCloud sync?'**
+  String get iCloudSyncEnableTitle;
+
+  /// No description provided for @iCloudSyncEnableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault will sync through your private iCloud database. ClipVal never runs a server that sees your values.'**
+  String get iCloudSyncEnableBody;
+
+  /// No description provided for @iCloudSyncTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn On'**
+  String get iCloudSyncTurnOn;
+
+  /// No description provided for @iCloudSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get iCloudSyncNow;
+
+  /// No description provided for @iCloudSyncNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get iCloudSyncNever;
+
+  /// No description provided for @iCloudSyncLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {when}'**
+  String iCloudSyncLastAt(String when);
+
+  /// No description provided for @iCloudSyncSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault synced'**
+  String get iCloudSyncSuccess;
+
+  /// No description provided for @iCloudSyncFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sync'**
+  String get iCloudSyncFailedTitle;
+
+  /// No description provided for @iCloudSyncFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that you’re signed into iCloud and try again.'**
+  String get iCloudSyncFailedBody;
+
   /// No description provided for @securitySectionFooter.
   ///
   /// In en, this message translates to:

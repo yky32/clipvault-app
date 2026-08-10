@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../services/auth_service.dart';
@@ -5,6 +7,7 @@ import '../services/category_repository.dart';
 import '../services/clip_item_repository.dart';
 import '../services/clipboard_service.dart';
 import '../services/encryption_service.dart';
+import '../services/icloud_sync_service.dart';
 import '../services/settings_service.dart';
 import '../services/vault_migration_service.dart';
 import '../services/widget_snapshot_service.dart';
@@ -20,6 +23,7 @@ class AppBootstrap {
   static late final AuthService authService;
   static late final VaultMigrationService vaultMigrationService;
   static late final WidgetSnapshotService widgetSnapshotService;
+  static late final ICloudSyncService iCloudSyncService;
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -45,5 +49,16 @@ class AppBootstrap {
     await widgetSnapshotService.init();
     // Best-effort: keep home-screen widget in sync after cold start.
     await widgetSnapshotService.sync();
+
+    iCloudSyncService = ICloudSyncService(
+      encryption: encryptionService,
+      items: clipItemRepository,
+      categories: categoryRepository,
+      widgetSnapshot: widgetSnapshotService,
+    );
+    // Best-effort pull if user already opted into iCloud sync.
+    if (SettingsService.instance.iCloudSyncEnabled) {
+      unawaited(iCloudSyncService.syncNow());
+    }
   }
 }

@@ -130,6 +130,9 @@ class SettingsService {
   static const _requireAuthToRevealKey = 'require_auth_to_reveal';
   /// Seconds after backgrounding before re-lock; 0 = immediate.
   static const _autoLockTimeoutKey = 'auto_lock_timeout_seconds';
+  /// Phase E: optional CloudKit private sync (default off).
+  static const _iCloudSyncKey = 'icloud_sync_enabled';
+  static const _iCloudLastSyncKey = 'icloud_last_sync_at';
 
   late SharedPreferences _prefs;
 
@@ -210,6 +213,26 @@ class SettingsService {
       _autoLockTimeoutKey,
       allowed.contains(seconds) ? seconds : 0,
     );
+  }
+
+  /// Opt-in CloudKit private sync (Phase E). Default **false**.
+  bool get iCloudSyncEnabled => _prefs.getBool(_iCloudSyncKey) ?? false;
+
+  Future<void> setICloudSyncEnabled(bool value) =>
+      _prefs.setBool(_iCloudSyncKey, value);
+
+  DateTime? get iCloudLastSyncAt {
+    final raw = _prefs.getString(_iCloudLastSyncKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> setICloudLastSyncAt(DateTime? value) async {
+    if (value == null) {
+      await _prefs.remove(_iCloudLastSyncKey);
+    } else {
+      await _prefs.setString(_iCloudLastSyncKey, value.toIso8601String());
+    }
   }
 
   /// Widget shows only pinned items (default false = pinned + recent + rest).

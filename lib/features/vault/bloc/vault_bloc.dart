@@ -52,6 +52,14 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     }
   }
 
+  void _scheduleICloud() {
+    try {
+      AppBootstrap.iCloudSyncService.scheduleSync();
+    } catch (_) {
+      // iCloud is optional; never fail vault actions.
+    }
+  }
+
   void _onStarted(VaultStarted event, Emitter<VaultState> emit) {
     emit(state.copyWith(status: VaultStatus.loading));
     emit(
@@ -108,6 +116,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       ),
     );
     await _syncWidget();
+    _scheduleICloud();
   }
 
   Future<void> _onItemDeleted(
@@ -117,6 +126,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.delete(event.itemId);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    try {
+      await AppBootstrap.iCloudSyncService.pushItemTombstone(event.itemId);
+    } catch (_) {}
+    _scheduleICloud();
   }
 
   Future<void> _onItemsDeleted(
@@ -127,6 +140,12 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.deleteMany(event.itemIds);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    for (final id in event.itemIds) {
+      try {
+        await AppBootstrap.iCloudSyncService.pushItemTombstone(id);
+      } catch (_) {}
+    }
+    _scheduleICloud();
   }
 
   Future<void> _onItemsRestored(
@@ -137,6 +156,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.restoreMany(event.items);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    _scheduleICloud();
   }
 
   Future<void> _onItemPinToggled(
@@ -148,6 +168,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.update(item.copyWith(isPinned: !item.isPinned));
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    _scheduleICloud();
   }
 
   Future<void> _onItemDuplicated(
@@ -168,6 +189,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     );
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    _scheduleICloud();
   }
 
   Future<void> _onRefreshed(
@@ -183,5 +205,6 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       ),
     );
     await _syncWidget();
+    _scheduleICloud();
   }
 }

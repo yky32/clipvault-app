@@ -296,6 +296,9 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
 
       if (!mounted) return;
       context.read<VaultBloc>().add(const VaultRefreshed());
+      try {
+        AppBootstrap.iCloudSyncService.scheduleSync();
+      } catch (_) {}
       Navigator.pop(context);
     } finally {
       if (mounted) setState(() => _saving = false);

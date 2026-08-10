@@ -165,4 +165,38 @@ class CategoryRepository {
     }
     return null;
   }
+
+  Map<String, dynamic>? getRawMap(String id) {
+    final raw = _box.get(id);
+    if (raw is! Map) return null;
+    return Map<String, dynamic>.from(
+      raw.map((k, v) => MapEntry(k.toString(), v)),
+    );
+  }
+
+  List<Map<String, dynamic>> getAllRawMaps() {
+    return _box.values
+        .whereType<Map>()
+        .map(
+          (raw) => Map<String, dynamic>.from(
+            raw.map((k, v) => MapEntry(k.toString(), v)),
+          ),
+        )
+        .toList();
+  }
+
+  /// Upsert from CloudKit without side-effects (LWW merge).
+  Future<void> putRawMap(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    await _box.put(id, raw);
+  }
+
+  /// Hard delete (including for remote tombstones). System categories stay.
+  Future<void> deleteForSync(String id) async {
+    final existing = getById(id);
+    if (existing == null) return;
+    if (existing.isSystem) return;
+    await _box.delete(id);
+  }
 }
