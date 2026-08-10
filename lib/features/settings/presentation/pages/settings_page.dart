@@ -40,6 +40,9 @@ class _SettingsPageState extends State<SettingsPage> {
   late GridTitleSize _gridTitleSize;
   late AppLocalePreference _localePref;
   late int _clipboardSeconds;
+  late bool _widgetPinnedOnly;
+  late bool _widgetHideTitlesWhenLocked;
+  late VaultSortMode _vaultSort;
   String _versionLabel = '1.0.0';
 
   @override
@@ -51,7 +54,16 @@ class _SettingsPageState extends State<SettingsPage> {
     _gridTitleSize = s.gridTitleSize;
     _localePref = s.localePreference;
     _clipboardSeconds = s.clipboardClearSeconds;
+    _widgetPinnedOnly = s.widgetPinnedOnly;
+    _widgetHideTitlesWhenLocked = s.widgetHideTitlesWhenLocked;
+    _vaultSort = s.vaultSortMode;
     _loadVersion();
+  }
+
+  Future<void> _syncWidgetPrefs() async {
+    try {
+      await AppBootstrap.widgetSnapshotService.sync();
+    } catch (_) {}
   }
 
   Future<void> _loadVersion() async {
@@ -96,6 +108,45 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     HapticFeedback.selectionClick();
     setState(() => _biometric = value);
+    await _syncWidgetPrefs();
+  }
+
+  String _vaultSortLabel(VaultSortMode mode, AppLocalizations l10n) {
+    return switch (mode) {
+      VaultSortMode.updated => l10n.vaultSortUpdated,
+      VaultSortMode.lastUsed => l10n.vaultSortLastUsed,
+      VaultSortMode.title => l10n.vaultSortTitle,
+    };
+  }
+
+  Future<void> _pickVaultSort() async {
+    final l10n = AppLocalizations.of(context);
+    final mode = await showCupertinoModalPopup<VaultSortMode>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(l10n.vaultSort),
+        actions: [
+          for (final m in VaultSortMode.values)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, m),
+              child: Text(_vaultSortLabel(m, l10n)),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+    if (mode == null || !mounted) return;
+    await SettingsService.instance.setVaultSortMode(mode);
+    if (!mounted) return;
+    HapticFeedback.selectionClick();
+    setState(() => _vaultSort = mode);
+    try {
+      context.read<VaultBloc>().add(const VaultRefreshed());
+    } catch (_) {}
   }
 
   Future<void> _pickTheme(ThemeController controller) async {
@@ -690,6 +741,28 @@ class _SettingsPageState extends State<SettingsPage> {
                   footer: l10n.gridTitleSizeSubtitle,
                   children: [
                     IosGroupTile(
+                      title: l10n.vaultSort,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.arrow_up_arrow_down,
+                        color: AppColors.iconView,
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _vaultSortLabel(_vaultSort, l10n),
+                            style: TextStyle(
+                              fontFamily: 'Satoshi',
+                              fontSize: 17,
+                              color: AppColors.secondaryLabel(context),
+                            ),
+                          ),
+                          const IosChevron(),
+                        ],
+                      ),
+                      onTap: _pickVaultSort,
+                    ),
+                    IosGroupTile(
                       title: l10n.themeMode,
                       leading: _LeadingIcon(
                         icon: CupertinoIcons.moon_stars_fill,
@@ -841,6 +914,52 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       onTap: _pickClipboardTimeout,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.widgetSection,
+                  footer: l10n.widgetHideTitlesWhenLockedSubtitle,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.widgetPinnedOnly,
+                      subtitle: l10n.widgetPinnedOnlySubtitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.pin_fill,
+                        color: AppColors.iconView,
+                      ),
+                      trailing: CupertinoSwitch(
+                        value: _widgetPinnedOnly,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (v) async {
+                          HapticFeedback.selectionClick();
+                          await SettingsService.instance.setWidgetPinnedOnly(v);
+                          if (!mounted) return;
+                          setState(() => _widgetPinnedOnly = v);
+                          await _syncWidgetPrefs();
+                        },
+                      ),
+                    ),
+                    IosGroupTile(
+                      title: l10n.widgetHideTitlesWhenLocked,
+                      subtitle: l10n.widgetHideTitlesWhenLockedSubtitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.eye_slash_fill,
+                        color: AppColors.iconSecurity,
+                      ),
+                      trailing: CupertinoSwitch(
+                        value: _widgetHideTitlesWhenLocked,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (v) async {
+                          HapticFeedback.selectionClick();
+                          await SettingsService.instance
+                              .setWidgetHideTitlesWhenLocked(v);
+                          if (!mounted) return;
+                          setState(() => _widgetHideTitlesWhenLocked = v);
+                          await _syncWidgetPrefs();
+                        },
+                      ),
                     ),
                   ],
                 ),

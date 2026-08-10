@@ -440,6 +440,78 @@ abstract class AppLocalizations {
   /// **'Pin to top'**
   String get pinItem;
 
+  /// No description provided for @duplicateItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get duplicateItem;
+
+  /// No description provided for @itemDuplicated.
+  ///
+  /// In en, this message translates to:
+  /// **'Item duplicated'**
+  String get itemDuplicated;
+
+  /// No description provided for @recentHoldToPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to pin'**
+  String get recentHoldToPin;
+
+  /// No description provided for @widgetSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Screen widget'**
+  String get widgetSection;
+
+  /// No description provided for @widgetPinnedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites only'**
+  String get widgetPinnedOnly;
+
+  /// No description provided for @widgetPinnedOnlySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only pinned items on the widget'**
+  String get widgetPinnedOnlySubtitle;
+
+  /// No description provided for @widgetHideTitlesWhenLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide titles when locked'**
+  String get widgetHideTitlesWhenLocked;
+
+  /// No description provided for @widgetHideTitlesWhenLockedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show monogram only while app lock is on'**
+  String get widgetHideTitlesWhenLockedSubtitle;
+
+  /// No description provided for @vaultSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort vault'**
+  String get vaultSort;
+
+  /// No description provided for @vaultSortUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently updated'**
+  String get vaultSortUpdated;
+
+  /// No description provided for @vaultSortLastUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently copied'**
+  String get vaultSortLastUsed;
+
+  /// No description provided for @vaultSortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title A–Z'**
+  String get vaultSortTitle;
+
   /// No description provided for @save.
   ///
   /// In en, this message translates to:

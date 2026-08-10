@@ -201,6 +201,15 @@ class _VaultPageState extends State<VaultPage> {
             child: Text(item.isPinned ? l10n.unpin : l10n.pinItem),
           ),
           CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              HapticFeedback.selectionClick();
+              context.read<VaultBloc>().add(VaultItemDuplicated(item.id));
+              CopiedHud.show(context, message: l10n.itemDuplicated);
+            },
+            child: Text(l10n.duplicateItem),
+          ),
+          CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(ctx);
@@ -607,6 +616,12 @@ class _VaultPageState extends State<VaultPage> {
                               child: _RecentStrip(
                                 items: recent,
                                 onCopy: _copy,
+                                onLongPress: (item) {
+                                  HapticFeedback.mediumImpact();
+                                  context
+                                      .read<VaultBloc>()
+                                      .add(VaultItemPinToggled(item.id));
+                                },
                               ),
                             ),
                           if (isGrid)
@@ -786,41 +801,61 @@ class _SectionLabel extends StatelessWidget {
 }
 
 /// Horizontal quick-access strip for last-copied items.
+///
+/// Tap → copy · long-press → pin/unpin (favorite for widget).
 class _RecentStrip extends StatelessWidget {
-  const _RecentStrip({required this.items, required this.onCopy});
+  const _RecentStrip({
+    required this.items,
+    required this.onCopy,
+    this.onLongPress,
+  });
 
   final List<ClipItem> items;
   final void Function(ClipItem) onCopy;
+  final void Function(ClipItem)? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    // ~15% tighter than the original strip so it doesn’t dominate the vault.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
-          child: Text(
-            l10n.recentSection.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
-              color: AppColors.secondaryLabel(context),
-            ),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.recentSection.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                    color: AppColors.secondaryLabel(context),
+                  ),
+                ),
+              ),
+              Text(
+                l10n.recentHoldToPin,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.tertiaryLabel(context),
+                ),
+              ),
+            ],
           ),
         ),
         SizedBox(
-          height: 37,
+          height: 34,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             physics: const BouncingScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 7),
+            separatorBuilder: (_, __) => const SizedBox(width: 6),
             itemBuilder: (context, index) {
               final item = items[index];
               return GestureDetector(
@@ -828,31 +863,40 @@ class _RecentStrip extends StatelessWidget {
                   HapticFeedback.lightImpact();
                   onCopy(item);
                 },
+                onLongPress: onLongPress == null
+                    ? null
+                    : () => onLongPress!(item),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground(context),
                     borderRadius: BorderRadius.circular(AppRadii.pill),
-                    border: Border.all(color: AppColors.hairline(context)),
+                    border: Border.all(
+                      color: item.isPinned
+                          ? AppColors.primary.withValues(alpha: 0.45)
+                          : AppColors.hairline(context),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        CupertinoIcons.doc_on_clipboard,
-                        size: 12,
+                        item.isPinned
+                            ? CupertinoIcons.pin_fill
+                            : CupertinoIcons.doc_on_clipboard,
+                        size: 11,
                         color: AppColors.primary,
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 4),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 120),
+                        constraints: const BoxConstraints(maxWidth: 100),
                         child: Text(
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelLarge?.copyWith(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             height: 1.1,
                           ),

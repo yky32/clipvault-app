@@ -14,26 +14,40 @@ private let copiedHighlightSeconds: TimeInterval = 2.6
 private let brand = Color(red: 0.76, green: 0.36, blue: 0.28)
 private let okGreen = Color(red: 0.15, green: 0.55, blue: 0.35)
 
-/// 4 columns × 2 rows
+/// 4 columns; medium = 2 rows (8), large = 4 rows (16)
 private let gridColumns = 4
-private let gridRows = 2
-private let gridCapacity = gridColumns * gridRows // 8
+private let mediumCapacity = 8
+private let largeCapacity = 16
 
 struct WidgetItem: Codable, Identifiable, Hashable {
   let id: String
   let title: String
   let value: String
+  /// Optional letter from host when titles are masked.
+  let monogram: String?
+  let pinned: Bool?
 
-  var monogram: String {
+  var displayMonogram: String {
+    if let m = monogram?.trimmingCharacters(in: .whitespacesAndNewlines), !m.isEmpty {
+      return String(m.prefix(1)).uppercased()
+    }
     let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
     guard let c = t.first else { return "•" }
     return String(c).uppercased()
+  }
+
+  var displayTitle: String {
+    let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    if t.isEmpty { return "···" }
+    return t
   }
 }
 
 struct WidgetPayload: Codable {
   let items: [WidgetItem]
   let updatedAt: String?
+  let hideTitles: Bool?
+  let pinnedOnly: Bool?
 }
 
 // MARK: - Timeline
@@ -42,6 +56,8 @@ struct ClipValEntry: TimelineEntry {
   let date: Date
   let items: [WidgetItem]
   let justCopiedId: String?
+  let hideTitles: Bool
+  let pinnedOnly: Bool
 }
 
 struct ClipValProvider: TimelineProvider {
@@ -49,9 +65,11 @@ struct ClipValProvider: TimelineProvider {
     ClipValEntry(
       date: .now,
       items: (1...8).map {
-        WidgetItem(id: "\($0)", title: "Item \($0)", value: "")
+        WidgetItem(id: "\($0)", title: "Item \($0)", value: "", monogram: nil, pinned: nil)
       },
-      justCopiedId: nil
+      justCopiedId: nil,
+      hideTitles: false,
+      pinnedOnly: false
     )
   }
 
@@ -73,15 +91,26 @@ struct ClipValProvider: TimelineProvider {
   }
 
   private func entry(at date: Date) -> ClipValEntry {
-    ClipValEntry(date: date, items: loadItems(), justCopiedId: loadCopied(at: date))
+    let loaded = loadPayload()
+    return ClipValEntry(
+      date: date,
+      items: loaded.items,
+      justCopiedId: loadCopied(at: date),
+      hideTitles: loaded.hideTitles,
+      pinnedOnly: loaded.pinnedOnly
+    )
   }
 
-  private func loadItems() -> [WidgetItem] {
+  private func loadPayload() -> (items: [WidgetItem], hideTitles: Bool, pinnedOnly: Bool) {
     guard let raw = UserDefaults(suiteName: appGroupId)?.string(forKey: itemsKey),
           let data = raw.data(using: .utf8),
           let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
-    else { return [] }
-    return Array(payload.items.prefix(gridCapacity))
+    else { return ([], false, false) }
+    return (
+      Array(payload.items.prefix(largeCapacity)),
+      payload.hideTitles ?? false,
+      payload.pinnedOnly ?? false
+    )
   }
 
   private func loadCopied(at date: Date) -> String? {
@@ -124,11 +153,16 @@ struct CopyValueIntent: AppIntent {
   }
 }
 
-// MARK: - UI: 4 columns × max 2 rows (medium only)
+// MARK: - UI: 4 columns × 2 rows (medium) or 4 rows (large)
 
 struct ClipValWidgetEntryView: View {
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.widgetFamily) private var family
   var entry: ClipValEntry
+
+  private var capacity: Int {
+    family == .systemLarge ? largeCapacity : mediumCapacity
+  }
 
   private let columns = Array(
     repeating: GridItem(.flexible(), spacing: 5, alignment: .center),
@@ -136,7 +170,7 @@ struct ClipValWidgetEntryView: View {
   )
 
   var body: some View {
-    let items = Array(entry.items.prefix(gridCapacity))
+    let items = Array(entry.items.prefix(capacity))
 
     VStack(alignment: .leading, spacing: 0) {
       // Header — reserved band so title never fights the grid
@@ -149,7 +183,7 @@ struct ClipValWidgetEntryView: View {
               .font(.system(size: 7, weight: .bold))
               .foregroundStyle(.white)
           )
-        Text("ClipVal")
+        Text(entry.pinnedOnly ? "Favorites" : "ClipVal")
           .font(.system(size: 13, weight: .bold, design: .rounded))
           .foregroundStyle(.primary)
           .lineLimit(1)
@@ -164,16 +198,18 @@ struct ClipValWidgetEntryView: View {
 
       if items.isEmpty {
         Spacer(minLength: 0)
-        Text("Open ClipVal to add values")
+        Text(entry.pinnedOnly
+              ? "Pin items in ClipVal to show them here"
+              : "Open ClipVal to add values")
           .font(.system(size: 12, weight: .medium, design: .rounded))
           .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
           .frame(maxWidth: .infinity)
         Spacer(minLength: 0)
       } else {
-        // 4 per row × max 2 rows — compact cells
         LazyVGrid(columns: columns, alignment: .center, spacing: 5) {
           ForEach(items) { item in
-            cell(item, hot: item.id == entry.justCopiedId)
+            cell(item, hot: item.id == entry.justCopiedId, hideTitle: entry.hideTitles)
           }
         }
         Spacer(minLength: 0)
@@ -186,8 +222,10 @@ struct ClipValWidgetEntryView: View {
     .widgetBackground()
   }
 
-  /// Compact cell: smaller monogram + title under it.
-  private func cell(_ item: WidgetItem, hot: Bool) -> some View {
+  /// Compact cell: monogram + title (or ··· when titles hidden for lock privacy).
+  private func cell(_ item: WidgetItem, hot: Bool, hideTitle: Bool) -> some View {
+    let shownTitle = hideTitle ? "···" : item.displayTitle
+    let intentTitle = hideTitle ? "Item" : (item.title.isEmpty ? "Item" : item.title)
     let label = VStack(spacing: 3) {
       ZStack {
         Circle()
@@ -197,14 +235,14 @@ struct ClipValWidgetEntryView: View {
             .font(.system(size: 10, weight: .bold))
             .foregroundStyle(.white)
         } else {
-          Text(item.monogram)
+          Text(item.displayMonogram)
             .font(.system(size: 11, weight: .bold, design: .rounded))
             .foregroundStyle(brand)
         }
       }
       .frame(width: 28, height: 28)
 
-      Text(item.title)
+      Text(shownTitle)
         .font(.system(size: 9, weight: .semibold, design: .rounded))
         .foregroundStyle(hot ? okGreen : .primary)
         .lineLimit(1)
@@ -227,7 +265,7 @@ struct ClipValWidgetEntryView: View {
 
     return Group {
       if #available(iOS 17.0, *) {
-        Button(intent: CopyValueIntent(id: item.id, value: item.value, title: item.title)) {
+        Button(intent: CopyValueIntent(id: item.id, value: item.value, title: intentTitle)) {
           label
         }
         .buttonStyle(.plain)
@@ -259,7 +297,7 @@ private extension View {
   }
 }
 
-// MARK: - Widget (medium only — 4×2 grid)
+// MARK: - Widget (medium 4×2 · large 4×4)
 
 struct ClipValWidget: Widget {
   let kind = "ClipValWidget"
@@ -270,16 +308,16 @@ struct ClipValWidget: Widget {
         ClipValWidgetEntryView(entry: entry)
       }
       .configurationDisplayName("ClipVal")
-      .description("4×2 grid — tap to copy without opening the app.")
-      .supportedFamilies([.systemMedium])
+      .description("Tap to copy without opening the app. Medium 8 · large 16.")
+      .supportedFamilies([.systemMedium, .systemLarge])
       .contentMarginsDisabled()
     } else {
       return StaticConfiguration(kind: kind, provider: ClipValProvider()) { entry in
         ClipValWidgetEntryView(entry: entry)
       }
       .configurationDisplayName("ClipVal")
-      .description("4×2 grid — tap to copy.")
-      .supportedFamilies([.systemMedium])
+      .description("Tap to copy. Pin items as favorites. Medium or large.")
+      .supportedFamilies([.systemMedium, .systemLarge])
     }
   }
 }

@@ -63,6 +63,14 @@ final class VaultItemPinToggled extends VaultEvent {
   List<Object?> get props => [itemId];
 }
 
+final class VaultItemDuplicated extends VaultEvent {
+  const VaultItemDuplicated(this.itemId);
+  final String itemId;
+
+  @override
+  List<Object?> get props => [itemId];
+}
+
 final class VaultRefreshed extends VaultEvent {
   const VaultRefreshed();
 }

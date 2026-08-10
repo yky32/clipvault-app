@@ -3,6 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/address_languages.dart';
 
+/// Sort mode for vault lists (pinned items always first).
+enum VaultSortMode {
+  /// Recently updated first (default Hive order).
+  updated,
+  /// Recently copied first.
+  lastUsed,
+  /// A–Z by title.
+  title,
+}
+
 enum VaultViewMode {
   list,
   grid2,
@@ -110,6 +120,12 @@ class SettingsService {
   static const _gridTitleSizeKey = 'grid_title_size';
   /// Enabled address language tag codes (e.g. `zh`, `en`). Order = chip order.
   static const _addressLanguageTagsKey = 'address_language_tags';
+  /// Home widget: only show pinned items (favorites).
+  static const _widgetPinnedOnlyKey = 'widget_pinned_only';
+  /// Home widget: mask titles when app lock is enabled.
+  static const _widgetHideTitlesWhenLockedKey = 'widget_hide_titles_locked';
+  /// Vault list sort (pin always first).
+  static const _vaultSortKey = 'vault_sort';
 
   late SharedPreferences _prefs;
 
@@ -164,6 +180,38 @@ class SettingsService {
 
   Future<void> setBiometricLockEnabled(bool value) =>
       _prefs.setBool(_biometricKey, value);
+
+  /// Widget shows only pinned items (default false = pinned + recent + rest).
+  bool get widgetPinnedOnly => _prefs.getBool(_widgetPinnedOnlyKey) ?? false;
+
+  Future<void> setWidgetPinnedOnly(bool value) =>
+      _prefs.setBool(_widgetPinnedOnlyKey, value);
+
+  /// When app lock is on, widget shows monogram only (not full titles).
+  bool get widgetHideTitlesWhenLocked =>
+      _prefs.getBool(_widgetHideTitlesWhenLockedKey) ?? true;
+
+  Future<void> setWidgetHideTitlesWhenLocked(bool value) =>
+      _prefs.setBool(_widgetHideTitlesWhenLockedKey, value);
+
+  /// How unpinned vault items are ordered (pinned always on top).
+  VaultSortMode get vaultSortMode {
+    final raw = _prefs.getString(_vaultSortKey);
+    return switch (raw) {
+      'title' => VaultSortMode.title,
+      'lastUsed' => VaultSortMode.lastUsed,
+      _ => VaultSortMode.updated,
+    };
+  }
+
+  Future<void> setVaultSortMode(VaultSortMode mode) => _prefs.setString(
+        _vaultSortKey,
+        switch (mode) {
+          VaultSortMode.updated => 'updated',
+          VaultSortMode.lastUsed => 'lastUsed',
+          VaultSortMode.title => 'title',
+        },
+      );
 
   VaultViewMode get defaultViewMode {
     final raw = _prefs.getString(_viewModeKey);

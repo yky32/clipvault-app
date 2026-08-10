@@ -7,6 +7,7 @@ final class VaultState extends Equatable {
     this.searchQuery = '',
     this.selectedCategoryId,
     this.viewMode = VaultViewMode.list,
+    this.sortMode = VaultSortMode.updated,
     this.status = VaultStatus.initial,
     this.lastCopiedTitle,
     this.errorMessage,
@@ -17,12 +18,14 @@ final class VaultState extends Equatable {
   final String searchQuery;
   final String? selectedCategoryId;
   final VaultViewMode viewMode;
+  /// Mirrored from Settings so sort changes emit a distinct state.
+  final VaultSortMode sortMode;
   final VaultStatus status;
   final String? lastCopiedTitle;
   final String? errorMessage;
 
   List<ClipItem> get filteredItems {
-    var result = items;
+    var result = List<ClipItem>.from(items);
     if (selectedCategoryId != null) {
       result =
           result.where((i) => i.categoryId == selectedCategoryId).toList();
@@ -31,7 +34,36 @@ final class VaultState extends Equatable {
     if (q.isNotEmpty) {
       result = result.where((i) => i.title.toLowerCase().contains(q)).toList();
     }
-    return result;
+    return _applySort(result, sortMode);
+  }
+
+  /// Pinned first, then [sortMode] among each group.
+  static List<ClipItem> _applySort(List<ClipItem> list, VaultSortMode mode) {
+    final pinned = list.where((i) => i.isPinned).toList();
+    final rest = list.where((i) => !i.isPinned).toList();
+
+    int byTitle(ClipItem a, ClipItem b) =>
+        a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    int byUpdated(ClipItem a, ClipItem b) =>
+        b.updatedAt.compareTo(a.updatedAt);
+    int byLastUsed(ClipItem a, ClipItem b) {
+      final at = a.lastCopiedAt;
+      final bt = b.lastCopiedAt;
+      if (at == null && bt == null) return byUpdated(a, b);
+      if (at == null) return 1;
+      if (bt == null) return -1;
+      final c = bt.compareTo(at);
+      return c != 0 ? c : byUpdated(a, b);
+    }
+
+    final cmp = switch (mode) {
+      VaultSortMode.title => byTitle,
+      VaultSortMode.lastUsed => byLastUsed,
+      VaultSortMode.updated => byUpdated,
+    };
+    pinned.sort(cmp);
+    rest.sort(cmp);
+    return [...pinned, ...rest];
   }
 
   bool get hasActiveFilter =>
@@ -60,6 +92,7 @@ final class VaultState extends Equatable {
     String? selectedCategoryId,
     bool clearCategoryFilter = false,
     VaultViewMode? viewMode,
+    VaultSortMode? sortMode,
     VaultStatus? status,
     String? lastCopiedTitle,
     bool clearLastCopiedTitle = false,
@@ -74,6 +107,7 @@ final class VaultState extends Equatable {
           ? null
           : (selectedCategoryId ?? this.selectedCategoryId),
       viewMode: viewMode ?? this.viewMode,
+      sortMode: sortMode ?? this.sortMode,
       status: status ?? this.status,
       lastCopiedTitle: clearLastCopiedTitle
           ? null
@@ -89,6 +123,7 @@ final class VaultState extends Equatable {
         searchQuery,
         selectedCategoryId,
         viewMode,
+        sortMode,
         status,
         lastCopiedTitle,
         errorMessage,

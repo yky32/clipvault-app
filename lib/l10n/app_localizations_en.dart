@@ -191,6 +191,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pinItem => 'Pin to top';
 
   @override
+  String get duplicateItem => 'Duplicate';
+
+  @override
+  String get itemDuplicated => 'Item duplicated';
+
+  @override
+  String get recentHoldToPin => 'Hold to pin';
+
+  @override
+  String get widgetSection => 'Home Screen widget';
+
+  @override
+  String get widgetPinnedOnly => 'Favorites only';
+
+  @override
+  String get widgetPinnedOnlySubtitle => 'Show only pinned items on the widget';
+
+  @override
+  String get widgetHideTitlesWhenLocked => 'Hide titles when locked';
+
+  @override
+  String get widgetHideTitlesWhenLockedSubtitle =>
+      'Show monogram only while app lock is on';
+
+  @override
+  String get vaultSort => 'Sort vault';
+
+  @override
+  String get vaultSortUpdated => 'Recently updated';
+
+  @override
+  String get vaultSortLastUsed => 'Recently copied';
+
+  @override
+  String get vaultSortTitle => 'Title A–Z';
+
+  @override
   String get save => 'Save';
 
   @override

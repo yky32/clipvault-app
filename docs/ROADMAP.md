@@ -56,17 +56,19 @@
 
 ---
 
-## Phase C — Faster one-tap (in progress / next)
+## Phase C — Faster one-tap (shipped in tree)
 
 **Goal:** Copy without digging; never leave the one-purpose box.
 
-| Item | Notes |
+| Item | Status |
 |------|--------|
-| Widget polish | Favorites-only row, sizes, hide titles when locked |
-| Recently copied strip | Clear, pin from strip, density |
-| Duplicate item | Small but useful after import |
-| Sort options | Last used / A–Z (optional) |
-| Spotlight / Handoff later | iOS search by **title only** (never index values) |
+| Widget favorites only (pinned) | Done — Settings toggle |
+| Hide widget titles when app lock on | Done — monogram + ··· |
+| Widget medium + large families | Done — medium 8 · large 16 |
+| Recently copied strip | Done — denser; hold to pin |
+| Duplicate item | Done — action sheet |
+| Sort vault | Done — updated / last used / A–Z |
+| Spotlight / Handoff | Later — title only |
 
 **Exit:** Top 8 values reachable in &lt;1s from Home Screen or search.
 
@@ -121,8 +123,7 @@
 ## Suggested near-term sequence
 
 ```
-Now ──► Phase B: Share → Save to ClipVal (done in tree; ship TF)
-     ──► Phase C: Widget favorites + small vault UX
+Now ──► Phase C: Widget favorites + vault speed (done in tree)
      ──► Phase D: Reveal-with-Face-ID / lock polish
      ──► App Store 1.1 / 1.2 marketing if needed
      ──► Phase E: iCloud private sync (big project)

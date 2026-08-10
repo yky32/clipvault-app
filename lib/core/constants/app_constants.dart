@@ -16,8 +16,11 @@ class AppConstants {
   /// JSON payload key in App Group UserDefaults.
   static const widgetItemsKey = 'widget_items_json';
 
-  /// Max items on the home-screen widget (4 columns × 2 rows).
-  static const widgetItemLimit = 8;
+  /// Max items pushed to the home-screen widget (medium 4×2, large 4×4).
+  static const widgetItemLimit = 16;
+
+  /// App Group flag: widget should mask titles (app lock / privacy).
+  static const widgetHideTitlesKey = 'widget_hide_titles';
 
   /// Deep link scheme: `clipval://copy?id=<itemId>` (iOS 15–16 fallback).
   static const urlScheme = 'clipval';

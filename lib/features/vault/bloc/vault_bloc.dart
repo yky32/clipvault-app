@@ -22,7 +22,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         _categories = categoryRepository,
         _clipboard = clipboardService,
         super(
-          VaultState(viewMode: SettingsService.instance.defaultViewMode),
+          VaultState(
+            viewMode: SettingsService.instance.defaultViewMode,
+            sortMode: SettingsService.instance.vaultSortMode,
+          ),
         ) {
     on<VaultStarted>(_onStarted);
     on<VaultSearchChanged>(_onSearchChanged);
@@ -32,6 +35,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<VaultItemDeleted>(_onItemDeleted);
     on<VaultItemsDeleted>(_onItemsDeleted);
     on<VaultItemPinToggled>(_onItemPinToggled);
+    on<VaultItemDuplicated>(_onItemDuplicated);
     on<VaultRefreshed>(_onRefreshed);
   }
 
@@ -55,6 +59,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         categories: _categories.getAll(),
         status: VaultStatus.ready,
         viewMode: SettingsService.instance.defaultViewMode,
+        sortMode: SettingsService.instance.vaultSortMode,
       ),
     );
   }
@@ -134,6 +139,25 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _syncWidget();
   }
 
+  Future<void> _onItemDuplicated(
+    VaultItemDuplicated event,
+    Emitter<VaultState> emit,
+  ) async {
+    final item = _items.getById(event.itemId);
+    if (item == null) return;
+    final base = item.title.trim();
+    final copyTitle = base.isEmpty ? 'Copy' : '$base (copy)';
+    await _items.create(
+      title: copyTitle,
+      value: item.value,
+      categoryId: item.categoryId,
+      languageTag: item.languageTag,
+      isPinned: false,
+    );
+    emit(state.copyWith(items: _items.getAll()));
+    await _syncWidget();
+  }
+
   Future<void> _onRefreshed(
     VaultRefreshed event,
     Emitter<VaultState> emit,
@@ -142,6 +166,8 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       state.copyWith(
         items: _items.getAll(),
         categories: _categories.getAll(),
+        sortMode: SettingsService.instance.vaultSortMode,
+        viewMode: SettingsService.instance.defaultViewMode,
       ),
     );
     await _syncWidget();

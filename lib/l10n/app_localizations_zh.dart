@@ -188,6 +188,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pinItem => '置頂';
 
   @override
+  String get duplicateItem => '複製項目';
+
+  @override
+  String get itemDuplicated => '已複製項目';
+
+  @override
+  String get recentHoldToPin => '長按置頂';
+
+  @override
+  String get widgetSection => '主畫面小工具';
+
+  @override
+  String get widgetPinnedOnly => '僅顯示我的最愛';
+
+  @override
+  String get widgetPinnedOnlySubtitle => '小工具只顯示已置頂項目';
+
+  @override
+  String get widgetHideTitlesWhenLocked => '鎖定時隱藏標題';
+
+  @override
+  String get widgetHideTitlesWhenLockedSubtitle => '開啟應用程式鎖定時只顯示字首';
+
+  @override
+  String get vaultSort => '排序';
+
+  @override
+  String get vaultSortUpdated => '最近更新';
+
+  @override
+  String get vaultSortLastUsed => '最近複製';
+
+  @override
+  String get vaultSortTitle => '標題 A–Z';
+
+  @override
   String get save => '儲存';
 
   @override
