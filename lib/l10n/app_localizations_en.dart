@@ -91,6 +91,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get valueHint => 'The text to copy';
 
   @override
+  String get valueExpand => 'Expand';
+
+  @override
+  String get valueExpandTitle => 'Edit value';
+
+  @override
+  String get valueExpandDone => 'Done';
+
+  @override
+  String get valuePaste => 'Paste';
+
+  @override
+  String get valueClear => 'Clear';
+
+  @override
   String get categoryLabel => 'Category';
 
   @override

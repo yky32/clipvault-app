@@ -248,6 +248,36 @@ abstract class AppLocalizations {
   /// **'The text to copy'**
   String get valueHint;
 
+  /// No description provided for @valueExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get valueExpand;
+
+  /// No description provided for @valueExpandTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit value'**
+  String get valueExpandTitle;
+
+  /// No description provided for @valueExpandDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get valueExpandDone;
+
+  /// No description provided for @valuePaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get valuePaste;
+
+  /// No description provided for @valueClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get valueClear;
+
   /// No description provided for @categoryLabel.
   ///
   /// In en, this message translates to:

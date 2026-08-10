@@ -90,6 +90,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get valueHint => '要複製的文字';
 
   @override
+  String get valueExpand => '展開';
+
+  @override
+  String get valueExpandTitle => '編輯內容';
+
+  @override
+  String get valueExpandDone => '完成';
+
+  @override
+  String get valuePaste => '貼上';
+
+  @override
+  String get valueClear => '清除';
+
+  @override
   String get categoryLabel => '分類';
 
   @override

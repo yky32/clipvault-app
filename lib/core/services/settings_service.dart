@@ -29,19 +29,48 @@ enum GridTitleSize {
   medium,
   small;
 
-  /// Title point size on grid tiles.
+  /// Title point size on **2-column** (and default) grid tiles.
   double get titleFontSize => switch (this) {
         large => 24,
         medium => 20,
         small => 15,
       };
 
-  /// Meta line under the title.
+  /// Meta line under the title (2-column / default).
   double get metaFontSize => switch (this) {
         large => 12.5,
         medium => 12,
         small => 11,
       };
+
+  /// Title size scaled for column count — 3-col tiles are ~½ the width.
+  double titleFontSizeForColumns(int columns) {
+    if (columns >= 3) {
+      return switch (this) {
+        // Tuned so “Ref Code” / “Area Code” read cleanly on ~100pt tiles.
+        large => 16,
+        medium => 14.5,
+        small => 13,
+      };
+    }
+    return titleFontSize;
+  }
+
+  /// Meta size for the given grid density.
+  double metaFontSizeForColumns(int columns) {
+    if (columns >= 3) {
+      return switch (this) {
+        large => 11,
+        medium => 10.5,
+        small => 10,
+      };
+    }
+    return metaFontSize;
+  }
+
+  /// Line height for titles at this density (slightly tighter in 3-col).
+  double titleLineHeightForColumns(int columns) =>
+      columns >= 3 ? 1.08 : 1.12;
 }
 
 /// In-app UI language preference.

@@ -57,6 +57,7 @@ class ItemEditorBottomSheet extends StatefulWidget {
 class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   final _titleController = TextEditingController();
   final _valueController = TextEditingController();
+  final _valueFocus = FocusNode();
 
   ClipItem? _existing;
   String? _selectedCategoryId;
@@ -65,6 +66,16 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
   bool _isPinned = false;
   bool _obscureValue = true;
   bool _saving = false;
+
+  /// Long / multi-line values get a taller field when revealed.
+  bool get _valueIsLong {
+    final t = _valueController.text;
+    return t.contains('\n') || t.length > 48;
+  }
+
+  /// Flutter requires [maxLines] == 1 when [obscureText] is true, so long
+  /// values collapse to a single starred line when hidden, and expand when shown.
+  bool get _valueMultiline => !_obscureValue;
 
   bool get _categorySupportsLanguageTag {
     final id = _selectedCategoryId;
@@ -90,6 +101,10 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     }
     _titleController.addListener(_onChanged);
     _valueController.addListener(_onChanged);
+    // Long templates: show plaintext multi-line by default when opening.
+    if (_valueIsLong) {
+      _obscureValue = false;
+    }
   }
 
   void _onChanged() => setState(() {});
@@ -102,7 +117,54 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
     _valueController
       ..removeListener(_onChanged)
       ..dispose();
+    _valueFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _pasteIntoValue() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty || !mounted) return;
+    HapticFeedback.selectionClick();
+    final sel = _valueController.selection;
+    final current = _valueController.text;
+    if (sel.isValid) {
+      final next = current.replaceRange(sel.start, sel.end, text);
+      _valueController.value = TextEditingValue(
+        text: next,
+        selection: TextSelection.collapsed(offset: sel.start + text.length),
+      );
+    } else {
+      _valueController.text = current.isEmpty ? text : '$current$text';
+      _valueController.selection =
+          TextSelection.collapsed(offset: _valueController.text.length);
+    }
+    // Reveal after paste so the user can review; eye still hides to stars.
+    setState(() => _obscureValue = false);
+  }
+
+  Future<void> _openExpandedValueEditor() async {
+    // Controller is owned by the sheet widget so it is disposed only after
+    // the route unmounts (avoids "used after disposed" during pop animation).
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ExpandedValueEditorSheet(
+        initialText: _valueController.text,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _valueController.value = TextEditingValue(
+        text: result,
+        selection: TextSelection.collapsed(offset: result.length),
+      );
+      if (result.contains('\n') || result.length > 48) {
+        _obscureValue = false;
+      }
+    });
   }
 
   bool get _canSave {
@@ -210,45 +272,23 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
                   ),
                 ),
               ),
-              _SheetField(
+              // Full-width value block — better for long templates than
+              // the compact label | single-line row.
+              _ValueEditorBlock(
                 label: l10n.valueLabel,
-                alignTop: true,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _valueController,
-                        obscureText: _obscureValue,
-                        minLines: _obscureValue ? 1 : 3,
-                        maxLines: _obscureValue ? 1 : 6,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          hintText: l10n.valueHint,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: const EdgeInsets.only(left: 8),
-                      minimumSize: Size.zero,
-                      onPressed: () =>
-                          setState(() => _obscureValue = !_obscureValue),
-                      child: Icon(
-                        _obscureValue
-                            ? CupertinoIcons.eye
-                            : CupertinoIcons.eye_slash,
-                        size: 20,
-                        color: AppColors.secondaryLabel(context),
-                      ),
-                    ),
-                  ],
-                ),
+                pasteLabel: l10n.valuePaste,
+                controller: _valueController,
+                focusNode: _valueFocus,
+                obscure: _obscureValue,
+                multiline: _valueMultiline,
+                tall: _valueIsLong && _valueMultiline,
+                hint: l10n.valueHint,
+                onToggleObscure: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _obscureValue = !_obscureValue);
+                },
+                onExpand: _openExpandedValueEditor,
+                onPaste: _pasteIntoValue,
               ),
             ],
           ),
@@ -429,32 +469,310 @@ class _SheetField extends StatelessWidget {
   const _SheetField({
     required this.label,
     required this.child,
-    this.alignTop = false,
   });
 
   final String label;
   final Widget child;
-  final bool alignTop;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        crossAxisAlignment:
-            alignTop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 88,
-            child: Padding(
-              padding: EdgeInsets.only(top: alignTop ? 2 : 0),
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _FieldLabelBadge(label),
             ),
           ),
           Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+/// Form field label chip — fill/text follow [AppColors.primary] (all palettes).
+class _FieldLabelBadge extends StatelessWidget {
+  const _FieldLabelBadge(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fill = AppColors.primary.withValues(alpha: isDark ? 0.22 : 0.14);
+    final fg = isDark ? AppColors.primaryLight : AppColors.primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              letterSpacing: -0.2,
+              height: 1.15,
+            ),
+      ),
+    );
+  }
+}
+
+/// Full-height multi-line value editor. Owns its [TextEditingController].
+class _ExpandedValueEditorSheet extends StatefulWidget {
+  const _ExpandedValueEditorSheet({required this.initialText});
+
+  final String initialText;
+
+  @override
+  State<_ExpandedValueEditorSheet> createState() =>
+      _ExpandedValueEditorSheetState();
+}
+
+class _ExpandedValueEditorSheetState extends State<_ExpandedValueEditorSheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.surfaceDimDark : AppColors.warmWhite;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        height: MediaQuery.sizeOf(context).height * 0.92,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.22)
+                      : Colors.black.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+              child: Row(
+                children: [
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l10n.cancel),
+                  ),
+                  Expanded(
+                    child: Text(
+                      l10n.valueExpandTitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                          ),
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    onPressed: () => Navigator.pop(context, _controller.text),
+                    child: Text(
+                      l10n.valueExpandDone,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontSize: 16,
+                        height: 1.35,
+                        letterSpacing: -0.2,
+                      ),
+                  decoration: InputDecoration(
+                    hintText: l10n.valueHint,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Stacked value field: toolbar + multi-line body for templates / long paste.
+class _ValueEditorBlock extends StatelessWidget {
+  const _ValueEditorBlock({
+    required this.label,
+    required this.pasteLabel,
+    required this.controller,
+    required this.focusNode,
+    required this.obscure,
+    required this.multiline,
+    required this.tall,
+    required this.hint,
+    required this.onToggleObscure,
+    required this.onExpand,
+    required this.onPaste,
+  });
+
+  final String label;
+  final String pasteLabel;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool obscure;
+  final bool multiline;
+  /// Extra height when showing a long value in the clear.
+  final bool tall;
+  final String hint;
+  final VoidCallback onToggleObscure;
+  final VoidCallback onExpand;
+  final VoidCallback onPaste;
+
+  @override
+  Widget build(BuildContext context) {
+    final secondary = AppColors.secondaryLabel(context);
+    // obscureText requires maxLines == 1 (Flutter). Hidden long text → one
+    // starred line; revealed → multi-line editor.
+    final minLines = !multiline ? 1 : (tall ? 5 : 2);
+    final maxLines = multiline ? 12 : 1;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _FieldLabelBadge(label),
+              const Spacer(),
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                onPressed: onPaste,
+                child: Text(
+                  pasteLabel,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                onPressed: onExpand,
+                child: Icon(
+                  CupertinoIcons.arrow_up_left_arrow_down_right,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+              ),
+              CupertinoButton(
+                padding: const EdgeInsets.only(left: 4, right: 8),
+                minimumSize: Size.zero,
+                onPressed: onToggleObscure,
+                child: Icon(
+                  obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                  size: 20,
+                  color: secondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: multiline ? (tall ? 120 : 48) : 24,
+              maxHeight: multiline ? 220 : 40,
+            ),
+            child: TextField(
+              key: ValueKey<bool>(obscure),
+              controller: controller,
+              focusNode: focusNode,
+              obscureText: obscure,
+              obscuringCharacter: '•',
+              minLines: minLines,
+              maxLines: maxLines,
+              keyboardType: multiline
+                  ? TextInputType.multiline
+                  : TextInputType.text,
+              textInputAction: multiline
+                  ? TextInputAction.newline
+                  : TextInputAction.done,
+              textAlignVertical:
+                  multiline ? TextAlignVertical.top : TextAlignVertical.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    height: multiline ? 1.35 : 1.2,
+                    fontSize: 16,
+                    letterSpacing: -0.2,
+                  ),
+              decoration: InputDecoration(
+                hintText: hint,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
         ],
       ),
     );

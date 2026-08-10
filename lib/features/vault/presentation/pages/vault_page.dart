@@ -601,6 +601,7 @@ class _VaultPageState extends State<VaultPage> {
                                     return ClipItemCard(
                                       item: item,
                                       compact: true,
+                                      gridColumns: gridCount,
                                       selectionMode: _selecting,
                                       selected: _selectedIds.contains(item.id),
                                       categoryName: _categoryName(

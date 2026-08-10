@@ -22,6 +22,7 @@ class ClipItemCard extends StatelessWidget {
     this.compact = false,
     this.selectionMode = false,
     this.selected = false,
+    this.gridColumns = 2,
     super.key,
   });
 
@@ -34,6 +35,9 @@ class ClipItemCard extends StatelessWidget {
   final bool selectionMode;
   final bool selected;
 
+  /// Cross-axis count when [compact] (2 or 3). Drives title/meta scale.
+  final int gridColumns;
+
   @override
   Widget build(BuildContext context) {
     if (compact) {
@@ -45,6 +49,7 @@ class ClipItemCard extends StatelessWidget {
         onLongPress: onLongPress,
         selectionMode: selectionMode,
         selected: selected,
+        gridColumns: gridColumns,
       );
     }
     return _ListRow(
@@ -186,6 +191,7 @@ class _GridTile extends StatelessWidget {
     this.categoryIconData,
     this.selectionMode = false,
     this.selected = false,
+    this.gridColumns = 2,
   });
 
   final ClipItem item;
@@ -195,6 +201,7 @@ class _GridTile extends StatelessWidget {
   final IconData? categoryIconData;
   final bool selectionMode;
   final bool selected;
+  final int gridColumns;
 
   @override
   Widget build(BuildContext context) {
@@ -238,10 +245,19 @@ class _GridTile extends StatelessWidget {
           child: ValueListenableBuilder<GridTitleSize>(
             valueListenable: SettingsService.instance.gridTitleSizeListenable,
             builder: (context, titleSizePref, _) {
-              final titleSize = titleSizePref.titleFontSize;
-              final metaSize = titleSizePref.metaFontSize;
-              const iconSize = 30.0;
+              final cols = gridColumns.clamp(2, 3);
+              final titleSize = titleSizePref.titleFontSizeForColumns(cols);
+              final metaSize = titleSizePref.metaFontSizeForColumns(cols);
+              final titleHeight =
+                  titleSizePref.titleLineHeightForColumns(cols);
+              final isDense = cols >= 3;
+              final iconSize = isDense ? 26.0 : 30.0;
+              final iconGlyph = isDense ? 13.0 : 15.0;
+              final padTop = isDense ? 2.0 : 4.0;
+              final gapTitleMeta = isDense ? 2.0 : 3.0;
 
+              // Keep icon fixed; flex title into remaining space so 3-col
+              // never overflows when titles wrap to two lines.
               return Stack(
                 children: [
                   Column(
@@ -256,7 +272,7 @@ class _GridTile extends StatelessWidget {
                             _GlassIconWell(
                               icon: icon,
                               size: iconSize,
-                              iconSize: 15,
+                              iconSize: iconGlyph,
                             ),
                             const Spacer(),
                             if (!selectionMode)
@@ -267,38 +283,55 @@ class _GridTile extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Spacer(),
-                      // —— Title ——
-                      Tooltip(
-                        message: item.title,
-                        waitDuration: const Duration(milliseconds: 400),
-                        child: Text(
-                          item.title,
-                          maxLines: 2,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'Satoshi',
-                            fontSize: titleSize,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.35,
-                            height: 1.12,
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: padTop),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Flexible(
+                                child: ClipRect(
+                                  child: Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: Tooltip(
+                                      message: item.title,
+                                      waitDuration:
+                                          const Duration(milliseconds: 400),
+                                      child: Text(
+                                        item.title,
+                                        maxLines: 2,
+                                        softWrap: true,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Satoshi',
+                                          fontSize: titleSize,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing:
+                                              isDense ? -0.28 : -0.35,
+                                          height: titleHeight,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: gapTitleMeta),
+                              Text(
+                                meta,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Satoshi',
+                                  fontSize: metaSize,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.08,
+                                  height: 1.12,
+                                  color: AppColors.secondaryLabel(context),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      // —— Meta: Wi-Fi · Just now (no icon) ——
-                      Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Satoshi',
-                          fontSize: metaSize,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.08,
-                          height: 1.15,
-                          color: AppColors.secondaryLabel(context),
                         ),
                       ),
                     ],
@@ -307,7 +340,10 @@ class _GridTile extends StatelessWidget {
                     Positioned(
                       top: 0,
                       right: 0,
-                      child: _SelectionCheck(selected: selected, size: 24),
+                      child: _SelectionCheck(
+                        selected: selected,
+                        size: isDense ? 20 : 24,
+                      ),
                     ),
                 ],
               );
