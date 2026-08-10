@@ -1,7 +1,7 @@
 name: clipval
 description: "ClipVal — private one-tap vault for storing values and copying to clipboard."
 publish_to: "none"
-version: 1.0.3+47
+version: 1.0.3+48
 
 environment:
   sdk: ^3.7.0
