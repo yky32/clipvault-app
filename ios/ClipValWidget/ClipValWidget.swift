@@ -14,8 +14,7 @@ private let copiedHighlightSeconds: TimeInterval = 2.6
 private let brand = Color(red: 0.76, green: 0.36, blue: 0.28)
 private let okGreen = Color(red: 0.15, green: 0.55, blue: 0.35)
 
-/// 4 columns; medium = 2 rows (8), large = 4 rows (16)
-private let gridColumns = 4
+/// Medium holds up to 8; large up to 16. Columns adapt to item count.
 private let mediumCapacity = 8
 private let largeCapacity = 16
 
@@ -153,7 +152,7 @@ struct CopyValueIntent: AppIntent {
   }
 }
 
-// MARK: - UI: 4 columns × 2 rows (medium) or 4 rows (large)
+// MARK: - UI: responsive grid — fills free space, scales by item count
 
 struct ClipValWidgetEntryView: View {
   @Environment(\.colorScheme) private var colorScheme
@@ -164,104 +163,186 @@ struct ClipValWidgetEntryView: View {
     family == .systemLarge ? largeCapacity : mediumCapacity
   }
 
-  private let columns = Array(
-    repeating: GridItem(.flexible(), spacing: 5, alignment: .center),
-    count: gridColumns
-  )
+  private let gridSpacing: CGFloat = 6
 
   var body: some View {
     let items = Array(entry.items.prefix(capacity))
 
-    VStack(alignment: .leading, spacing: 0) {
-      // Header — reserved band so title never fights the grid
-      HStack(spacing: 6) {
-        RoundedRectangle(cornerRadius: 4, style: .continuous)
-          .fill(brand)
-          .frame(width: 14, height: 14)
-          .overlay(
-            Image(systemName: "doc.on.clipboard")
-              .font(.system(size: 7, weight: .bold))
-              .foregroundStyle(.white)
-          )
-        Text(entry.pinnedOnly ? "Favorites" : "ClipVal")
-          .font(.system(size: 13, weight: .bold, design: .rounded))
-          .foregroundStyle(.primary)
-          .lineLimit(1)
-        Spacer(minLength: 6)
-        Text(entry.justCopiedId == nil ? "Tap to copy" : "Copied ✓")
-          .font(.system(size: 11, weight: .semibold, design: .rounded))
-          .foregroundStyle(entry.justCopiedId == nil ? .secondary : okGreen)
-          .lineLimit(1)
-      }
-      .frame(height: 20)
-      .padding(.bottom, 8)
+    GeometryReader { geo in
+      VStack(alignment: .leading, spacing: 0) {
+        header
+          .frame(height: 20)
+          .padding(.bottom, 8)
 
-      if items.isEmpty {
-        Spacer(minLength: 0)
-        Text(entry.pinnedOnly
-              ? "Pin items in ClipVal to show them here"
-              : "Open ClipVal to add values")
-          .font(.system(size: 12, weight: .medium, design: .rounded))
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.center)
-          .frame(maxWidth: .infinity)
-        Spacer(minLength: 0)
-      } else {
-        LazyVGrid(columns: columns, alignment: .center, spacing: 5) {
-          ForEach(items) { item in
-            cell(item, hot: item.id == entry.justCopiedId, hideTitle: entry.hideTitles)
-          }
+        if items.isEmpty {
+          emptyState
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+          responsiveGrid(items: items, in: geo.size)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        Spacer(minLength: 0)
       }
+      .padding(.horizontal, 12)
+      .padding(.top, 11)
+      .padding(.bottom, 10)
+      .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
     }
-    .padding(.horizontal, 12)
-    .padding(.top, 11)
-    .padding(.bottom, 10)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetBackground()
   }
 
-  /// Compact cell: monogram + title (or ··· when titles hidden for lock privacy).
-  private func cell(_ item: WidgetItem, hot: Bool, hideTitle: Bool) -> some View {
+  private var header: some View {
+    HStack(spacing: 6) {
+      RoundedRectangle(cornerRadius: 4, style: .continuous)
+        .fill(brand)
+        .frame(width: 14, height: 14)
+        .overlay(
+          Image(systemName: "doc.on.clipboard")
+            .font(.system(size: 7, weight: .bold))
+            .foregroundStyle(.white)
+        )
+      Text(entry.pinnedOnly ? "Favorites" : "ClipVal")
+        .font(.system(size: 13, weight: .bold, design: .rounded))
+        .foregroundStyle(.primary)
+        .lineLimit(1)
+      Spacer(minLength: 6)
+      Text(entry.justCopiedId == nil ? "Tap to copy" : "Copied ✓")
+        .font(.system(size: 11, weight: .semibold, design: .rounded))
+        .foregroundStyle(entry.justCopiedId == nil ? .secondary : okGreen)
+        .lineLimit(1)
+    }
+  }
+
+  private var emptyState: some View {
+    Text(entry.pinnedOnly
+          ? "Pin items in ClipVal to show them here"
+          : "Open ClipVal to add values")
+      .font(.system(size: 12, weight: .medium, design: .rounded))
+      .foregroundStyle(.secondary)
+      .multilineTextAlignment(.center)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
+  /// Columns adapt to count so fewer items get bigger tap targets;
+  /// rows share leftover height so large widgets don’t leave a blank band.
+  private func responsiveGrid(items: [WidgetItem], in size: CGSize) -> some View {
+    let cols = columnCount(for: items.count)
+    let rows = chunk(items, size: cols)
+    let rowCount = max(rows.count, 1)
+    // Header (~28) + vertical padding (~21) reserved outside the grid.
+    let gridHeight = max(size.height - 49, 40)
+    let cellHeight = (gridHeight - gridSpacing * CGFloat(rowCount - 1)) / CGFloat(rowCount)
+    let cellWidth = (size.width - 24 - gridSpacing * CGFloat(cols - 1)) / CGFloat(cols)
+    let metrics = CellMetrics(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      family: family
+    )
+
+    return VStack(spacing: gridSpacing) {
+      ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+        HStack(spacing: gridSpacing) {
+          ForEach(row) { item in
+            cell(
+              item,
+              hot: item.id == entry.justCopiedId,
+              hideTitle: entry.hideTitles,
+              metrics: metrics
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          }
+          // Incomplete last row — equal empty slots so remaining cells stay full-width.
+          if row.count < cols {
+            ForEach(0..<(cols - row.count), id: \.self) { _ in
+              Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
+  /// Pick columns so the grid uses space without looking sparse.
+  private func columnCount(for count: Int) -> Int {
+    let n = max(count, 1)
+    if family == .systemLarge {
+      switch n {
+      case 1: return 1
+      case 2: return 2
+      case 3: return 3
+      case 4: return 2          // 2×2 — roomy tiles
+      case 5...6: return 3      // 2 rows
+      case 7...9: return 3      // 3 rows
+      default: return 4         // 10–16 → 3–4 rows
+      }
+    }
+    // Medium: always aim for a short wide strip
+    switch n {
+    case 1: return 1
+    case 2: return 2
+    case 3: return 3
+    default: return 4
+    }
+  }
+
+  private func chunk(_ items: [WidgetItem], size: Int) -> [[WidgetItem]] {
+    guard size > 0 else { return [items] }
+    var out: [[WidgetItem]] = []
+    var i = 0
+    while i < items.count {
+      let end = min(i + size, items.count)
+      out.append(Array(items[i..<end]))
+      i = end
+    }
+    return out
+  }
+
+  private func cell(
+    _ item: WidgetItem,
+    hot: Bool,
+    hideTitle: Bool,
+    metrics: CellMetrics
+  ) -> some View {
     let shownTitle = hideTitle ? "···" : item.displayTitle
     let intentTitle = hideTitle ? "Item" : (item.title.isEmpty ? "Item" : item.title)
-    let label = VStack(spacing: 3) {
+    let label = VStack(spacing: metrics.stackSpacing) {
       ZStack {
         Circle()
           .fill(hot ? okGreen : brand.opacity(colorScheme == .dark ? 0.30 : 0.13))
         if hot {
           Image(systemName: "checkmark")
-            .font(.system(size: 10, weight: .bold))
+            .font(.system(size: metrics.checkSize, weight: .bold))
             .foregroundStyle(.white)
         } else {
           Text(item.displayMonogram)
-            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .font(.system(size: metrics.monoSize, weight: .bold, design: .rounded))
             .foregroundStyle(brand)
         }
       }
-      .frame(width: 28, height: 28)
+      .frame(width: metrics.monoFrame, height: metrics.monoFrame)
 
       Text(shownTitle)
-        .font(.system(size: 9, weight: .semibold, design: .rounded))
+        .font(.system(size: metrics.titleSize, weight: .semibold, design: .rounded))
         .foregroundStyle(hot ? okGreen : .primary)
-        .lineLimit(1)
-        .minimumScaleFactor(0.65)
+        .lineLimit(metrics.titleLines)
+        .minimumScaleFactor(0.6)
+        .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
     }
-    .padding(.vertical, 4)
-    .padding(.horizontal, 2)
-    .frame(maxWidth: .infinity)
-    .frame(minHeight: 52)
+    .padding(.vertical, metrics.padV)
+    .padding(.horizontal, metrics.padH)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(
-      RoundedRectangle(cornerRadius: 10, style: .continuous)
+      RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
         .fill(hot ? okGreen.opacity(0.12) : cellFill)
     )
     .overlay(
-      RoundedRectangle(cornerRadius: 10, style: .continuous)
+      RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
         .strokeBorder(hot ? okGreen.opacity(0.35) : Color.primary.opacity(0.05), lineWidth: 1)
     )
-    .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
     return Group {
       if #available(iOS 17.0, *) {
@@ -281,6 +362,33 @@ struct ClipValWidgetEntryView: View {
     colorScheme == .dark
       ? Color.white.opacity(0.08)
       : Color.black.opacity(0.04)
+  }
+}
+
+/// Type scale / padding derived from actual cell size so sparse grids grow.
+private struct CellMetrics {
+  let monoFrame: CGFloat
+  let monoSize: CGFloat
+  let checkSize: CGFloat
+  let titleSize: CGFloat
+  let titleLines: Int
+  let stackSpacing: CGFloat
+  let padV: CGFloat
+  let padH: CGFloat
+  let corner: CGFloat
+
+  init(cellWidth: CGFloat, cellHeight: CGFloat, family: WidgetFamily) {
+    let shortSide = min(max(cellWidth, 1), max(cellHeight, 1))
+    // Monogram ~38% of short side, clamped for readability.
+    monoFrame = min(max(shortSide * 0.38, 22), family == .systemLarge ? 48 : 32)
+    monoSize = monoFrame * 0.42
+    checkSize = monoFrame * 0.38
+    titleSize = min(max(shortSide * 0.12, 9), family == .systemLarge ? 13 : 11)
+    titleLines = cellHeight >= 72 ? 2 : 1
+    stackSpacing = cellHeight >= 70 ? 6 : 3
+    padV = cellHeight >= 70 ? 10 : 4
+    padH = cellWidth >= 90 ? 6 : 2
+    corner = cellHeight >= 70 ? 14 : 10
   }
 }
 
