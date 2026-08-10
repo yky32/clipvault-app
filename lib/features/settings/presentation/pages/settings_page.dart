@@ -267,7 +267,7 @@ class _SettingsPageState extends State<SettingsPage> {
       await _shareTempFile(
         context: context,
         file: file,
-        mimeType: 'application/octet-stream',
+        mimeType: 'application/x-clipval-backup',
         displayName: 'clipval-backup.clipval',
         subject: 'ClipVal secure backup',
         successMessage: l10n.exportSecureShared,
@@ -341,9 +341,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _importBackup(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
 
+    // FileType.any: iOS greys out unknown custom extensions when using
+    // FileType.custom unless a system UTI match is perfect. We validate
+    // encrypted vs CSV ourselves after the pick.
     final pick = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['clipval', 'csv', 'txt', 'json'],
+      type: FileType.any,
       withData: true,
     );
     if (!context.mounted) return;
