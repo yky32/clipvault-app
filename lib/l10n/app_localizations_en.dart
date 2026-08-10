@@ -196,6 +196,40 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get select => 'Select';
+
+  @override
+  String get selectItems => 'Select Items';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get deselectAll => 'Deselect All';
+
+  @override
+  String get deleteSelected => 'Delete';
+
+  @override
+  String deleteSelectedTitle(int count) {
+    return 'Delete $count items?';
+  }
+
+  @override
+  String get deleteSelectedBody =>
+      'These items will be permanently removed from your vault.';
+
+  @override
+  String deleteSelectedSuccess(int count) {
+    return 'Deleted $count items';
+  }
+
+  @override
   String copied(String title) {
     return 'Copied $title';
   }
@@ -338,6 +372,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get importCsvConfirmBody =>
       'Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?';
+
+  @override
+  String importCsvPreviewSummary(int newCount, int skipCount) {
+    return '$newCount new · $skipCount skipped';
+  }
+
+  @override
+  String importCsvPreviewInvalid(int count) {
+    return '$count invalid';
+  }
+
+  @override
+  String importCsvPreviewSamples(String titles) {
+    return 'Includes: $titles';
+  }
+
+  @override
+  String importCsvPreviewNewCategories(String names) {
+    return 'New categories: $names';
+  }
+
+  @override
+  String get importCsvPreviewFooter =>
+      'Items will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file.';
+
+  @override
+  String get importCsvNothingNew =>
+      'Nothing new to import — all rows are duplicates or empty';
 
   @override
   String get exportConfirmAction => 'Export';

@@ -47,6 +47,14 @@ final class VaultItemDeleted extends VaultEvent {
   List<Object?> get props => [itemId];
 }
 
+final class VaultItemsDeleted extends VaultEvent {
+  const VaultItemsDeleted(this.itemIds);
+  final List<String> itemIds;
+
+  @override
+  List<Object?> get props => [itemIds];
+}
+
 final class VaultItemPinToggled extends VaultEvent {
   const VaultItemPinToggled(this.itemId);
   final String itemId;

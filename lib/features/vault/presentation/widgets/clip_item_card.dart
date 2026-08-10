@@ -20,6 +20,8 @@ class ClipItemCard extends StatelessWidget {
     this.categoryName,
     this.categoryIconData,
     this.compact = false,
+    this.selectionMode = false,
+    this.selected = false,
     super.key,
   });
 
@@ -29,6 +31,8 @@ class ClipItemCard extends StatelessWidget {
   final String? categoryName;
   final IconData? categoryIconData;
   final bool compact;
+  final bool selectionMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +43,8 @@ class ClipItemCard extends StatelessWidget {
         categoryIconData: categoryIconData,
         onTap: onTap,
         onLongPress: onLongPress,
+        selectionMode: selectionMode,
+        selected: selected,
       );
     }
     return _ListRow(
@@ -47,6 +53,8 @@ class ClipItemCard extends StatelessWidget {
       categoryIconData: categoryIconData,
       onTap: onTap,
       onLongPress: onLongPress,
+      selectionMode: selectionMode,
+      selected: selected,
     );
   }
 }
@@ -58,6 +66,8 @@ class _ListRow extends StatelessWidget {
     required this.onLongPress,
     this.categoryName,
     this.categoryIconData,
+    this.selectionMode = false,
+    this.selected = false,
   });
 
   final ClipItem item;
@@ -65,6 +75,8 @@ class _ListRow extends StatelessWidget {
   final VoidCallback onLongPress;
   final String? categoryName;
   final IconData? categoryIconData;
+  final bool selectionMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +108,12 @@ class _ListRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _GlassIconWell(icon: icon, size: 34, iconSize: 17),
-            const SizedBox(width: 12),
+            if (selectionMode) ...[
+              _SelectionCheck(selected: selected, size: 22),
+              const SizedBox(width: 12),
+            ] else
+              _GlassIconWell(icon: icon, size: 34, iconSize: 17),
+            if (!selectionMode) const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +184,8 @@ class _GridTile extends StatelessWidget {
     required this.onLongPress,
     this.categoryName,
     this.categoryIconData,
+    this.selectionMode = false,
+    this.selected = false,
   });
 
   final ClipItem item;
@@ -175,6 +193,8 @@ class _GridTile extends StatelessWidget {
   final VoidCallback onLongPress;
   final String? categoryName;
   final IconData? categoryIconData;
+  final bool selectionMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +211,8 @@ class _GridTile extends StatelessWidget {
         ? CupertinoIcons.pin_fill
         : (categoryIconData ?? categoryIconForId(item.categoryId));
 
+    final radius = BorderRadius.circular(18);
+
     return PressableScale(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -200,79 +222,133 @@ class _GridTile extends StatelessWidget {
         HapticFeedback.mediumImpact();
         onLongPress();
       },
-      child: GlassIsland(
-        borderRadius: BorderRadius.circular(18),
-        blur: 16,
-        padding: const EdgeInsets.fromLTRB(12, 11, 11, 11),
-        // Title size is a Settings preference — never auto-shrinks.
-        child: ValueListenableBuilder<GridTitleSize>(
-          valueListenable: SettingsService.instance.gridTitleSizeListenable,
-          builder: (context, titleSizePref, _) {
-            final titleSize = titleSizePref.titleFontSize;
-            final metaSize = titleSizePref.metaFontSize;
-            const iconSize = 30.0;
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          border: selected
+              ? Border.all(color: AppColors.primary, width: 2)
+              : Border.all(color: Colors.transparent, width: 2),
+        ),
+        child: GlassIsland(
+          borderRadius: radius,
+          blur: 16,
+          padding: const EdgeInsets.fromLTRB(12, 11, 11, 11),
+          // Title size is a Settings preference — never auto-shrinks.
+          child: ValueListenableBuilder<GridTitleSize>(
+            valueListenable: SettingsService.instance.gridTitleSizeListenable,
+            builder: (context, titleSizePref, _) {
+              final titleSize = titleSizePref.titleFontSize;
+              final metaSize = titleSizePref.metaFontSize;
+              const iconSize = 30.0;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // —— Top: category icon (left) | language + pin (right) ——
-                SizedBox(
-                  height: iconSize,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+              return Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _GlassIconWell(
-                        icon: icon,
-                        size: iconSize,
-                        iconSize: 15,
+                      // —— Top: category icon (left) | language + pin (right) ——
+                      SizedBox(
+                        height: iconSize,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _GlassIconWell(
+                              icon: icon,
+                              size: iconSize,
+                              iconSize: 15,
+                            ),
+                            const Spacer(),
+                            if (!selectionMode)
+                              _StatusCluster(
+                                languageTag: item.languageTag,
+                                isPinned: item.isPinned,
+                              ),
+                          ],
+                        ),
                       ),
                       const Spacer(),
-                      _StatusCluster(
-                        languageTag: item.languageTag,
-                        isPinned: item.isPinned,
+                      // —— Title ——
+                      Tooltip(
+                        message: item.title,
+                        waitDuration: const Duration(milliseconds: 400),
+                        child: Text(
+                          item.title,
+                          maxLines: 2,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Satoshi',
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.35,
+                            height: 1.12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // —— Meta: Wi-Fi · Just now (no icon) ——
+                      Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Satoshi',
+                          fontSize: metaSize,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.08,
+                          height: 1.15,
+                          color: AppColors.secondaryLabel(context),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const Spacer(),
-                // —— Title ——
-                Tooltip(
-                  message: item.title,
-                  waitDuration: const Duration(milliseconds: 400),
-                  child: Text(
-                    item.title,
-                    maxLines: 2,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Satoshi',
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.35,
-                      height: 1.12,
+                  if (selectionMode)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: _SelectionCheck(selected: selected, size: 24),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // —— Meta: Wi-Fi · Just now (no icon) ——
-                Text(
-                  meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Satoshi',
-                    fontSize: metaSize,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.08,
-                    height: 1.15,
-                    color: AppColors.secondaryLabel(context),
-                  ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Circle checkmark used in list/grid selection mode.
+class _SelectionCheck extends StatelessWidget {
+  const _SelectionCheck({required this.selected, this.size = 22});
+
+  final bool selected;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? AppColors.primary : Colors.transparent,
+        border: Border.all(
+          color: selected
+              ? AppColors.primary
+              : AppColors.secondaryLabel(context).withValues(alpha: 0.45),
+          width: 1.6,
+        ),
+      ),
+      child: selected
+          ? Icon(
+              CupertinoIcons.checkmark,
+              size: size * 0.55,
+              color: Colors.white,
+            )
+          : null,
     );
   }
 }
@@ -384,6 +460,8 @@ class ClipItemGroupedList extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.categoryIconOf,
+    this.selectionMode = false,
+    this.isSelected,
     super.key,
   });
 
@@ -392,6 +470,8 @@ class ClipItemGroupedList extends StatelessWidget {
   final IconData? Function(ClipItem)? categoryIconOf;
   final void Function(ClipItem) onTap;
   final void Function(ClipItem) onLongPress;
+  final bool selectionMode;
+  final bool Function(ClipItem)? isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +487,8 @@ class ClipItemGroupedList extends StatelessWidget {
               item: items[i],
               categoryName: categoryNameOf(items[i]),
               categoryIconData: categoryIconOf?.call(items[i]),
+              selectionMode: selectionMode,
+              selected: isSelected?.call(items[i]) ?? false,
               onTap: () => onTap(items[i]),
               onLongPress: () => onLongPress(items[i]),
             ),

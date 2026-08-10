@@ -70,6 +70,13 @@ class ClipItemRepository {
     await _box.delete(id);
   }
 
+  /// Remove many items in one pass (bulk delete).
+  Future<void> deleteMany(Iterable<String> ids) async {
+    for (final id in ids) {
+      await _box.delete(id);
+    }
+  }
+
   Future<ClipItem> markCopied(String id) async {
     final existing = getById(id);
     if (existing == null) {

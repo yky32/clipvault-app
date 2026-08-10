@@ -14,16 +14,31 @@ class EncryptionService {
               aOptions: AndroidOptions(encryptedSharedPreferences: true),
             );
 
-  final FlutterSecureStorage _storage;
+  /// In-memory key only — for unit tests (no secure storage).
+  EncryptionService.forTest([List<int>? keyBytes]) : _storage = null {
+    final bytes =
+        keyBytes ?? List<int>.generate(32, (i) => (i * 17 + 3) % 256);
+    final raw = base64Encode(bytes);
+    _key = encrypt.Key.fromBase64(raw);
+    final ivBytes = encrypt.Key.fromBase64(raw).bytes.sublist(0, 16);
+    _iv = encrypt.IV(ivBytes);
+  }
+
+  final FlutterSecureStorage? _storage;
   encrypt.Key? _key;
   encrypt.IV? _iv;
 
   Future<void> init() async {
-    var raw = await _storage.read(key: AppConstants.encryptionKeyName);
+    if (_key != null && _iv != null) return;
+    final storage = _storage;
+    if (storage == null) {
+      throw StateError('EncryptionService.forTest is already initialized');
+    }
+    var raw = await storage.read(key: AppConstants.encryptionKeyName);
     if (raw == null) {
       final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
       raw = base64Encode(bytes);
-      await _storage.write(key: AppConstants.encryptionKeyName, value: raw);
+      await storage.write(key: AppConstants.encryptionKeyName, value: raw);
     }
     _key = encrypt.Key.fromBase64(raw);
     // Deterministic IV derived from key for stable storage (key never leaves secure storage).

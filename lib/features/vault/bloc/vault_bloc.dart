@@ -30,6 +30,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<VaultViewModeToggled>(_onViewModeToggled);
     on<VaultItemCopied>(_onItemCopied);
     on<VaultItemDeleted>(_onItemDeleted);
+    on<VaultItemsDeleted>(_onItemsDeleted);
     on<VaultItemPinToggled>(_onItemPinToggled);
     on<VaultRefreshed>(_onRefreshed);
   }
@@ -108,6 +109,16 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     Emitter<VaultState> emit,
   ) async {
     await _items.delete(event.itemId);
+    emit(state.copyWith(items: _items.getAll()));
+    await _syncWidget();
+  }
+
+  Future<void> _onItemsDeleted(
+    VaultItemsDeleted event,
+    Emitter<VaultState> emit,
+  ) async {
+    if (event.itemIds.isEmpty) return;
+    await _items.deleteMany(event.itemIds);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
   }

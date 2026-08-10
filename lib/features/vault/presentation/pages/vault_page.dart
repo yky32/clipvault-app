@@ -30,11 +30,154 @@ class VaultPage extends StatefulWidget {
 class _VaultPageState extends State<VaultPage> {
   final _searchController = TextEditingController();
   bool _welcomeChecked = false;
+  bool _selecting = false;
+  final Set<String> _selectedIds = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowWelcome());
+  }
+
+  void _enterSelectMode({String? initialId}) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selecting = true;
+      _selectedIds.clear();
+      if (initialId != null) _selectedIds.add(initialId);
+    });
+  }
+
+  void _exitSelectMode() {
+    setState(() {
+      _selecting = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelected(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _selectAllVisible(List<ClipItem> filtered) {
+    setState(() {
+      final allSelected = filtered.isNotEmpty &&
+          filtered.every((i) => _selectedIds.contains(i.id));
+      if (allSelected) {
+        for (final i in filtered) {
+          _selectedIds.remove(i.id);
+        }
+      } else {
+        for (final i in filtered) {
+          _selectedIds.add(i.id);
+        }
+      }
+    });
+  }
+
+  void _onItemTap(ClipItem item) {
+    if (_selecting) {
+      HapticFeedback.selectionClick();
+      _toggleSelected(item.id);
+      return;
+    }
+    _copy(item);
+  }
+
+  void _onItemLongPress(
+    BuildContext context,
+    ClipItem item,
+  ) {
+    if (_selecting) {
+      _toggleSelected(item.id);
+      return;
+    }
+    _showItemActions(context, item);
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    String itemId,
+    String title,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.deleteConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.deleteConfirmBody(title)),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      HapticFeedback.mediumImpact();
+      context.read<VaultBloc>().add(VaultItemDeleted(itemId));
+    }
+  }
+
+  void _showItemActions(BuildContext context, ClipItem item) {
+    final l10n = AppLocalizations.of(context);
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(item.title),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _enterSelectMode(initialId: item.id);
+            },
+            child: Text(l10n.select),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ItemEditorBottomSheet.show(context, itemId: item.id);
+            },
+            child: Text(l10n.editItem),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<VaultBloc>().add(VaultItemPinToggled(item.id));
+            },
+            child: Text(item.isPinned ? l10n.unpin : l10n.pinItem),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _confirmDelete(context, item.id, item.title);
+            },
+            child: Text(l10n.delete),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
   }
 
   /// First install or App Store marketing-version upgrade only.
@@ -86,19 +229,17 @@ class _VaultPageState extends State<VaultPage> {
       ..add(const VaultCategoryFilterChanged(null));
   }
 
-  Future<void> _confirmDelete(
-    BuildContext context,
-    String itemId,
-    String title,
-  ) async {
+  Future<void> _confirmBulkDelete(BuildContext context) async {
+    if (_selectedIds.isEmpty) return;
     final l10n = AppLocalizations.of(context);
+    final count = _selectedIds.length;
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.deleteConfirmTitle),
+        title: Text(l10n.deleteSelectedTitle(count)),
         content: Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Text(l10n.deleteConfirmBody(title)),
+          child: Text(l10n.deleteSelectedBody),
         ),
         actions: [
           CupertinoDialogAction(
@@ -108,59 +249,19 @@ class _VaultPageState extends State<VaultPage> {
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.delete),
+            child: Text(l10n.deleteSelected),
           ),
         ],
       ),
     );
-    if (confirmed == true && context.mounted) {
-      HapticFeedback.mediumImpact();
-      context.read<VaultBloc>().add(VaultItemDeleted(itemId));
-    }
-  }
+    if (confirmed != true || !context.mounted) return;
 
-  void _showItemActions(
-    BuildContext context,
-    String itemId,
-    String title,
-    bool isPinned,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: Text(title),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ItemEditorBottomSheet.show(context, itemId: itemId);
-            },
-            child: Text(l10n.editItem),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<VaultBloc>().add(VaultItemPinToggled(itemId));
-            },
-            child: Text(isPinned ? l10n.unpin : l10n.pinItem),
-          ),
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(ctx);
-              _confirmDelete(context, itemId, title);
-            },
-            child: Text(l10n.delete),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l10n.cancel),
-        ),
-      ),
-    );
+    final ids = _selectedIds.toList(growable: false);
+    HapticFeedback.mediumImpact();
+    context.read<VaultBloc>().add(VaultItemsDeleted(ids));
+    _exitSelectMode();
+    if (!context.mounted) return;
+    CopiedHud.show(context, message: l10n.deleteSelectedSuccess(count));
   }
 
   void _copy(ClipItem item) {
@@ -212,7 +313,7 @@ class _VaultPageState extends State<VaultPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Title + actions: list | settings | add (iOS nav pattern)
+                  // Title + actions — selection mode swaps the toolbar.
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 6, 0),
                     child: Row(
@@ -220,60 +321,136 @@ class _VaultPageState extends State<VaultPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            l10n.vaultTitle,
+                            _selecting
+                                ? (_selectedIds.isEmpty
+                                    ? l10n.selectItems
+                                    : l10n.selectedCount(_selectedIds.length))
+                                : l10n.vaultTitle,
                             style: theme.textTheme.displayMedium?.copyWith(
-                              fontSize: 34,
+                              fontSize: _selecting ? 22 : 34,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.37,
                               height: 1.1,
                             ),
                           ),
                         ),
-                        if (!isEmpty)
+                        if (_selecting) ...[
                           CupertinoButton(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8),
                             minimumSize: Size.zero,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              context
-                                  .read<VaultBloc>()
-                                  .add(const VaultViewModeToggled());
-                            },
-                            child: Icon(
-                              switch (state.viewMode) {
-                                VaultViewMode.list =>
-                                  CupertinoIcons.square_grid_2x2,
-                                VaultViewMode.grid2 =>
-                                  CupertinoIcons.square_grid_3x2,
-                                VaultViewMode.grid3 =>
-                                  CupertinoIcons.list_bullet,
+                            onPressed: _exitSelectMode,
+                            child: Text(
+                              l10n.cancel,
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (filtered.isNotEmpty)
+                            CupertinoButton(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                _selectAllVisible(filtered);
                               },
+                              child: Text(
+                                filtered.every(
+                                  (i) => _selectedIds.contains(i.id),
+                                )
+                                    ? l10n.deselectAll
+                                    : l10n.selectAll,
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          CupertinoButton(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            minimumSize: Size.zero,
+                            onPressed: _selectedIds.isEmpty
+                                ? null
+                                : () => _confirmBulkDelete(context),
+                            child: Text(
+                              l10n.deleteSelected,
+                              style: TextStyle(
+                                color: _selectedIds.isEmpty
+                                    ? AppColors.tertiaryLabel(context)
+                                    : AppColors.error,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          if (!isEmpty) ...[
+                            CupertinoButton(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              minimumSize: Size.zero,
+                              onPressed: () => _enterSelectMode(),
+                              child: Icon(
+                                CupertinoIcons.checkmark_circle,
+                                size: 22,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            CupertinoButton(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              minimumSize: Size.zero,
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                context
+                                    .read<VaultBloc>()
+                                    .add(const VaultViewModeToggled());
+                              },
+                              child: Icon(
+                                switch (state.viewMode) {
+                                  VaultViewMode.list =>
+                                    CupertinoIcons.square_grid_2x2,
+                                  VaultViewMode.grid2 =>
+                                    CupertinoIcons.square_grid_3x2,
+                                  VaultViewMode.grid3 =>
+                                    CupertinoIcons.list_bullet,
+                                },
+                                size: 22,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                          CupertinoButton(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            minimumSize: Size.zero,
+                            onPressed: () => context.push('/vault/settings'),
+                            child: Icon(
+                              CupertinoIcons.gear,
                               size: 22,
                               color: AppColors.primary,
                             ),
                           ),
-                        CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          minimumSize: Size.zero,
-                          onPressed: () => context.push('/vault/settings'),
-                          child: Icon(
-                            CupertinoIcons.gear,
-                            size: 22,
-                            color: AppColors.primary,
+                          CupertinoButton(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            minimumSize: Size.zero,
+                            onPressed: () {
+                              _openAdd(categoryId: state.selectedCategoryId);
+                            },
+                            child: Icon(
+                              CupertinoIcons.add_circled_solid,
+                              size: 28,
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
-                        CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          minimumSize: Size.zero,
-                          onPressed: () {
-                            _openAdd(categoryId: state.selectedCategoryId);
-                          },
-                          child: Icon(
-                            CupertinoIcons.add_circled_solid,
-                            size: 28,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -393,7 +570,7 @@ class _VaultPageState extends State<VaultPage> {
                             ),
                           )
                         else ...[
-                          if (showRecent)
+                          if (showRecent && !_selecting)
                             SliverToBoxAdapter(
                               child: _RecentStrip(
                                 items: recent,
@@ -404,7 +581,7 @@ class _VaultPageState extends State<VaultPage> {
                             SliverPadding(
                               padding: EdgeInsets.fromLTRB(
                                 16,
-                                showRecent ? 8 : 12,
+                                (showRecent && !_selecting) ? 8 : 12,
                                 16,
                                 24 + bottomInset,
                               ),
@@ -424,6 +601,8 @@ class _VaultPageState extends State<VaultPage> {
                                     return ClipItemCard(
                                       item: item,
                                       compact: true,
+                                      selectionMode: _selecting,
+                                      selected: _selectedIds.contains(item.id),
                                       categoryName: _categoryName(
                                         state,
                                         item.categoryId,
@@ -431,13 +610,9 @@ class _VaultPageState extends State<VaultPage> {
                                       ),
                                       categoryIconData:
                                           categoryIconForId(item.categoryId),
-                                      onTap: () => _copy(item),
-                                      onLongPress: () => _showItemActions(
-                                        context,
-                                        item.id,
-                                        item.title,
-                                        item.isPinned,
-                                      ),
+                                      onTap: () => _onItemTap(item),
+                                      onLongPress: () =>
+                                          _onItemLongPress(context, item),
                                     );
                                   },
                                   childCount: filtered.length,
@@ -448,7 +623,7 @@ class _VaultPageState extends State<VaultPage> {
                             SliverPadding(
                               padding: EdgeInsets.fromLTRB(
                                 16,
-                                showRecent ? 8 : 12,
+                                (showRecent && !_selecting) ? 8 : 12,
                                 16,
                                 24 + bottomInset,
                               ),
@@ -456,6 +631,9 @@ class _VaultPageState extends State<VaultPage> {
                                 child: _SectionedList(
                                   state: state,
                                   filtered: filtered,
+                                  selectionMode: _selecting,
+                                  isSelected: (item) =>
+                                      _selectedIds.contains(item.id),
                                   categoryNameOf: (item) => _categoryName(
                                     state,
                                     item.categoryId,
@@ -463,13 +641,9 @@ class _VaultPageState extends State<VaultPage> {
                                   ),
                                   categoryIconOf: (item) =>
                                       categoryIconForId(item.categoryId),
-                                  onTap: _copy,
-                                  onLongPress: (item) => _showItemActions(
-                                    context,
-                                    item.id,
-                                    item.title,
-                                    item.isPinned,
-                                  ),
+                                  onTap: _onItemTap,
+                                  onLongPress: (item) =>
+                                      _onItemLongPress(context, item),
                                 ),
                               ),
                             ),
@@ -496,6 +670,8 @@ class _SectionedList extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.categoryIconOf,
+    this.selectionMode = false,
+    this.isSelected,
   });
 
   final VaultState state;
@@ -504,6 +680,8 @@ class _SectionedList extends StatelessWidget {
   final IconData? Function(ClipItem)? categoryIconOf;
   final void Function(ClipItem) onTap;
   final void Function(ClipItem) onLongPress;
+  final bool selectionMode;
+  final bool Function(ClipItem)? isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -517,6 +695,8 @@ class _SectionedList extends StatelessWidget {
         items: filtered,
         categoryNameOf: categoryNameOf,
         categoryIconOf: categoryIconOf,
+        selectionMode: selectionMode,
+        isSelected: isSelected,
         onTap: onTap,
         onLongPress: onLongPress,
       );
@@ -530,6 +710,8 @@ class _SectionedList extends StatelessWidget {
           items: pinned,
           categoryNameOf: categoryNameOf,
           categoryIconOf: categoryIconOf,
+          selectionMode: selectionMode,
+          isSelected: isSelected,
           onTap: onTap,
           onLongPress: onLongPress,
         ),
@@ -539,6 +721,8 @@ class _SectionedList extends StatelessWidget {
           items: rest,
           categoryNameOf: categoryNameOf,
           categoryIconOf: categoryIconOf,
+          selectionMode: selectionMode,
+          isSelected: isSelected,
           onTap: onTap,
           onLongPress: onLongPress,
         ),

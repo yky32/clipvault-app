@@ -446,6 +446,60 @@ abstract class AppLocalizations {
   /// **'\"{title}\" will be removed from your vault.'**
   String deleteConfirmBody(String title);
 
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @selectItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Items'**
+  String get selectItems;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselectAll;
+
+  /// No description provided for @deleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteSelected;
+
+  /// No description provided for @deleteSelectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count} items?'**
+  String deleteSelectedTitle(int count);
+
+  /// No description provided for @deleteSelectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These items will be permanently removed from your vault.'**
+  String get deleteSelectedBody;
+
+  /// No description provided for @deleteSelectedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {count} items'**
+  String deleteSelectedSuccess(int count);
+
   /// No description provided for @copied.
   ///
   /// In en, this message translates to:
@@ -721,6 +775,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?'**
   String get importCsvConfirmBody;
+
+  /// No description provided for @importCsvPreviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{newCount} new · {skipCount} skipped'**
+  String importCsvPreviewSummary(int newCount, int skipCount);
+
+  /// No description provided for @importCsvPreviewInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invalid'**
+  String importCsvPreviewInvalid(int count);
+
+  /// No description provided for @importCsvPreviewSamples.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes: {titles}'**
+  String importCsvPreviewSamples(String titles);
+
+  /// No description provided for @importCsvPreviewNewCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'New categories: {names}'**
+  String importCsvPreviewNewCategories(String names);
+
+  /// No description provided for @importCsvPreviewFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Items will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file.'**
+  String get importCsvPreviewFooter;
+
+  /// No description provided for @importCsvNothingNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to import — all rows are duplicates or empty'**
+  String get importCsvNothingNew;
 
   /// No description provided for @exportConfirmAction.
   ///

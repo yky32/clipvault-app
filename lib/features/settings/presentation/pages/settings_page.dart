@@ -15,6 +15,7 @@ import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/build_info.dart';
 import '../../../../core/services/settings_service.dart';
+import '../../../../core/services/vault_migration_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/brand_palette.dart';
 import '../../../../core/theme/palette_controller.dart';
@@ -246,40 +247,9 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  /// Pick a ClipVal CSV and merge items (skip exact title+value dupes).
+  /// Pick a ClipVal CSV, preview counts, then merge on confirm.
   Future<void> _importCsv(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.importCsvConfirmTitle),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(l10n.importCsvConfirmBody),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.importConfirmAction),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    if (!await _confirmSensitiveAccess(
-      context,
-      reason: l10n.importAuthReason,
-      cancelledMessage: l10n.importCancelled,
-    )) {
-      return;
-    }
 
     final pick = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -303,6 +273,64 @@ class _SettingsPageState extends State<SettingsPage> {
     if (content == null || content.trim().isEmpty) {
       HapticFeedback.heavyImpact();
       CopiedHud.show(context, message: l10n.importCsvInvalid);
+      return;
+    }
+
+    late final CsvImportPreview preview;
+    try {
+      preview = AppBootstrap.vaultMigrationService.previewCsv(content);
+    } on FormatException {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+      return;
+    } catch (_) {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      CopiedHud.show(context, message: l10n.importCsvInvalid);
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    if (preview.totalRows == 0) {
+      CopiedHud.show(context, message: l10n.importCsvEmpty);
+      return;
+    }
+    if (!preview.hasWork) {
+      HapticFeedback.lightImpact();
+      CopiedHud.show(context, message: l10n.importCsvNothingNew);
+      return;
+    }
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.importCsvConfirmTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(_importPreviewBody(l10n, preview)),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.importConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    if (!await _confirmSensitiveAccess(
+      context,
+      reason: l10n.importAuthReason,
+      cancelledMessage: l10n.importCancelled,
+    )) {
       return;
     }
 
@@ -338,6 +366,31 @@ class _SettingsPageState extends State<SettingsPage> {
       HapticFeedback.heavyImpact();
       CopiedHud.show(context, message: l10n.importCsvInvalid);
     }
+  }
+
+  /// Build multi-line preview text for the import confirm dialog.
+  String _importPreviewBody(AppLocalizations l10n, CsvImportPreview preview) {
+    final lines = <String>[
+      l10n.importCsvPreviewSummary(preview.willImport, preview.willSkip),
+    ];
+    if (preview.invalid > 0) {
+      lines.add(l10n.importCsvPreviewInvalid(preview.invalid));
+    }
+    if (preview.sampleNewTitles.isNotEmpty) {
+      lines.add(
+        l10n.importCsvPreviewSamples(preview.sampleNewTitles.join(', ')),
+      );
+    }
+    if (preview.newCategoryNames.isNotEmpty) {
+      lines.add(
+        l10n.importCsvPreviewNewCategories(
+          preview.newCategoryNames.join(', '),
+        ),
+      );
+    }
+    lines.add('');
+    lines.add(l10n.importCsvPreviewFooter);
+    return lines.join('\n');
   }
 
   /// Re-auth when app lock is on. Returns false if cancelled / failed.

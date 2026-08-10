@@ -22,35 +22,33 @@ class VaultMigrationService {
     return VaultCsv.encode(items: items, categoriesById: byId);
   }
 
+  /// Dry-run: how many rows would be added vs skipped (no writes).
+  CsvImportPreview previewCsv(String content) {
+    final rows = VaultCsv.decode(content);
+    final plan = _classifyRows(rows);
+
+    return CsvImportPreview(
+      totalRows: rows.length,
+      willImport: plan.toImport.length,
+      willSkip: plan.skipCount,
+      invalid: plan.invalidCount,
+      sampleNewTitles: [
+        for (final row in plan.toImport.take(5)) row.effectiveTitle,
+      ],
+      newCategoryNames: plan.newCategoryNames.toList(growable: false),
+    );
+  }
+
   /// Merge CSV into the vault. Exact title+value duplicates are skipped.
   Future<CsvImportResult> importCsv(String content) async {
     final rows = VaultCsv.decode(content);
-    final existing = _items.getAll();
-    final seen = <String>{
-      for (final item in existing) _dupeKey(item.title, item.value),
-    };
+    final plan = _classifyRows(rows);
 
     var imported = 0;
-    var skipped = 0;
     var failed = 0;
 
-    for (final row in rows) {
+    for (final row in plan.toImport) {
       try {
-        final title = row.title.trim();
-        if (title.isEmpty && row.value.isEmpty) {
-          skipped++;
-          continue;
-        }
-        // Require a title so the card is usable; fall back to a short value.
-        final effectiveTitle =
-            title.isNotEmpty ? title : _titleFromValue(row.value);
-
-        final key = _dupeKey(effectiveTitle, row.value);
-        if (seen.contains(key)) {
-          skipped++;
-          continue;
-        }
-
         final categoryId = await _resolveCategoryId(
           systemKey: row.categorySystemKey,
           name: row.categoryName,
@@ -58,7 +56,7 @@ class VaultMigrationService {
 
         final now = DateTime.now();
         await _items.create(
-          title: effectiveTitle,
+          title: row.effectiveTitle,
           value: row.value,
           categoryId: categoryId,
           languageTag: row.languageTag,
@@ -67,7 +65,6 @@ class VaultMigrationService {
           updatedAt: row.updatedAt ?? now,
           lastCopiedAt: row.lastCopiedAt,
         );
-        seen.add(key);
         imported++;
       } catch (_) {
         failed++;
@@ -76,8 +73,100 @@ class VaultMigrationService {
 
     return CsvImportResult(
       imported: imported,
-      skipped: skipped,
-      failed: failed,
+      skipped: plan.skipCount,
+      failed: failed + plan.invalidCount,
+    );
+  }
+
+  /// Classify CSV rows against the current vault (no side effects).
+  _ImportPlan _classifyRows(List<VaultCsvRow> rows) {
+    final existing = _items.getAll();
+    final seen = <String>{
+      for (final item in existing) _dupeKey(item.title, item.value),
+    };
+
+    final existingCategoryKeys = <String>{
+      for (final c in _categories.getAll()) ...[
+        if (c.systemKey != null && c.systemKey!.isNotEmpty)
+          'key:${c.systemKey!.toLowerCase()}',
+        'name:${c.name.toLowerCase()}',
+      ],
+      for (final def in DefaultCategories.all) ...[
+        'key:${def.systemKey}',
+        'name:${def.name.toLowerCase()}',
+      ],
+    };
+
+    final toImport = <_PreparedRow>[];
+    final newCategoryNames = <String>{};
+    var skipCount = 0;
+    var invalidCount = 0;
+
+    for (final row in rows) {
+      final title = row.title.trim();
+      if (title.isEmpty && row.value.isEmpty) {
+        skipCount++;
+        continue;
+      }
+
+      final effectiveTitle =
+          title.isNotEmpty ? title : _titleFromValue(row.value);
+      if (effectiveTitle.isEmpty) {
+        invalidCount++;
+        continue;
+      }
+
+      final key = _dupeKey(effectiveTitle, row.value);
+      if (seen.contains(key)) {
+        skipCount++;
+        continue;
+      }
+      seen.add(key);
+
+      // Track categories that would be created on import.
+      final sys = row.categorySystemKey?.trim();
+      final name = row.categoryName?.trim();
+      if (sys != null && sys.isNotEmpty) {
+        if (!existingCategoryKeys.contains('key:${sys.toLowerCase()}')) {
+          // Unknown system key → fall through to name or leave uncategorized.
+          if (name != null &&
+              name.isNotEmpty &&
+              !existingCategoryKeys.contains('name:${name.toLowerCase()}')) {
+            newCategoryNames.add(name);
+            existingCategoryKeys.add('name:${name.toLowerCase()}');
+          }
+        }
+      } else if (name != null && name.isNotEmpty) {
+        final lower = name.toLowerCase();
+        final isDefault = DefaultCategories.all
+            .any((d) => d.name.toLowerCase() == lower);
+        if (!isDefault &&
+            !existingCategoryKeys.contains('name:$lower')) {
+          newCategoryNames.add(name);
+          existingCategoryKeys.add('name:$lower');
+        }
+      }
+
+      toImport.add(
+        _PreparedRow(
+          effectiveTitle: effectiveTitle,
+          value: row.value,
+          categoryName: row.categoryName,
+          categorySystemKey: row.categorySystemKey,
+          languageTag: row.languageTag,
+          isPinned: row.isPinned,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          lastCopiedAt: row.lastCopiedAt,
+        ),
+      );
+    }
+
+    return _ImportPlan(
+      toImport: toImport,
+      skipCount: skipCount,
+      invalidCount: invalidCount,
+      newCategoryNames: newCategoryNames,
     );
   }
 
@@ -121,4 +210,64 @@ class VaultMigrationService {
     if (oneLine.length <= 40) return oneLine;
     return '${oneLine.substring(0, 37)}…';
   }
+}
+
+/// Dry-run result shown before the user confirms import.
+class CsvImportPreview {
+  const CsvImportPreview({
+    required this.totalRows,
+    required this.willImport,
+    required this.willSkip,
+    required this.invalid,
+    required this.sampleNewTitles,
+    required this.newCategoryNames,
+  });
+
+  final int totalRows;
+  final int willImport;
+  final int willSkip;
+  final int invalid;
+  final List<String> sampleNewTitles;
+  final List<String> newCategoryNames;
+
+  bool get isEmpty => totalRows == 0 || (willImport == 0 && willSkip == 0 && invalid == 0);
+  bool get hasWork => willImport > 0;
+}
+
+class _PreparedRow {
+  const _PreparedRow({
+    required this.effectiveTitle,
+    required this.value,
+    this.categoryName,
+    this.categorySystemKey,
+    this.languageTag,
+    this.isPinned = false,
+    this.createdAt,
+    this.updatedAt,
+    this.lastCopiedAt,
+  });
+
+  final String effectiveTitle;
+  final String value;
+  final String? categoryName;
+  final String? categorySystemKey;
+  final String? languageTag;
+  final bool isPinned;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? lastCopiedAt;
+}
+
+class _ImportPlan {
+  const _ImportPlan({
+    required this.toImport,
+    required this.skipCount,
+    required this.invalidCount,
+    required this.newCategoryNames,
+  });
+
+  final List<_PreparedRow> toImport;
+  final int skipCount;
+  final int invalidCount;
+  final Set<String> newCategoryNames;
 }

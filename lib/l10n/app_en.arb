@@ -83,6 +83,30 @@
       "title": { "type": "String" }
     }
   },
+  "select": "Select",
+  "selectItems": "Select Items",
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "deleteSelected": "Delete",
+  "deleteSelectedTitle": "Delete {count} items?",
+  "@deleteSelectedTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "deleteSelectedBody": "These items will be permanently removed from your vault.",
+  "deleteSelectedSuccess": "Deleted {count} items",
+  "@deleteSelectedSuccess": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "copied": "Copied {title}",
   "@copied": {
     "placeholders": {
@@ -134,6 +158,33 @@
   "exportCsvConfirmBody": "Your vault values will be written to a CSV file as plain text so you can save it to Files, iCloud, or share it. Anyone with the file can read the values. Continue?",
   "importCsvConfirmTitle": "Import vault CSV?",
   "importCsvConfirmBody": "Items from the file will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file. Continue?",
+  "importCsvPreviewSummary": "{newCount} new · {skipCount} skipped",
+  "@importCsvPreviewSummary": {
+    "placeholders": {
+      "newCount": { "type": "int" },
+      "skipCount": { "type": "int" }
+    }
+  },
+  "importCsvPreviewInvalid": "{count} invalid",
+  "@importCsvPreviewInvalid": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "importCsvPreviewSamples": "Includes: {titles}",
+  "@importCsvPreviewSamples": {
+    "placeholders": {
+      "titles": { "type": "String" }
+    }
+  },
+  "importCsvPreviewNewCategories": "New categories: {names}",
+  "@importCsvPreviewNewCategories": {
+    "placeholders": {
+      "names": { "type": "String" }
+    }
+  },
+  "importCsvPreviewFooter": "Items will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file.",
+  "importCsvNothingNew": "Nothing new to import — all rows are duplicates or empty",
   "exportConfirmAction": "Export",
   "importConfirmAction": "Import",
   "exportAuthReason": "Confirm to export vault values",

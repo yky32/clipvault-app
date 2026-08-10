@@ -193,6 +193,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get select => '選取';
+
+  @override
+  String get selectItems => '選取項目';
+
+  @override
+  String selectedCount(int count) {
+    return '已選 $count 項';
+  }
+
+  @override
+  String get selectAll => '全選';
+
+  @override
+  String get deselectAll => '取消全選';
+
+  @override
+  String get deleteSelected => '刪除';
+
+  @override
+  String deleteSelectedTitle(int count) {
+    return '刪除 $count 個項目？';
+  }
+
+  @override
+  String get deleteSelectedBody => '這些項目將從保險庫中永久移除。';
+
+  @override
+  String deleteSelectedSuccess(int count) {
+    return '已刪除 $count 個項目';
+  }
+
+  @override
   String copied(String title) {
     return '已複製 $title';
   }
@@ -333,6 +366,32 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get importCsvConfirmBody =>
       '檔案中的項目會加入此保險庫。完全相同的標題與內容會略過。檔案內為純文字。確定繼續？';
+
+  @override
+  String importCsvPreviewSummary(int newCount, int skipCount) {
+    return '$newCount 筆新增 · $skipCount 筆略過';
+  }
+
+  @override
+  String importCsvPreviewInvalid(int count) {
+    return '$count 筆無效';
+  }
+
+  @override
+  String importCsvPreviewSamples(String titles) {
+    return '包含：$titles';
+  }
+
+  @override
+  String importCsvPreviewNewCategories(String names) {
+    return '新分類：$names';
+  }
+
+  @override
+  String get importCsvPreviewFooter => '項目會加入此保險庫。完全相同的標題與內容會略過。檔案內為純文字。';
+
+  @override
+  String get importCsvNothingNew => '沒有新項目可匯入 — 全部為重複或空白列';
 
   @override
   String get exportConfirmAction => '匯出';
