@@ -1,0 +1,9 @@
+What's new in ClipVal 1.0.3
+
+• Secure backup — password-encrypted .clipval export & import (phone swap without accounts)
+• Import preview — see how many items are new vs skipped before merging
+• Bulk delete — select multiple vault items at once
+• Home Screen widget — 4×2 grid, tap to copy (where available)
+• Better item editor for long templates (expand, paste, show/hide)
+• 3-column grid type polish and themed field labels
+• Privacy-first: no account, data stays on your device
