@@ -133,6 +133,10 @@ class SettingsService {
   /// Phase E: optional CloudKit private sync (default off).
   static const _iCloudSyncKey = 'icloud_sync_enabled';
   static const _iCloudLastSyncKey = 'icloud_last_sync_at';
+  /// Lifetime successful one-tap copies (for review prompt).
+  static const _successfulCopyCountKey = 'successful_copy_count';
+  /// True after we asked StoreKit for a review (once).
+  static const _reviewPromptedKey = 'in_app_review_prompted';
 
   late SharedPreferences _prefs;
 
@@ -234,6 +238,30 @@ class SettingsService {
       await _prefs.setString(_iCloudLastSyncKey, value.toIso8601String());
     }
   }
+
+  // ── Activation / App Store review (P0–P1) ─────────────────────────────
+
+  int get successfulCopyCount =>
+      _prefs.getInt(_successfulCopyCountKey) ?? 0;
+
+  Future<int> incrementSuccessfulCopyCount() async {
+    final next = successfulCopyCount + 1;
+    await _prefs.setInt(_successfulCopyCountKey, next);
+    return next;
+  }
+
+  bool get inAppReviewPrompted =>
+      _prefs.getBool(_reviewPromptedKey) ?? false;
+
+  Future<void> setInAppReviewPrompted(bool value) =>
+      _prefs.setBool(_reviewPromptedKey, value);
+
+  /// Ask for review after enough real use — never on first open.
+  bool get shouldRequestInAppReview {
+    if (inAppReviewPrompted) return false;
+    return successfulCopyCount >= 10;
+  }
+
 
   /// Widget shows only pinned items (default false = pinned + recent + rest).
   bool get widgetPinnedOnly => _prefs.getBool(_widgetPinnedOnlyKey) ?? false;

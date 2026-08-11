@@ -5,6 +5,11 @@ Faster one-tap
 • Recently copied strip — denser; hold to pin
 • Duplicate any item from the action sheet
 • Sort vault — recently updated, recently copied, or A–Z
+• Smoother home loading skeleton
+
+Easier first value
+• Empty vault starters (Wi-Fi, FPS, address, API key, promo)
+• Share from any app → Save to ClipVal
 
 Trust surface
 • Face ID / device passcode to reveal values in the editor (when app lock is on)
@@ -13,4 +18,4 @@ Trust surface
 • Undo delete for a few seconds
 
 Still ClipVal
-• No account. Data stays on your device unless you export a password-locked .clipval backup.
+• No account. Data stays on your device unless you export a password-locked .clipval backup or turn on optional iCloud sync in Settings.

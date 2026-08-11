@@ -137,8 +137,56 @@ abstract class AppLocalizations {
   /// No description provided for @emptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Add your first value — passwords, codes, addresses, templates.'**
+  /// **'Add one value you paste all the time — then every next paste is one tap.'**
   String get emptySubtitle;
+
+  /// No description provided for @emptyAddFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first value'**
+  String get emptyAddFirst;
+
+  /// No description provided for @emptyStartersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'START WITH'**
+  String get emptyStartersLabel;
+
+  /// No description provided for @emptyShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Share text from any app → Save to ClipVal.'**
+  String get emptyShareHint;
+
+  /// No description provided for @starterWifiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi‑Fi password'**
+  String get starterWifiTitle;
+
+  /// No description provided for @starterFpsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FPS / bank ID'**
+  String get starterFpsTitle;
+
+  /// No description provided for @starterAddressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping address'**
+  String get starterAddressTitle;
+
+  /// No description provided for @starterApiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get starterApiTitle;
+
+  /// No description provided for @starterPromoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo code'**
+  String get starterPromoTitle;
 
   /// No description provided for @addFirstItem.
   ///
@@ -1289,7 +1337,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingBody2.
   ///
   /// In en, this message translates to:
-  /// **'Everything stays on your device. Values are encrypted at rest.'**
+  /// **'Values stay on your device and encrypted at rest. Optional iCloud sync uses your private iCloud only — never a ClipVal server.'**
   String get onboardingBody2;
 
   /// No description provided for @onboardingTitle3.
@@ -1301,7 +1349,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingBody3.
   ///
   /// In en, this message translates to:
-  /// **'Start storing values right away. You can turn on app lock anytime in Settings.'**
+  /// **'Add your first value — Wi‑Fi, FPS, or an address. Pin favorites for the Home Screen widget.'**
   String get onboardingBody3;
 
   /// No description provided for @getStarted.
@@ -1355,7 +1403,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeLocalBody.
   ///
   /// In en, this message translates to:
-  /// **'Your vault lives only on this device. Values are encrypted at rest (AES-256). No account. No cloud. We never see your data.'**
+  /// **'Vault lives on this device with AES-256. No ClipVal account. Optional iCloud sync is off by default and only uses your private iCloud — we never see your values.'**
   String get welcomeLocalBody;
 
   /// No description provided for @welcomeHowTitle.
@@ -1367,8 +1415,20 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeHowBody.
   ///
   /// In en, this message translates to:
-  /// **'Add a title and value. Tap any card to copy instantly. Optional Face ID / device lock and clipboard auto-clear live in Settings.'**
+  /// **'Tap + to add, or Share from any app → Save to ClipVal. Tap a card to copy. Pin favorites for the widget.'**
   String get welcomeHowBody;
+
+  /// No description provided for @welcomeIcloudTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional iCloud'**
+  String get welcomeIcloudTitle;
+
+  /// No description provided for @welcomeIcloudBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Sync with iCloud in Settings for a second device. Still no ClipVal account — ciphertext only, on your iCloud.'**
+  String get welcomeIcloudBody;
 
   /// No description provided for @welcomePromoTitle.
   ///

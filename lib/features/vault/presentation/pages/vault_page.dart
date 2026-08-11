@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
+import '../../../../core/services/review_prompt_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/services/share_intake_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -289,11 +291,24 @@ class _VaultPageState extends State<VaultPage> {
     return null;
   }
 
-  void _openAdd({String? categoryId}) {
+  void _openAdd({
+    String? categoryId,
+    String? initialTitle,
+    String? initialValue,
+  }) {
     HapticFeedback.selectionClick();
     ItemEditorBottomSheet.show(
       context,
       initialCategoryId: categoryId,
+      initialTitle: initialTitle,
+      initialValue: initialValue,
+    );
+  }
+
+  void _openStarter(VaultStarter starter) {
+    _openAdd(
+      categoryId: starter.categoryId,
+      initialTitle: starter.title,
     );
   }
 
@@ -351,6 +366,8 @@ class _VaultPageState extends State<VaultPage> {
     // HUD uses display title so sensitive items stay masked in toast.
     CopiedHud.show(context, message: l10n.copied(item.displayTitle));
     context.read<VaultBloc>().add(VaultItemCopied(item.id));
+    // P1: soft review prompt after real usage (never blocks copy).
+    unawaited(ReviewPromptService.instance.recordSuccessfulCopyAndMaybePrompt());
   }
 
   /// Pull-to-refresh (Triftly pattern) — reloads items + categories from local store.
@@ -653,7 +670,10 @@ class _VaultPageState extends State<VaultPage> {
                         if (isEmpty)
                           SliverFillRemaining(
                             hasScrollBody: false,
-                            child: const VaultEmptyState(),
+                            child: VaultEmptyState(
+                              onAdd: _openAdd,
+                              onStarter: _openStarter,
+                            ),
                           )
                         else if (filtered.isEmpty)
                           SliverFillRemaining(
