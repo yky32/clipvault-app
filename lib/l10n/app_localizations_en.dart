@@ -380,6 +380,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check that you’re signed into iCloud and try again.';
 
   @override
+  String get iCloudSyncSchemaNotReadyTitle => 'iCloud not ready yet';
+
+  @override
+  String get iCloudSyncSchemaNotReadyBody =>
+      'Cloud sync needs a one-time server setup that isn\'t finished. Your vault stays on this device — try again later, or use a password-locked .clipval backup.';
+
+  @override
+  String get iCloudSyncNetworkBody =>
+      'Network problem while talking to iCloud. Check connection and try again.';
+
+  @override
+  String get iCloudSyncNoAccountBody =>
+      'Sign into iCloud in Settings, then try sync again.';
+
+  @override
   String get securitySectionFooter =>
       'Lock protects the vault. Reveal and auto-lock refine how long values stay exposed.';
 

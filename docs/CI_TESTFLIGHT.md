@@ -86,3 +86,14 @@ cd ios && bundle exec fastlane ios upload_testflight
 - One Distribution cert on the portal for the team  
 - Never commit `.p12` / `.p8`  
 - Wait for Deploy to finish before the next merge to `main`
+
+## CloudKit / iCloud (gate)
+
+TestFlight uses CloudKit **Production**. Deploying schema is **not** part of this workflow.
+
+Before enabling iCloud sync for testers:
+
+1. Follow [`CLOUDKIT_DEPLOY_CHECKLIST.md`](./CLOUDKIT_DEPLOY_CHECKLIST.md)
+2. Confirm Production has `ClipItem`, `Category`, `VaultMeta`
+3. Otherwise TF shows schema errors (CLIPVAL-CK-001)
+

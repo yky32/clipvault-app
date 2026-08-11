@@ -373,6 +373,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get iCloudSyncFailedBody => '請確認已登入 iCloud 後再試。';
 
   @override
+  String get iCloudSyncSchemaNotReadyTitle => 'iCloud 尚未就緒';
+
+  @override
+  String get iCloudSyncSchemaNotReadyBody =>
+      '雲端同步需要一次性伺服器設定，目前尚未完成。保險庫仍只在本機；請稍後再試，或使用密碼保護的 .clipval 備份。';
+
+  @override
+  String get iCloudSyncNetworkBody => '連線 iCloud 時出現網絡問題，請檢查網絡後再試。';
+
+  @override
+  String get iCloudSyncNoAccountBody => '請先在系統設定登入 iCloud，然後再同步。';
+
+  @override
   String get securitySectionFooter => '鎖定保護保險庫；顯示驗證與自動鎖定控制暴露時間。';
 
   @override
