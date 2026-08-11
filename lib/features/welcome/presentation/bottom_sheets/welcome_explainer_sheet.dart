@@ -121,6 +121,14 @@ class WelcomeExplainerSheet extends StatelessWidget {
                 ),
                 const _WelcomeDivider(),
                 _WelcomeSection(
+                  emoji: '☁️',
+                  icon: CupertinoIcons.cloud,
+                  iconColor: AppColors.primary,
+                  title: l10n.welcomeIcloudTitle,
+                  body: l10n.welcomeIcloudBody,
+                ),
+                const _WelcomeDivider(),
+                _WelcomeSection(
                   emoji: '✨',
                   icon: CupertinoIcons.hand_point_right_fill,
                   iconColor: AppColors.iconView,

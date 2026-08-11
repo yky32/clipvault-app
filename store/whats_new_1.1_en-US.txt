@@ -4,12 +4,17 @@ Optional iCloud sync
 • Sync with iCloud — opt-in, off by default
 • Your private CloudKit only — goes to your iCloud, never to ClipVal servers
 • Values stay encrypted on device before upload
-• Phone + second device stay aligned without creating a ClipVal account
+• Phone + second device stay aligned without a ClipVal account
 • .clipval password backups still work for off-Apple or disaster recovery
 
 Faster one-tap
 • Widget favorites, hide titles when locked, medium & large widgets
 • Recent strip, duplicate item, vault sort (updated / last used / A–Z)
+• Home loading skeleton for a smoother open
+
+Easier first value
+• Empty vault starters (Wi-Fi, FPS, address, API key, promo)
+• Share from any app → Save to ClipVal
 
 Trust surface
 • Face ID to reveal values when app lock is on

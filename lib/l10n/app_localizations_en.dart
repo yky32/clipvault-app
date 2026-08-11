@@ -28,7 +28,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptySubtitle =>
-      'Add your first value — passwords, codes, addresses, templates.';
+      'Add one value you paste all the time — then every next paste is one tap.';
+
+  @override
+  String get emptyAddFirst => 'Add your first value';
+
+  @override
+  String get emptyStartersLabel => 'START WITH';
+
+  @override
+  String get emptyShareHint =>
+      'Tip: Share text from any app → Save to ClipVal.';
+
+  @override
+  String get starterWifiTitle => 'Wi‑Fi password';
+
+  @override
+  String get starterFpsTitle => 'FPS / bank ID';
+
+  @override
+  String get starterAddressTitle => 'Shipping address';
+
+  @override
+  String get starterApiTitle => 'API key';
+
+  @override
+  String get starterPromoTitle => 'Promo code';
 
   @override
   String get addFirstItem => 'Add your first item';
@@ -662,14 +687,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingBody2 =>
-      'Everything stays on your device. Values are encrypted at rest.';
+      'Values stay on your device and encrypted at rest. Optional iCloud sync uses your private iCloud only — never a ClipVal server.';
 
   @override
   String get onboardingTitle3 => 'Ready when you are';
 
   @override
   String get onboardingBody3 =>
-      'Start storing values right away. You can turn on app lock anytime in Settings.';
+      'Add your first value — Wi‑Fi, FPS, or an address. Pin favorites for the Home Screen widget.';
 
   @override
   String get getStarted => 'Get started';
@@ -700,14 +725,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeLocalBody =>
-      'Your vault lives only on this device. Values are encrypted at rest (AES-256). No account. No cloud. We never see your data.';
+      'Vault lives on this device with AES-256. No ClipVal account. Optional iCloud sync is off by default and only uses your private iCloud — we never see your values.';
 
   @override
   String get welcomeHowTitle => 'How it works';
 
   @override
   String get welcomeHowBody =>
-      'Add a title and value. Tap any card to copy instantly. Optional Face ID / device lock and clipboard auto-clear live in Settings.';
+      'Tap + to add, or Share from any app → Save to ClipVal. Tap a card to copy. Pin favorites for the widget.';
+
+  @override
+  String get welcomeIcloudTitle => 'Optional iCloud';
+
+  @override
+  String get welcomeIcloudBody =>
+      'Turn on Sync with iCloud in Settings for a second device. Still no ClipVal account — ciphertext only, on your iCloud.';
 
   @override
   String get welcomePromoTitle => 'Your one-tap vault';

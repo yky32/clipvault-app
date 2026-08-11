@@ -27,7 +27,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get emptyTitle => '保險庫是空的';
 
   @override
-  String get emptySubtitle => '新增第一個值 — 密碼、代碼、地址、範本訊息等。';
+  String get emptySubtitle => '先存一個你常貼上的值 — 之後每次只要一按。';
+
+  @override
+  String get emptyAddFirst => '新增第一個值';
+
+  @override
+  String get emptyStartersLabel => '快速開始';
+
+  @override
+  String get emptyShareHint => '提示：從任何 App 分享文字 → 儲存到 ClipVal。';
+
+  @override
+  String get starterWifiTitle => 'Wi‑Fi 密碼';
+
+  @override
+  String get starterFpsTitle => 'FPS／銀行編號';
+
+  @override
+  String get starterAddressTitle => '收件地址';
+
+  @override
+  String get starterApiTitle => 'API 金鑰';
+
+  @override
+  String get starterPromoTitle => '優惠碼';
 
   @override
   String get addFirstItem => '新增第一個項目';
@@ -643,13 +667,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingTitle2 => '預設私密';
 
   @override
-  String get onboardingBody2 => '資料只留在你的裝置。內容在本地加密儲存。';
+  String get onboardingBody2 =>
+      '內容留在你的裝置並加密。可選 iCloud 同步只經你的私有 iCloud — ClipVal 沒有伺服器。';
 
   @override
   String get onboardingTitle3 => '準備就緒';
 
   @override
-  String get onboardingBody3 => '立刻開始儲存內容。可隨時在「設定」中開啟應用程式鎖定。';
+  String get onboardingBody3 => '先加第一個值 — Wi‑Fi、FPS 或地址。釘選常用項目到主畫面小工具。';
 
   @override
   String get getStarted => '開始使用';
@@ -680,14 +705,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get welcomeLocalBody =>
-      '保險庫只留在這台裝置。內容以 AES-256 加密儲存。沒有帳號、沒有雲端。我們看不到你的資料。';
+      '保險庫在本機以 AES-256 加密。無需 ClipVal 帳號。可選 iCloud 同步預設關閉，只使用你的私有 iCloud — 我們看不到你的內容。';
 
   @override
   String get welcomeHowTitle => '怎麼使用';
 
   @override
   String get welcomeHowBody =>
-      '新增標題與內容，輕觸卡片即可複製。可在「設定」開啟 Face ID／裝置鎖定與剪貼簿自動清除。';
+      '按 + 新增，或從任何 App 分享 → 儲存到 ClipVal。輕觸卡片即可複製。釘選常用項到小工具。';
+
+  @override
+  String get welcomeIcloudTitle => '可選 iCloud';
+
+  @override
+  String get welcomeIcloudBody =>
+      '在設定開啟「透過 iCloud 同步」即可在第二部裝置使用。仍然無需 ClipVal 帳號 — 只有密文進你的 iCloud。';
 
   @override
   String get welcomePromoTitle => '你的一鍵保險庫';
