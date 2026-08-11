@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/build_info.dart';
+import '../../../../core/services/icloud_sync_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/services/vault_backup.dart';
 import '../../../../core/services/vault_migration_service.dart';
@@ -70,6 +71,58 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadVersion();
   }
 
+
+  String _iCloudFailTitle(AppLocalizations l10n, ICloudSyncResult result) {
+    if (result.code == ICloudSyncResult.schemaProduction) {
+      return l10n.iCloudSyncSchemaNotReadyTitle;
+    }
+    return l10n.iCloudSyncFailedTitle;
+  }
+
+  String _iCloudFailBody(AppLocalizations l10n, ICloudSyncResult result) {
+    switch (result.code) {
+      case ICloudSyncResult.schemaProduction:
+        return l10n.iCloudSyncSchemaNotReadyBody;
+      case ICloudSyncResult.noAccount:
+        return l10n.iCloudSyncNoAccountBody;
+      case ICloudSyncResult.network:
+        return l10n.iCloudSyncNetworkBody;
+      default:
+        // Never dump raw CKRecordID / production schema jargon to users.
+        final raw = result.message?.trim() ?? '';
+        if (raw.isEmpty ||
+            raw.contains('CKRecord') ||
+            raw.toLowerCase().contains('production schema') ||
+            raw.toLowerCase().contains('cannot create new type')) {
+          return l10n.iCloudSyncFailedBody;
+        }
+        return raw;
+    }
+  }
+
+  Future<void> _showICloudFailDialog(
+    AppLocalizations l10n,
+    ICloudSyncResult result,
+  ) async {
+    if (!mounted) return;
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(_iCloudFailTitle(l10n, result)),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(_iCloudFailBody(l10n, result)),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleICloudSync(bool value) async {
     final l10n = AppLocalizations.of(context);
     if (!value) {
@@ -120,22 +173,7 @@ class _SettingsPageState extends State<SettingsPage> {
         context.read<VaultBloc>().add(const VaultRefreshed());
       } catch (_) {}
     } else {
-      await showCupertinoDialog<void>(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text(l10n.iCloudSyncFailedTitle),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(result.message ?? l10n.iCloudSyncFailedBody),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.cancel),
-            ),
-          ],
-        ),
-      );
+      await _showICloudFailDialog(l10n, result);
     }
   }
 
@@ -156,10 +194,16 @@ class _SettingsPageState extends State<SettingsPage> {
         context.read<VaultBloc>().add(const VaultRefreshed());
       } catch (_) {}
     } else {
-      CopiedHud.show(
-        context,
-        message: result.message ?? l10n.iCloudSyncFailedBody,
-      );
+      // Schema / account issues need a real dialog (toast is easy to miss).
+      if (result.code == ICloudSyncResult.schemaProduction ||
+          result.code == ICloudSyncResult.noAccount) {
+        await _showICloudFailDialog(l10n, result);
+      } else {
+        CopiedHud.show(
+          context,
+          message: _iCloudFailBody(l10n, result),
+        );
+      }
     }
   }
 

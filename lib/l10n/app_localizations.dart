@@ -782,6 +782,30 @@ abstract class AppLocalizations {
   /// **'Check that you’re signed into iCloud and try again.'**
   String get iCloudSyncFailedBody;
 
+  /// No description provided for @iCloudSyncSchemaNotReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud not ready yet'**
+  String get iCloudSyncSchemaNotReadyTitle;
+
+  /// No description provided for @iCloudSyncSchemaNotReadyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync needs a one-time server setup that isn\'t finished. Your vault stays on this device — try again later, or use a password-locked .clipval backup.'**
+  String get iCloudSyncSchemaNotReadyBody;
+
+  /// No description provided for @iCloudSyncNetworkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Network problem while talking to iCloud. Check connection and try again.'**
+  String get iCloudSyncNetworkBody;
+
+  /// No description provided for @iCloudSyncNoAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign into iCloud in Settings, then try sync again.'**
+  String get iCloudSyncNoAccountBody;
+
   /// No description provided for @securitySectionFooter.
   ///
   /// In en, this message translates to:

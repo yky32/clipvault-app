@@ -16,6 +16,7 @@ class ICloudSyncResult {
   const ICloudSyncResult({
     required this.ok,
     this.message,
+    this.code,
     this.pulledItems = 0,
     this.pushedItems = 0,
     this.pulledCategories = 0,
@@ -24,10 +25,17 @@ class ICloudSyncResult {
 
   final bool ok;
   final String? message;
+  /// Stable machine code for Settings UX (e.g. [schemaProduction]).
+  final String? code;
   final int pulledItems;
   final int pushedItems;
   final int pulledCategories;
   final int pushedCategories;
+
+  /// Production CloudKit schema missing a record type (CLIPVAL-CK-001).
+  static const schemaProduction = 'schema_production';
+  static const noAccount = 'no_account';
+  static const network = 'network';
 }
 
 /// Phase E — optional iCloud (CloudKit private DB) vault sync.
@@ -67,6 +75,32 @@ class ICloudSyncService {
 
   bool get enabled =>
       isSupported && SettingsService.instance.iCloudSyncEnabled;
+
+  /// Map native / CK error strings → stable [ICloudSyncResult.code].
+  static String? mapErrorCode({String? platformCode, String? message}) {
+    final code = (platformCode ?? '').toLowerCase();
+    final msg = (message ?? '').toLowerCase();
+    if (code == ICloudSyncResult.schemaProduction ||
+        msg.contains('cannot create new type') ||
+        msg.contains('production schema') ||
+        (msg.contains('record type') && msg.contains('production'))) {
+      return ICloudSyncResult.schemaProduction;
+    }
+    if (code == ICloudSyncResult.noAccount ||
+        msg.contains('no account') ||
+        code == 'noaccount') {
+      return ICloudSyncResult.noAccount;
+    }
+    if (code == ICloudSyncResult.network ||
+        msg.contains('network') ||
+        msg.contains('offline') ||
+        msg.contains('timed out') ||
+        msg.contains('timeout')) {
+      return ICloudSyncResult.network;
+    }
+    return platformCode;
+  }
+
 
   /// Account status: available / noAccount / restricted / …
   Future<Map<String, dynamic>> checkAvailability() async {
@@ -170,12 +204,22 @@ class ICloudSyncService {
     } on PlatformException catch (e) {
       sw.stop();
       _log('FAIL ${sw.elapsedMilliseconds}ms | ${e.code}: ${e.message}');
-      return ICloudSyncResult(ok: false, message: e.message ?? e.code);
+      final mapped = mapErrorCode(platformCode: e.code, message: e.message);
+      return ICloudSyncResult(
+        ok: false,
+        code: mapped,
+        message: e.message ?? e.code,
+      );
     } catch (e, st) {
       sw.stop();
       _log('FAIL ${sw.elapsedMilliseconds}ms | $e');
       debugPrint('$st');
-      return ICloudSyncResult(ok: false, message: e.toString());
+      final mapped = mapErrorCode(message: e.toString());
+      return ICloudSyncResult(
+        ok: false,
+        code: mapped,
+        message: e.toString(),
+      );
     } finally {
       _syncing = false;
     }

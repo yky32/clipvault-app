@@ -87,6 +87,7 @@ Everything in **1.0.4 scope** **plus**:
 
 - [ ] 1.0.3 (and any 1.0.4 if you did patch first) **Ready for Sale**
 - [ ] CloudKit Dashboard: **Deploy Schema Changes** to **Production** for `iCloud.com.clipval`
+- [ ] **CLIPVAL-CK-001:** Production must include **Category** (see `docs/CLOUDKIT_DEPLOY_CHECKLIST.md`) — TF sync fails without it
 - [ ] Create version **1.1** in App Store Connect
 - [ ] Upload build from `main` with iCloud entitlements
 - [ ] What’s New: `store/whats_new_1.1_en-US.txt` + `zh-Hant`

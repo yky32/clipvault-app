@@ -36,6 +36,31 @@ final class CloudKitSyncChannel {
     }
   }
 
+
+  /// Map CloudKit failures to stable FlutterError codes for Dart UX.
+  private static func flutterError(from error: Error, fallbackCode: String) -> FlutterError {
+    let msg = error.localizedDescription
+    let lower = msg.lowercased()
+    // Production schema missing a record type (CLIPVAL-CK-001).
+    if lower.contains("cannot create new type")
+      || lower.contains("production schema")
+      || (lower.contains("record type") && lower.contains("production"))
+    {
+      return FlutterError(
+        code: "schema_production",
+        message: msg,
+        details: ["reason": "production_schema_missing_type"]
+      )
+    }
+    if lower.contains("not authenticated") || lower.contains("no account") {
+      return FlutterError(code: "no_account", message: msg, details: nil)
+    }
+    if lower.contains("network") || lower.contains("offline") || lower.contains("timed out") {
+      return FlutterError(code: "network", message: msg, details: nil)
+    }
+    return FlutterError(code: fallbackCode, message: msg, details: nil)
+  }
+
   private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "engineInfo":
@@ -81,7 +106,7 @@ final class CloudKitSyncChannel {
         } catch {
           NSLog("[ClipVal iCloud] FETCH FAIL: %@", error.localizedDescription)
           DispatchQueue.main.async {
-            result(FlutterError(code: "fetch", message: error.localizedDescription, details: nil))
+            result(Self.flutterError(from: error, fallbackCode: "fetch"))
           }
         }
       }
@@ -102,7 +127,7 @@ final class CloudKitSyncChannel {
         } catch {
           NSLog("[ClipVal iCloud] UPSERT FAIL: %@", error.localizedDescription)
           DispatchQueue.main.async {
-            result(FlutterError(code: "upsert", message: error.localizedDescription, details: nil))
+            result(Self.flutterError(from: error, fallbackCode: "upsert"))
           }
         }
       }
@@ -119,8 +144,9 @@ final class CloudKitSyncChannel {
           try await self.deleteRecords(itemIds: itemIds, categoryIds: categoryIds)
           DispatchQueue.main.async { result(["ok": true]) }
         } catch {
+          NSLog("[ClipVal iCloud] DELETE FAIL: %@", error.localizedDescription)
           DispatchQueue.main.async {
-            result(FlutterError(code: "delete", message: error.localizedDescription, details: nil))
+            result(Self.flutterError(from: error, fallbackCode: "delete"))
           }
         }
       }

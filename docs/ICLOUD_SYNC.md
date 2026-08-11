@@ -20,7 +20,8 @@ Copy for UI: *“Goes to your iCloud, never to us.”*
 3. Xcode → Runner → Signing & Capabilities → confirm **iCloud (CloudKit)** + container
 4. First run in **Development** schema: CloudKit creates record types on first save:
    - `ClipItem`, `Category`, `VaultMeta`
-5. Promote schema to **Production** in CloudKit Dashboard before App Store release
+5. Promote schema to **Production** in CloudKit Dashboard before App Store / TestFlight iCloud
+   - **Checklist:** [`CLOUDKIT_DEPLOY_CHECKLIST.md`](./CLOUDKIT_DEPLOY_CHECKLIST.md) (CLIPVAL-CK-001)
 
 Entitlements live in `ios/Runner/Runner.entitlements`.
 
