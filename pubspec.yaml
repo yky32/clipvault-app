@@ -45,6 +45,9 @@ dependencies:
   # Home Screen widget (iOS WidgetKit via App Group snapshot)
   home_widget: ^0.7.0
 
+  # Loading skeletons (Triftly pattern; ^2.1.3+ for Flutter 3.32 CI)
+  skeletonizer: ^2.1.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
