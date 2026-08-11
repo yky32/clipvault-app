@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
@@ -20,6 +21,7 @@ import '../../../welcome/presentation/bottom_sheets/welcome_explainer_sheet.dart
 import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
+import '../widgets/vault_home_skeleton.dart';
 
 class VaultPage extends StatefulWidget {
   const VaultPage({super.key});
@@ -372,9 +374,27 @@ class _VaultPageState extends State<VaultPage> {
       backgroundColor: AppColors.groupedBackground(context),
       body: BlocBuilder<VaultBloc, VaultState>(
           builder: (context, state) {
-            if (state.status == VaultStatus.loading ||
-                state.status == VaultStatus.initial) {
-              return const Center(child: CupertinoActivityIndicator());
+            final booting = (state.status == VaultStatus.loading ||
+                    state.status == VaultStatus.initial) &&
+                state.items.isEmpty;
+            // Failure with no data — never stick on skeleton.
+            if (state.status == VaultStatus.failure && state.items.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    state.errorMessage ?? 'Something went wrong',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryLabel(context),
+                    ),
+                  ),
+                ),
+              );
+            }
+            // Cold open / first load — full home skeleton (mock cards).
+            if (booting) {
+              return VaultHomeSkeleton(viewMode: state.viewMode);
             }
 
             final isEmpty = state.items.isEmpty;
@@ -386,8 +406,14 @@ class _VaultPageState extends State<VaultPage> {
             final showRecent = !state.hasActiveFilter &&
                 recent.isNotEmpty &&
                 state.items.length > 1;
+            // Pull-to-refresh / reload with existing data — bone overlay.
+            final skeletonizeContent =
+                state.status == VaultStatus.loading && state.items.isNotEmpty;
 
-            return SafeArea(
+            return Skeletonizer(
+              enabled: skeletonizeContent,
+              ignoreContainers: false,
+              child: SafeArea(
               bottom: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -740,6 +766,7 @@ class _VaultPageState extends State<VaultPage> {
                   ),
                 ],
               ),
+            ),
             );
           },
         ),

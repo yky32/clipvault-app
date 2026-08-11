@@ -60,15 +60,25 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     }
   }
 
-  void _onStarted(VaultStarted event, Emitter<VaultState> emit) {
+  Future<void> _onStarted(VaultStarted event, Emitter<VaultState> emit) async {
     emit(state.copyWith(status: VaultStatus.loading));
+    final sw = Stopwatch()..start();
+    final items = _items.getAll();
+    final categories = _categories.getAll();
+    // Local Hive is instant — yield a short beat so cold-open skeleton paints.
+    const minSkeleton = Duration(milliseconds: 320);
+    final remaining = minSkeleton - sw.elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
+    }
     emit(
       state.copyWith(
-        items: _items.getAll(),
-        categories: _categories.getAll(),
+        items: items,
+        categories: categories,
         status: VaultStatus.ready,
         viewMode: SettingsService.instance.defaultViewMode,
         sortMode: SettingsService.instance.vaultSortMode,
+        clearError: true,
       ),
     );
   }
@@ -196,12 +206,24 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     VaultRefreshed event,
     Emitter<VaultState> emit,
   ) async {
+    // Keep existing items so UI can skeletonize in place (not flash empty).
+    emit(state.copyWith(status: VaultStatus.loading));
+    final sw = Stopwatch()..start();
+    final items = _items.getAll();
+    final categories = _categories.getAll();
+    const minSkeleton = Duration(milliseconds: 280);
+    final remaining = minSkeleton - sw.elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
+    }
     emit(
       state.copyWith(
-        items: _items.getAll(),
-        categories: _categories.getAll(),
+        items: items,
+        categories: categories,
         sortMode: SettingsService.instance.vaultSortMode,
         viewMode: SettingsService.instance.defaultViewMode,
+        status: VaultStatus.ready,
+        clearError: true,
       ),
     );
     await _syncWidget();
