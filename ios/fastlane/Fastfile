@@ -419,13 +419,163 @@ def increment_marketing_version_in_pubspec
   [new_version_name, new_build]
 end
 
+def version_tuple(version_name)
+  version_name.to_s.split(".").map(&:to_i)
+end
+
+# Compare semver-ish a.b.c — returns -1 / 0 / 1
+def compare_marketing_versions(a, b)
+  version_tuple(a) <=> version_tuple(b)
+end
+
+# Widget + Share use hardcoded MARKETING_VERSION / CURRENT_PROJECT_VERSION
+# (they do not inherit FLUTTER_BUILD_*). Keep them equal to pubspec or
+# ASC rejects the IPA with the *extension* short version (often still 1.0.x).
+def sync_extension_versions_from_pubspec!
+  _path, _content, version_name, build_number = read_pubspec_version
+  pbx_path = File.join(IOS_DIR, "Runner.xcodeproj/project.pbxproj")
+  UI.user_error!("❌ Missing #{pbx_path}") unless File.exist?(pbx_path)
+
+  content = File.read(pbx_path)
+  # Only rewrite numeric literals — leave Runner's $(FLUTTER_BUILD_*) alone.
+  updated = content
+    .gsub(
+      /MARKETING_VERSION = \d+\.\d+\.\d+;/,
+      "MARKETING_VERSION = #{version_name};"
+    )
+    .gsub(
+      /CURRENT_PROJECT_VERSION = \d+;/,
+      "CURRENT_PROJECT_VERSION = #{build_number};"
+    )
+
+  if updated == content
+    UI.message("📎 Extension MARKETING_VERSION already #{version_name}+#{build_number}")
+  else
+    File.write(pbx_path, updated)
+    UI.success("📎 Synced Widget/Share MARKETING_VERSION → #{version_name}+#{build_number}")
+  end
+  [version_name, build_number]
+end
+
+# Highest App Store Connect marketing version that has closed (or is closing)
+# the pre-release train — new TF builds must be *strictly greater*.
+def fetch_app_store_train_floor_version
+  begin
+    require "spaceship"
+
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    unless app
+      UI.important("⚠️  ASC app #{APP_IDENTIFIER} not found — skip proactive version check")
+      return nil
+    end
+
+    floor = nil
+    begin
+      live = app.get_live_app_store_version
+      floor = live.version_string if live && live.version_string
+    rescue => ex
+      UI.message("ℹ️  No live App Store version yet (#{ex.message})")
+    end
+
+    # Any version already approved / waiting for release also locks that train.
+    closed_states = %w[
+      READY_FOR_SALE
+      PENDING_APPLE_RELEASE
+      PENDING_DEVELOPER_RELEASE
+      ACCEPTED
+    ]
+
+    begin
+      versions = app.get_app_store_versions(limit: 30) || []
+      versions.each do |v|
+        state = v.app_store_state.to_s
+        next unless closed_states.include?(state)
+        vs = v.version_string.to_s
+        next if vs.empty?
+        if floor.nil? || compare_marketing_versions(vs, floor) > 0
+          floor = vs
+        end
+      end
+    rescue => ex
+      UI.important("⚠️  Could not list ASC versions: #{ex.message}")
+    end
+
+    UI.message("🏪 ASC train floor (must upload > this): #{floor || 'none'}")
+    floor
+  rescue => ex
+    UI.important("⚠️  ASC version lookup failed (will rely on upload retry): #{ex.message}")
+    nil
+  end
+end
+
+# Before build: if pubspec marketing ≤ ASC floor, patch-bump until strictly greater.
+# Avoids a full failed IPA + rebuild cycle when 1.0.3 is already Ready for Sale.
+def ensure_marketing_version_above_app_store_floor!
+  floor = fetch_app_store_train_floor_version
+  return nil if floor.nil? || floor.to_s.empty?
+
+  pubspec_path, content, name, build = read_pubspec_version
+  if compare_marketing_versions(name, floor) > 0
+    UI.success("✅ pubspec #{name} > ASC floor #{floor} — train open")
+    return nil
+  end
+
+  old = "#{name}+#{build}"
+  while compare_marketing_versions(name, floor) <= 0
+    parts = name.split(".").map(&:to_i)
+    UI.user_error!("❌ Unexpected version name: #{name}") unless parts.length == 3
+    parts[2] += 1
+    name = parts.join(".")
+    build += 1
+  end
+
+  UI.important("🚂 ASC floor is #{floor} — proactive bump #{old} → #{name}+#{build}")
+  write_pubspec_version(pubspec_path, content, name, build)
+  commit_and_push_build_number(
+    build,
+    commit_subject: "chore: Auto-bump marketing version to #{name}+#{build} [skip ci]",
+    commit_body: "Proactive bump: App Store train floor #{floor} closed for new builds (ASC 90186/90062)."
+  )
+  [name, build]
+end
+
 def closed_app_store_train_error?(message)
   msg = message.to_s
   msg.include?("90186") ||
     msg.include?("90062") ||
     msg.include?("Invalid Pre-Release Train") ||
     msg.include?("closed for new build submissions") ||
-    msg.include?("must contain a higher version than that of the previously approved version")
+    msg.include?("must contain a higher version than that of the previously approved version") ||
+    msg.include?("This bundle is invalid. The value for key CFBundleShortVersionString")
+end
+
+# Read CFBundleShortVersionString from the built IPA (main app).
+def read_ipa_short_version(ipa_path)
+  begin
+    FastlaneCore::IpaFileAnalyser.fetch_app_version(ipa_path)
+  rescue => ex
+    UI.important("⚠️  Could not analyse IPA version: #{ex.message}")
+    nil
+  end
+end
+
+def verify_ipa_matches_pubspec!(ipa_path)
+  _p, _c, expected_name, expected_build = read_pubspec_version
+  short = read_ipa_short_version(ipa_path)
+  UI.message("📋 IPA short version=#{short.inspect} (expect #{expected_name}+#{expected_build})")
+
+  if short && short != expected_name
+    UI.user_error!(
+      "❌ IPA CFBundleShortVersionString is #{short}, pubspec is #{expected_name}. " \
+      "Extension targets may still be hardcoded — ensure sync_extension_versions_from_pubspec! ran."
+    )
+  end
+  true
+end
+
+def flutter_version_build_args
+  _p, _c, version_name, build_number = read_pubspec_version
+  "--build-name=#{version_name} --build-number=#{build_number}"
 end
 
 def generate_release_notes
@@ -444,7 +594,9 @@ def generate_release_notes
 
       commit_msg = parts[1].strip
       next if commit_msg.include?("Auto-increment build number") ||
-              commit_msg.include?("chore: Auto-increment")
+              commit_msg.include?("chore: Auto-increment") ||
+              commit_msg.include?("Auto-bump marketing version") ||
+              commit_msg.include?("chore: Auto-bump")
 
       cleaned = commit_msg.length > 150 ? commit_msg[0..150] : commit_msg
       valid_commits << cleaned unless cleaned.empty?
@@ -600,16 +752,20 @@ platform :ios do
       )
 
       export_plist = write_ci_export_options_plist!
-      UI.message("📦 Building IPA via flutter build ipa...")
+      sync_extension_versions_from_pubspec!
+      ver_args = flutter_version_build_args
+      UI.message("📦 Building IPA via flutter build ipa (#{ver_args})...")
       git_def = flutter_git_define_args
       sh(
         "cd #{PROJECT_ROOT} && flutter build ipa --release " \
-        "--export-options-plist=#{export_plist} #{git_def}"
+        "#{ver_args} --export-options-plist=#{export_plist} #{git_def}"
       )
       ensure_runner_ipa_path!
     else
+      sync_extension_versions_from_pubspec!
+      ver_args = flutter_version_build_args
       git_def = flutter_git_define_args
-      sh("cd #{PROJECT_ROOT} && flutter build ios --release --no-codesign #{git_def}")
+      sh("cd #{PROJECT_ROOT} && flutter build ios --release --no-codesign #{ver_args} #{git_def}")
 
       export_opts = {
         method: export_method,
@@ -647,9 +803,14 @@ platform :ios do
     api_key = build_app_store_connect_api_key
 
     unless skip_build
+      # 1) If ASC already closed this marketing train, bump *before* building.
+      ensure_marketing_version_above_app_store_floor!
+      # 2) Always +1 build for this upload.
       UI.important("🔢 Auto-incrementing build number...")
       new_build_number = increment_build_number_in_pubspec
       commit_and_push_build_number(new_build_number)
+      # 3) Keep Widget/Share MARKETING_VERSION in lockstep with pubspec.
+      sync_extension_versions_from_pubspec!
       UI.important("")
 
       UI.important("📦 Building IPA for App Store / TestFlight...")
@@ -696,6 +857,7 @@ platform :ios do
         "❌ IPA not found at #{ipa_path}. Build first or omit skip_build."
       )
     end
+    verify_ipa_matches_pubspec!(ipa_path) unless skip_build
 
     UI.message("🚀 Uploading to TestFlight...")
     ENV["PILOT_APP_IDENTIFIER"] = APP_IDENTIFIER
@@ -741,7 +903,7 @@ platform :ios do
         UI.success("✅ Successfully uploaded to TestFlight!")
       elsif closed_app_store_train_error?(error_msg) && !skip_build
         # ASC closed this marketing version (already approved / train locked).
-        # Bump CFBundleShortVersionString, rebuild, upload once more in-job.
+        # Bump CFBundleShortVersionString, sync extensions, rebuild, upload once more.
         UI.important("🚂 Pre-release train closed (ASC 90186/90062) — auto-bumping marketing version…")
         UI.important("   #{error_msg.lines.first&.strip}")
         new_name, new_build = increment_marketing_version_in_pubspec
@@ -750,11 +912,13 @@ platform :ios do
           commit_subject: "chore: Auto-bump marketing version to #{new_name}+#{new_build} [skip ci]",
           commit_body: "ASC closed the previous marketing-version train (90186/90062). Fastfile bumped patch + build and re-uploaded."
         )
+        sync_extension_versions_from_pubspec!
         UI.important("📦 Rebuilding IPA at #{new_name}+#{new_build}…")
         build_ipa(export_method: "app-store")
         unless File.exist?(ipa_path)
           UI.user_error!("❌ IPA missing after rebuild at #{ipa_path}")
         end
+        verify_ipa_matches_pubspec!(ipa_path)
         upload_to_testflight(pilot_opts)
         UI.success("✅ Uploaded to TestFlight after auto version bump (#{new_name}+#{new_build})")
         UI.message("📱 Check App Store Connect for build processing status")
