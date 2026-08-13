@@ -957,7 +957,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nearbyFooter =>
-      'Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.';
+      'Local Wi‑Fi only. Requires a 6-digit code + Accept. Values are encrypted in transit (AES-GCM). No ClipVal cloud. Turn off when idle.';
 
   @override
   String get nearbySendTitle => 'Send nearby';
@@ -1041,4 +1041,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clipboardSuggestSaved => 'Saved from clipboard';
+
+  @override
+  String get nearbyPinLabel => 'Their 6-digit code';
+
+  @override
+  String get nearbyPinInvalid =>
+      'Enter the 6-digit code shown on the other device';
+
+  @override
+  String get nearbyPinWrong => 'Wrong code — check the other device';
+
+  @override
+  String get nearbySendSubtitlePin =>
+      'Pick a device, then enter the code shown under Settings → Nearby on that phone. Value is encrypted on the way.';
+
+  @override
+  String get nearbySessionPin => 'Your code';
+
+  @override
+  String get nearbySessionPinSubtitle =>
+      'Other devices type this to send to you. Rotates when you refresh or re-enable Nearby.';
+
+  @override
+  String get nearbyRotatePin => 'New code';
+
+  @override
+  String get iCloudDiagnose => 'Check iCloud status';
+
+  @override
+  String get iCloudDiagnoseOk => 'iCloud looks ready';
+
+  @override
+  String get iCloudDiagnoseSchema =>
+      'Production schema not ready — deploy CloudKit types from Dashboard (see docs)';
+
+  @override
+  String get iCloudDiagnoseNoAccount => 'No iCloud account on this device';
+
+  @override
+  String get iCloudDiagnoseNetwork => 'Network error talking to iCloud';
+
+  @override
+  String get iCloudDiagnoseOther => 'iCloud check failed';
 }

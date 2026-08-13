@@ -1,6 +1,7 @@
 import '../models/clip_item.dart';
 import 'clipboard_service.dart';
 import 'clip_item_repository.dart';
+import 'nearby/nearby_crypto.dart';
 import 'settings_service.dart';
 
 /// Decides whether to surface "Save clipboard to ClipVal?"
@@ -29,14 +30,14 @@ class ClipboardSuggestService {
     final self = _clipboard.lastSelfCopiedText;
     if (self != null && self == text) return null;
 
-    // Skip if user dismissed this exact payload recently.
+    // Dismissed store is a hash — never persist pasteboard plaintext.
+    final fp = NearbyCrypto.clipboardFingerprint(text);
     final dismissed = SettingsService.instance.clipboardSuggestLastDismissed;
-    if (dismissed != null && dismissed == text) return null;
+    if (dismissed != null && dismissed == fp) return null;
 
     // Skip if an identical value already exists in vault.
     try {
-      final existing = _items.getAll();
-      for (final ClipItem item in existing) {
+      for (final ClipItem item in _items.getAll()) {
         if (item.value == text) return null;
       }
     } catch (_) {}
@@ -45,7 +46,9 @@ class ClipboardSuggestService {
   }
 
   Future<void> markDismissed(String text) =>
-      SettingsService.instance.setClipboardSuggestLastDismissed(text);
+      SettingsService.instance.setClipboardSuggestLastDismissed(
+        NearbyCrypto.clipboardFingerprint(text),
+      );
 
   Future<void> clearDismissed() =>
       SettingsService.instance.setClipboardSuggestLastDismissed(null);

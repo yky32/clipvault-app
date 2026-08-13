@@ -22,7 +22,9 @@
   "itemCount": "{count} items",
   "@itemCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "itemCountOne": "1 item",
@@ -30,13 +32,17 @@
   "noMatchesSearch": "Nothing matches “{query}”.",
   "@noMatchesSearch": {
     "placeholders": {
-      "query": { "type": "String" }
+      "query": {
+        "type": "String"
+      }
     }
   },
   "noMatchesCategory": "No items in “{category}” yet.",
   "@noMatchesCategory": {
     "placeholders": {
-      "category": { "type": "String" }
+      "category": {
+        "type": "String"
+      }
     }
   },
   "clearSearch": "Clear search",
@@ -73,7 +79,9 @@
   "categoryDeleteBody": "\"{name}\" will be removed. Items keep their values but lose this label.",
   "@categoryDeleteBody": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "slideToAdd": "Slide to add",
@@ -105,7 +113,9 @@
   "deleteConfirmBody": "\"{title}\" will be removed from your vault.",
   "@deleteConfirmBody": {
     "placeholders": {
-      "title": { "type": "String" }
+      "title": {
+        "type": "String"
+      }
     }
   },
   "select": "Select",
@@ -113,7 +123,9 @@
   "selectedCount": "{count} selected",
   "@selectedCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "selectAll": "Select All",
@@ -122,20 +134,26 @@
   "deleteSelectedTitle": "Delete {count} items?",
   "@deleteSelectedTitle": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "deleteSelectedBody": "These items will be permanently removed from your vault.",
   "deleteSelectedSuccess": "Deleted {count} items",
   "@deleteSelectedSuccess": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "copied": "Copied {title}",
   "@copied": {
     "placeholders": {
-      "title": { "type": "String" }
+      "title": {
+        "type": "String"
+      }
     }
   },
   "pinnedSection": "Pinned",
@@ -166,7 +184,9 @@
   "iCloudSyncLastAt": "Last sync {when}",
   "@iCloudSyncLastAt": {
     "placeholders": {
-      "when": { "type": "String" }
+      "when": {
+        "type": "String"
+      }
     }
   },
   "iCloudSyncSuccess": "Vault synced",
@@ -193,7 +213,9 @@
   "itemsDeletedUndo": "{count} items deleted",
   "@itemsDeletedUndo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "themeMode": "Theme",
@@ -243,26 +265,36 @@
   "importCsvPreviewSummary": "{newCount} new · {skipCount} skipped",
   "@importCsvPreviewSummary": {
     "placeholders": {
-      "newCount": { "type": "int" },
-      "skipCount": { "type": "int" }
+      "newCount": {
+        "type": "int"
+      },
+      "skipCount": {
+        "type": "int"
+      }
     }
   },
   "importCsvPreviewInvalid": "{count} invalid",
   "@importCsvPreviewInvalid": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "importCsvPreviewSamples": "Includes: {titles}",
   "@importCsvPreviewSamples": {
     "placeholders": {
-      "titles": { "type": "String" }
+      "titles": {
+        "type": "String"
+      }
     }
   },
   "importCsvPreviewNewCategories": "New categories: {names}",
   "@importCsvPreviewNewCategories": {
     "placeholders": {
-      "names": { "type": "String" }
+      "names": {
+        "type": "String"
+      }
     }
   },
   "importCsvPreviewFooter": "Items will be added to this vault. Exact duplicates (same title and value) are skipped. Values are plain text in the file.",
@@ -277,16 +309,26 @@
   "importCsvSuccess": "Imported {imported}, skipped {skipped}",
   "@importCsvSuccess": {
     "placeholders": {
-      "imported": { "type": "int" },
-      "skipped": { "type": "int" }
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
     }
   },
   "importCsvSuccessWithFailed": "Imported {imported}, skipped {skipped}, failed {failed}",
   "@importCsvSuccessWithFailed": {
     "placeholders": {
-      "imported": { "type": "int" },
-      "skipped": { "type": "int" },
-      "failed": { "type": "int" }
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
     }
   },
   "importCsvEmpty": "No items found in that file",
@@ -305,7 +347,9 @@
   "welcomeSubtitleUpgrade": "Version {version}",
   "@welcomeSubtitleUpgrade": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "welcomeWhyTitle": "Why ClipVal",
@@ -345,14 +389,20 @@
   "settingsFooterVersion": "v{version} · Stored in local device only",
   "@settingsFooterVersion": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "settingsFooterVersionWithCommit": "v{version} #{commit} · Stored in local device only",
   "@settingsFooterVersionWithCommit": {
     "placeholders": {
-      "version": { "type": "String" },
-      "commit": { "type": "String" }
+      "version": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
     }
   },
   "lastUsedLabel": "Last used",
@@ -361,19 +411,25 @@
   "minutesAgo": "{count}m ago",
   "@minutesAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "hoursAgo": "{count}h ago",
   "@hoursAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "daysAgo": "{count}d ago",
   "@daysAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "yesterday": "Yesterday",
@@ -399,33 +455,41 @@
   "addressLanguageRemoveBody": "\"{name}\" will no longer be offered when tagging Addresses items. Existing tags on items are kept.",
   "@addressLanguageRemoveBody": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "gridTitleSize": "Grid title size",
   "gridTitleSizeSubtitle": "Title text on vault grid cards. Does not auto-shrink.",
   "gridTitleSizeLarge": "Large",
   "gridTitleSizeMedium": "Medium",
-  "gridTitleSizeSmall": "Small"
-,
-
+  "gridTitleSizeSmall": "Small",
   "nearbySection": "Nearby",
   "nearbyEnabled": "Nearby send & receive",
   "nearbyEnabledSubtitle": "Send a vault item to another ClipVal on the same Wi‑Fi — no cloud",
   "nearbyDisplayName": "This device name",
   "nearbyDisplayNameHint": "Shown to nearby ClipVal devices",
-  "nearbyFooter": "Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.",
+  "nearbyFooter": "Local Wi‑Fi only. Requires a 6-digit code + Accept. Values are encrypted in transit (AES-GCM). No ClipVal cloud. Turn off when idle.",
   "nearbySendTitle": "Send nearby",
   "nearbySendSubtitle": "Choose a ClipVal device on this Wi‑Fi. They’ll get a prompt to save the item.",
   "nearbyScanning": "Looking for nearby ClipVal…",
   "nearbyNoDevices": "No devices found. Open ClipVal on the other phone and enable Nearby in Settings.",
   "nearbySendAccepted": "Saved on {name}",
   "@nearbySendAccepted": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbySendRejected": "Declined by {name}",
   "@nearbySendRejected": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbySendTimeout": "No response — try again",
   "nearbySendUnreachable": "Couldn’t reach device",
@@ -434,7 +498,11 @@
   "nearbyReceiveTitle": "Incoming ClipVal item",
   "nearbyReceiveFrom": "From {name}",
   "@nearbyReceiveFrom": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbyReceivePrivacyNote": "On your Wi‑Fi only. Nothing is saved until you accept.",
   "nearbyDecline": "Decline",
@@ -447,5 +515,18 @@
   "clipboardSuggestBannerTitle": "Save to ClipVal?",
   "clipboardSuggestSave": "Save",
   "clipboardSuggestNotNow": "Not now",
-  "clipboardSuggestSaved": "Saved from clipboard"
+  "clipboardSuggestSaved": "Saved from clipboard",
+  "nearbyPinLabel": "Their 6-digit code",
+  "nearbyPinInvalid": "Enter the 6-digit code shown on the other device",
+  "nearbyPinWrong": "Wrong code — check the other device",
+  "nearbySendSubtitlePin": "Pick a device, then enter the code shown under Settings → Nearby on that phone. Value is encrypted on the way.",
+  "nearbySessionPin": "Your code",
+  "nearbySessionPinSubtitle": "Other devices type this to send to you. Rotates when you refresh or re-enable Nearby.",
+  "nearbyRotatePin": "New code",
+  "iCloudDiagnose": "Check iCloud status",
+  "iCloudDiagnoseOk": "iCloud looks ready",
+  "iCloudDiagnoseSchema": "Production schema not ready — deploy CloudKit types from Dashboard (see docs)",
+  "iCloudDiagnoseNoAccount": "No iCloud account on this device",
+  "iCloudDiagnoseNetwork": "Network error talking to iCloud",
+  "iCloudDiagnoseOther": "iCloud check failed"
 }

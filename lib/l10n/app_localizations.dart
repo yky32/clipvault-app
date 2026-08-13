@@ -1823,7 +1823,7 @@ abstract class AppLocalizations {
   /// No description provided for @nearbyFooter.
   ///
   /// In en, this message translates to:
-  /// **'Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.'**
+  /// **'Local Wi‑Fi only. Requires a 6-digit code + Accept. Values are encrypted in transit (AES-GCM). No ClipVal cloud. Turn off when idle.'**
   String get nearbyFooter;
 
   /// No description provided for @nearbySendTitle.
@@ -1969,6 +1969,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved from clipboard'**
   String get clipboardSuggestSaved;
+
+  /// No description provided for @nearbyPinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Their 6-digit code'**
+  String get nearbyPinLabel;
+
+  /// No description provided for @nearbyPinInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code shown on the other device'**
+  String get nearbyPinInvalid;
+
+  /// No description provided for @nearbyPinWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong code — check the other device'**
+  String get nearbyPinWrong;
+
+  /// No description provided for @nearbySendSubtitlePin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a device, then enter the code shown under Settings → Nearby on that phone. Value is encrypted on the way.'**
+  String get nearbySendSubtitlePin;
+
+  /// No description provided for @nearbySessionPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Your code'**
+  String get nearbySessionPin;
+
+  /// No description provided for @nearbySessionPinSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Other devices type this to send to you. Rotates when you refresh or re-enable Nearby.'**
+  String get nearbySessionPinSubtitle;
+
+  /// No description provided for @nearbyRotatePin.
+  ///
+  /// In en, this message translates to:
+  /// **'New code'**
+  String get nearbyRotatePin;
+
+  /// No description provided for @iCloudDiagnose.
+  ///
+  /// In en, this message translates to:
+  /// **'Check iCloud status'**
+  String get iCloudDiagnose;
+
+  /// No description provided for @iCloudDiagnoseOk.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud looks ready'**
+  String get iCloudDiagnoseOk;
+
+  /// No description provided for @iCloudDiagnoseSchema.
+  ///
+  /// In en, this message translates to:
+  /// **'Production schema not ready — deploy CloudKit types from Dashboard (see docs)'**
+  String get iCloudDiagnoseSchema;
+
+  /// No description provided for @iCloudDiagnoseNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'No iCloud account on this device'**
+  String get iCloudDiagnoseNoAccount;
+
+  /// No description provided for @iCloudDiagnoseNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error talking to iCloud'**
+  String get iCloudDiagnoseNetwork;
+
+  /// No description provided for @iCloudDiagnoseOther.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud check failed'**
+  String get iCloudDiagnoseOther;
 }
 
 class _AppLocalizationsDelegate

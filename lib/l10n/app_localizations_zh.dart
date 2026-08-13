@@ -930,7 +930,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nearbyDisplayNameHint => '顯示給附近的 ClipVal';
 
   @override
-  String get nearbyFooter => '只使用區域網路（類似 Wi‑Fi 上的 AirDrop）。對方必須接受。不用時請關閉。';
+  String get nearbyFooter =>
+      '只經區域 Wi‑Fi。需要 6 位代碼 + 接受。內容傳輸加密（AES-GCM）。無 ClipVal 雲端。不用時請關閉。';
 
   @override
   String get nearbySendTitle => '傳送到附近';
@@ -1010,4 +1011,44 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardSuggestSaved => '已從剪貼簿儲存';
+
+  @override
+  String get nearbyPinLabel => '對方的 6 位代碼';
+
+  @override
+  String get nearbyPinInvalid => '請輸入對方裝置顯示的 6 位代碼';
+
+  @override
+  String get nearbyPinWrong => '代碼錯誤 — 請核對方裝置';
+
+  @override
+  String get nearbySendSubtitlePin => '選擇裝置，然後輸入對方「設定 → 附近」顯示的代碼。內容傳輸時會加密。';
+
+  @override
+  String get nearbySessionPin => '你的代碼';
+
+  @override
+  String get nearbySessionPinSubtitle => '其他裝置要輸入此代碼才能傳給你。重新整理或重開附近會更換。';
+
+  @override
+  String get nearbyRotatePin => '換新代碼';
+
+  @override
+  String get iCloudDiagnose => '檢查 iCloud 狀態';
+
+  @override
+  String get iCloudDiagnoseOk => 'iCloud 看起來就緒';
+
+  @override
+  String get iCloudDiagnoseSchema =>
+      '正式版 schema 未就緒 — 請在 CloudKit Dashboard 部署類型（見文件）';
+
+  @override
+  String get iCloudDiagnoseNoAccount => '此裝置未登入 iCloud';
+
+  @override
+  String get iCloudDiagnoseNetwork => '連線 iCloud 時網絡錯誤';
+
+  @override
+  String get iCloudDiagnoseOther => 'iCloud 檢查失敗';
 }

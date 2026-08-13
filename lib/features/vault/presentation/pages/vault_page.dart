@@ -76,6 +76,9 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
     if (_clipboardSuggestText != null) return;
     _clipboardSuggestChecking = true;
     try {
+      // Brief settle — avoids racing lock screen / OS paste banners.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!mounted || _selecting) return;
       final svc = ClipboardSuggestService(
         clipboard: AppBootstrap.clipboardService,
         items: AppBootstrap.clipItemRepository,

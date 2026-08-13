@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -55,6 +56,8 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _nearbyEnabled;
   late String _nearbyName;
   bool _nearbyBusy = false;
+  String? _nearbyPin;
+  StreamSubscription? _nearbyPinSub;
   String _versionLabel = '1.0.0';
 
   @override
@@ -76,7 +79,17 @@ class _SettingsPageState extends State<SettingsPage> {
     _iCloudLastSync = s.iCloudLastSyncAt;
     _nearbyEnabled = s.nearbyEnabled;
     _nearbyName = s.nearbyDisplayName;
+    _nearbyPin = NearbyService.instance.sessionPin;
+    _nearbyPinSub = NearbyService.instance.sessionPin$.listen((p) {
+      if (mounted) setState(() => _nearbyPin = p);
+    });
     _loadVersion();
+  }
+
+  @override
+  void dispose() {
+    _nearbyPinSub?.cancel();
+    super.dispose();
   }
 
 
@@ -196,6 +209,40 @@ class _SettingsPageState extends State<SettingsPage> {
     await NearbyService.instance.updateDisplayName(name);
     if (!mounted) return;
     setState(() => _nearbyName = name);
+  }
+
+
+  Future<void> _diagnoseICloud() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _iCloudBusy = true);
+    try {
+      final r = await AppBootstrap.iCloudSyncService.diagnose();
+      if (!mounted) return;
+      final body = switch (r.code) {
+        ICloudSyncResult.schemaProduction => l10n.iCloudDiagnoseSchema,
+        ICloudSyncResult.noAccount => l10n.iCloudDiagnoseNoAccount,
+        ICloudSyncResult.network => l10n.iCloudDiagnoseNetwork,
+        _ => r.ok ? l10n.iCloudDiagnoseOk : (r.message ?? l10n.iCloudDiagnoseOther),
+      };
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: Text(l10n.iCloudDiagnose),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(body),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _iCloudBusy = false);
+    }
   }
 
   Future<void> _toggleICloudSync(bool value) async {
@@ -1366,6 +1413,17 @@ class _SettingsPageState extends State<SettingsPage> {
                               : const IosChevron(),
                           onTap: _iCloudBusy ? null : _syncICloudNow,
                         ),
+                      IosGroupTile(
+                        title: l10n.iCloudDiagnose,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.heart_fill,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: _iCloudBusy
+                            ? const CupertinoActivityIndicator()
+                            : const IosChevron(),
+                        onTap: _iCloudBusy ? null : _diagnoseICloud,
+                      ),
                     ],
                   ),
                 if (!kIsWeb && Platform.isIOS) const SizedBox(height: 28),
@@ -1398,6 +1456,29 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         trailing: const IosChevron(),
                         onTap: _editNearbyName,
+                      ),
+                    if (_nearbyEnabled && _nearbyPin != null)
+                      IosGroupTile(
+                        title: l10n.nearbySessionPin,
+                        subtitle: _nearbyPin,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.lock_shield_fill,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            NearbyService.instance.rotatePin();
+                            HapticFeedback.selectionClick();
+                          },
+                          child: Text(
+                            l10n.nearbyRotatePin,
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                       ),
                   ],
                 ),

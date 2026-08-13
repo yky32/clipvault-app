@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -67,8 +68,7 @@ class ICloudSyncService {
 
   /// Filter Xcode / `flutter run` console with: `ClipVal iCloud`
   static void _log(String message) {
-    // ignore: avoid_print — intentional proof logs for sync verification
-    print('[ClipVal iCloud] $message');
+    developer.log(message, name: 'clipval.icloud');
   }
 
   bool get isSupported => !kIsWeb && Platform.isIOS;
@@ -119,6 +119,48 @@ class ICloudSyncService {
         'status': 'error',
         'message': e.message ?? e.code,
       };
+    }
+  }
+
+  /// Lightweight health check for Settings (no full vault merge).
+  /// Surfaces schema / account / network codes without dumping raw CK noise.
+  Future<ICloudSyncResult> diagnose() async {
+    if (!isSupported) {
+      return const ICloudSyncResult(ok: false, message: 'unsupported');
+    }
+    final avail = await checkAvailability();
+    final status = '${avail['status'] ?? ''}'.toLowerCase();
+    if (avail['available'] != true) {
+      if (status.contains('noaccount') || status.contains('no_account')) {
+        return const ICloudSyncResult(
+          ok: false,
+          code: ICloudSyncResult.noAccount,
+        );
+      }
+      final mapped = mapErrorCode(
+        platformCode: status,
+        message: avail['message']?.toString(),
+      );
+      return ICloudSyncResult(
+        ok: false,
+        code: mapped,
+        message: avail['message']?.toString() ?? status,
+      );
+    }
+    // Probe private DB with empty pull — catches production schema gaps.
+    try {
+      await _channel.invokeMethod<dynamic>('fetchAll');
+      return const ICloudSyncResult(ok: true);
+    } on PlatformException catch (e) {
+      final code = mapErrorCode(platformCode: e.code, message: e.message);
+      return ICloudSyncResult(
+        ok: false,
+        code: code,
+        message: e.message ?? e.code,
+      );
+    } catch (e) {
+      final code = mapErrorCode(message: '$e');
+      return ICloudSyncResult(ok: false, code: code, message: '$e');
     }
   }
 
