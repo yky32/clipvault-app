@@ -1,12 +1,12 @@
-/// Nearby (LAN) vault item transfer — LocalSend-inspired, item-only MVP.
+/// Nearby (LAN) vault item transfer — LocalSend-inspired.
 ///
-/// Protocol v1 (HTTP on local Wi‑Fi, no ClipVal cloud):
+/// Protocol v2 (HTTP on local Wi‑Fi, no ClipVal cloud):
 /// - Advertise: Bonjour `_clipval-nearby._tcp`
-/// - GET  /v1/ping  → device card
-/// - POST /v1/offer → hold until receiver Accept/Reject (timeout ~55s)
+/// - GET  /v1/ping  → device card (`pinRequired: true`, no PIN leak)
+/// - POST /v1/offer → PIN required; **value is AES-GCM ciphertext**
+/// - Holds until receiver Accept/Reject (timeout ~55s)
 ///
-/// Trust model: same LAN + explicit human Accept (like AirDrop).
-/// Values travel only on the local network; no ClipVal server.
+/// Trust: same LAN + 6-digit session PIN (shown on receiver) + human Accept.
 library;
 
 class NearbyDevice {
@@ -28,6 +28,66 @@ class NearbyDevice {
   String toString() => 'NearbyDevice($name @ $host:$port)';
 }
 
+/// Wire payload for POST /v1/offer (v2).
+class NearbyOfferWire {
+  const NearbyOfferWire({
+    required this.fromName,
+    required this.fromId,
+    required this.title,
+    required this.pin,
+    required this.ciphertext,
+    required this.nonce,
+    this.categoryName,
+    this.isSensitive = false,
+    this.protocolVersion = 2,
+  });
+
+  final int protocolVersion;
+  final String fromName;
+  final String fromId;
+  final String title;
+  final String pin;
+  final String ciphertext;
+  final String nonce;
+  final String? categoryName;
+  final bool isSensitive;
+
+  Map<String, dynamic> toJson() => {
+        'protocolVersion': protocolVersion,
+        'fromName': fromName,
+        'fromId': fromId,
+        'title': title,
+        'pin': pin,
+        'ciphertext': ciphertext,
+        'nonce': nonce,
+        if (categoryName != null && categoryName!.isNotEmpty)
+          'categoryName': categoryName,
+        'isSensitive': isSensitive,
+      };
+
+  static NearbyOfferWire? tryParse(Map<String, dynamic> json) {
+    final title = json['title']?.toString() ?? '';
+    final pin = json['pin']?.toString() ?? '';
+    final ct = json['ciphertext']?.toString() ?? '';
+    final nonce = json['nonce']?.toString() ?? '';
+    // v1 plaintext fallback rejected — force v2 crypto.
+    if (ct.isEmpty || nonce.isEmpty) return null;
+    if (title.trim().isEmpty) return null;
+    return NearbyOfferWire(
+      protocolVersion: (json['protocolVersion'] as num?)?.toInt() ?? 2,
+      fromName: json['fromName']?.toString() ?? 'ClipVal',
+      fromId: json['fromId']?.toString() ?? '',
+      title: title.trim(),
+      pin: pin,
+      ciphertext: ct,
+      nonce: nonce,
+      categoryName: json['categoryName']?.toString(),
+      isSensitive: json['isSensitive'] == true,
+    );
+  }
+}
+
+/// Decrypted offer for UI.
 class NearbyOfferPayload {
   const NearbyOfferPayload({
     required this.fromName,
@@ -44,33 +104,6 @@ class NearbyOfferPayload {
   final String value;
   final String? categoryName;
   final bool isSensitive;
-
-  Map<String, dynamic> toJson() => {
-        'protocolVersion': 1,
-        'fromName': fromName,
-        'fromId': fromId,
-        'title': title,
-        'value': value,
-        if (categoryName != null && categoryName!.isNotEmpty)
-          'categoryName': categoryName,
-        'isSensitive': isSensitive,
-      };
-
-  static NearbyOfferPayload? fromJson(Map<String, dynamic> json) {
-    final title = json['title']?.toString() ?? '';
-    final value = json['value']?.toString() ?? '';
-    if (title.trim().isEmpty && value.trim().isEmpty) return null;
-    return NearbyOfferPayload(
-      fromName: json['fromName']?.toString() ?? 'ClipVal',
-      fromId: json['fromId']?.toString() ?? '',
-      title: title.trim().isEmpty
-          ? (value.length > 32 ? '${value.substring(0, 32)}…' : value)
-          : title,
-      value: value,
-      categoryName: json['categoryName']?.toString(),
-      isSensitive: json['isSensitive'] == true,
-    );
-  }
 }
 
 enum NearbySendResult {
@@ -80,6 +113,7 @@ enum NearbySendResult {
   timeout,
   cancelled,
   disabled,
+  badPin,
   error,
 }
 

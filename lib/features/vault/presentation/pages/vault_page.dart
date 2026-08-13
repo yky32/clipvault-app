@@ -11,6 +11,8 @@ import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/review_prompt_service.dart';
+import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/services/clipboard_suggest_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/services/share_intake_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -33,27 +35,169 @@ class VaultPage extends StatefulWidget {
   State<VaultPage> createState() => _VaultPageState();
 }
 
-class _VaultPageState extends State<VaultPage> {
+class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   bool _welcomeChecked = false;
   bool _selecting = false;
   final Set<String> _selectedIds = {};
+  String? _clipboardSuggestText;
+  bool _clipboardSuggestBusy = false;
+  bool _clipboardSuggestChecking = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     ShareIntakeService.attach(_openSharedPayload);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowWelcome();
       ShareIntakeService.consumePending();
+      _maybeSuggestClipboard();
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     ShareIntakeService.detach();
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _maybeSuggestClipboard();
+    }
+  }
+
+  Future<void> _maybeSuggestClipboard() async {
+    if (!mounted || _selecting || _clipboardSuggestChecking) return;
+    if (_clipboardSuggestText != null) return;
+    _clipboardSuggestChecking = true;
+    try {
+      // Brief settle — avoids racing lock screen / OS paste banners.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!mounted || _selecting) return;
+      final svc = ClipboardSuggestService(
+        clipboard: AppBootstrap.clipboardService,
+        items: AppBootstrap.clipItemRepository,
+      );
+      final text = await svc.evaluate();
+      if (!mounted || text == null) return;
+      setState(() => _clipboardSuggestText = text);
+    } finally {
+      _clipboardSuggestChecking = false;
+    }
+  }
+
+  Future<void> _dismissClipboardSuggest() async {
+    final text = _clipboardSuggestText;
+    if (text == null) return;
+    await ClipboardSuggestService(
+      clipboard: AppBootstrap.clipboardService,
+      items: AppBootstrap.clipItemRepository,
+    ).markDismissed(text);
+    if (!mounted) return;
+    setState(() => _clipboardSuggestText = null);
+  }
+
+  Future<void> _saveClipboardSuggest() async {
+    final text = _clipboardSuggestText;
+    if (text == null || _clipboardSuggestBusy) return;
+    setState(() => _clipboardSuggestBusy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final title = _titleFromSharedValue(text);
+      await AppBootstrap.clipItemRepository.create(
+        title: title.isEmpty ? 'Clipboard' : title,
+        value: text,
+      );
+      await ClipboardSuggestService(
+        clipboard: AppBootstrap.clipboardService,
+        items: AppBootstrap.clipItemRepository,
+      ).markDismissed(text);
+      if (!mounted) return;
+      context.read<VaultBloc>().add(const VaultRefreshed());
+      setState(() {
+        _clipboardSuggestText = null;
+        _clipboardSuggestBusy = false;
+      });
+      CopiedHud.show(context, message: l10n.clipboardSuggestSaved);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _clipboardSuggestBusy = false);
+      CopiedHud.show(context, message: '$e');
+    }
+  }
+
+  Widget _clipboardSuggestBanner(AppLocalizations l10n) {
+    final text = _clipboardSuggestText;
+    if (text == null) return const SizedBox.shrink();
+    final preview = text.length > 100 ? '${text.substring(0, 100)}…' : text;
+    return Material(
+      color: AppColors.cardBackground(context),
+      elevation: 0,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(CupertinoIcons.doc_on_clipboard, color: AppColors.primary, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.clipboardSuggestBannerTitle,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              preview,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.secondaryLabel(context),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _clipboardSuggestBusy ? null : _dismissClipboardSuggest,
+                  child: Text(l10n.clipboardSuggestNotNow),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _clipboardSuggestBusy ? null : _saveClipboardSuggest,
+                  child: _clipboardSuggestBusy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.clipboardSuggestSave),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _openSharedPayload(SharedClipPayload payload) {
@@ -619,6 +763,10 @@ class _VaultPageState extends State<VaultPage> {
                               ),
                             ),
                           ),
+                          if (_clipboardSuggestText != null && !_selecting)
+                            SliverToBoxAdapter(
+                              child: _clipboardSuggestBanner(l10n),
+                            ),
                           if (state.categories.isNotEmpty)
                             SliverToBoxAdapter(
                               child: SizedBox(
@@ -685,14 +833,19 @@ class _VaultPageState extends State<VaultPage> {
                               ),
                             ),
                         ],
-                        if (isEmpty)
+                        if (isEmpty) ...[
+                          if (_clipboardSuggestText != null && !_selecting)
+                            SliverToBoxAdapter(
+                              child: _clipboardSuggestBanner(l10n),
+                            ),
                           SliverFillRemaining(
                             hasScrollBody: false,
                             child: VaultEmptyState(
                               onAdd: _openAdd,
                               onStarter: _openStarter,
                             ),
-                          )
+                          ),
+                        ]
                         else if (filtered.isEmpty)
                           SliverFillRemaining(
                             hasScrollBody: false,

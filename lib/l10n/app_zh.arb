@@ -88,7 +88,9 @@
   "selectedCount": "已選 {count} 項",
   "@selectedCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "selectAll": "全選",
@@ -97,14 +99,18 @@
   "deleteSelectedTitle": "刪除 {count} 個項目？",
   "@deleteSelectedTitle": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "deleteSelectedBody": "這些項目將從保險庫中永久移除。",
   "deleteSelectedSuccess": "已刪除 {count} 個項目",
   "@deleteSelectedSuccess": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "copied": "已複製 {title}",
@@ -136,7 +142,9 @@
   "iCloudSyncLastAt": "上次同步 {when}",
   "@iCloudSyncLastAt": {
     "placeholders": {
-      "when": { "type": "String" }
+      "when": {
+        "type": "String"
+      }
     }
   },
   "iCloudSyncSuccess": "已同步",
@@ -163,7 +171,9 @@
   "itemsDeletedUndo": "已刪除 {count} 個項目",
   "@itemsDeletedUndo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "themeMode": "主題",
@@ -213,26 +223,36 @@
   "importCsvPreviewSummary": "{newCount} 筆新增 · {skipCount} 筆略過",
   "@importCsvPreviewSummary": {
     "placeholders": {
-      "newCount": { "type": "int" },
-      "skipCount": { "type": "int" }
+      "newCount": {
+        "type": "int"
+      },
+      "skipCount": {
+        "type": "int"
+      }
     }
   },
   "importCsvPreviewInvalid": "{count} 筆無效",
   "@importCsvPreviewInvalid": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "importCsvPreviewSamples": "包含：{titles}",
   "@importCsvPreviewSamples": {
     "placeholders": {
-      "titles": { "type": "String" }
+      "titles": {
+        "type": "String"
+      }
     }
   },
   "importCsvPreviewNewCategories": "新分類：{names}",
   "@importCsvPreviewNewCategories": {
     "placeholders": {
-      "names": { "type": "String" }
+      "names": {
+        "type": "String"
+      }
     }
   },
   "importCsvPreviewFooter": "項目會加入此保險庫。完全相同的標題與內容會略過。檔案內為純文字。",
@@ -247,16 +267,26 @@
   "importCsvSuccess": "已匯入 {imported}，略過 {skipped}",
   "@importCsvSuccess": {
     "placeholders": {
-      "imported": { "type": "int" },
-      "skipped": { "type": "int" }
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
     }
   },
   "importCsvSuccessWithFailed": "已匯入 {imported}，略過 {skipped}，失敗 {failed}",
   "@importCsvSuccessWithFailed": {
     "placeholders": {
-      "imported": { "type": "int" },
-      "skipped": { "type": "int" },
-      "failed": { "type": "int" }
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
     }
   },
   "importCsvEmpty": "檔案中找不到項目",
@@ -275,7 +305,9 @@
   "welcomeSubtitleUpgrade": "版本 {version}",
   "@welcomeSubtitleUpgrade": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "welcomeWhyTitle": "為什麼用 ClipVal",
@@ -315,14 +347,20 @@
   "settingsFooterVersion": "v{version} · 僅儲存在本機裝置",
   "@settingsFooterVersion": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "settingsFooterVersionWithCommit": "v{version} #{commit} · 僅儲存在本機裝置",
   "@settingsFooterVersionWithCommit": {
     "placeholders": {
-      "version": { "type": "String" },
-      "commit": { "type": "String" }
+      "version": {
+        "type": "String"
+      },
+      "commit": {
+        "type": "String"
+      }
     }
   },
   "lastUsedLabel": "上次使用",
@@ -331,19 +369,25 @@
   "minutesAgo": "{count} 分鐘前",
   "@minutesAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "hoursAgo": "{count} 小時前",
   "@hoursAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "daysAgo": "{count} 天前",
   "@daysAgo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "yesterday": "昨天",
@@ -369,33 +413,41 @@
   "addressLanguageRemoveBody": "之後儲存「地址」項目時將不再提供「{name}」。已標記的項目會保留原標籤。",
   "@addressLanguageRemoveBody": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "gridTitleSize": "網格標題大小",
   "gridTitleSizeSubtitle": "保險庫網格卡片的標題字級，不會自動縮小。",
   "gridTitleSizeLarge": "大",
   "gridTitleSizeMedium": "中",
-  "gridTitleSizeSmall": "小"
-,
-
+  "gridTitleSizeSmall": "小",
   "nearbySection": "附近裝置",
   "nearbyEnabled": "附近傳送與接收",
   "nearbyEnabledSubtitle": "經同一 Wi‑Fi 傳送保險庫項目到另一部 ClipVal — 不經雲端",
   "nearbyDisplayName": "此裝置名稱",
   "nearbyDisplayNameHint": "顯示給附近的 ClipVal",
-  "nearbyFooter": "只使用區域網路（類似 Wi‑Fi 上的 AirDrop）。對方必須接受。不用時請關閉。",
+  "nearbyFooter": "只經區域 Wi‑Fi。需要 6 位代碼 + 接受。內容傳輸加密（AES-GCM）。無 ClipVal 雲端。不用時請關閉。",
   "nearbySendTitle": "傳送到附近",
   "nearbySendSubtitle": "選擇同一 Wi‑Fi 上的 ClipVal。對方會收到是否儲存的提示。",
   "nearbyScanning": "正在尋找附近的 ClipVal…",
   "nearbyNoDevices": "找不到裝置。請在另一部手機開啟 ClipVal，並在設定啟用「附近」。",
   "nearbySendAccepted": "已儲存到 {name}",
   "@nearbySendAccepted": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbySendRejected": "{name} 已拒絕",
   "@nearbySendRejected": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbySendTimeout": "沒有回應 — 請再試",
   "nearbySendUnreachable": "無法連線到裝置",
@@ -404,12 +456,35 @@
   "nearbyReceiveTitle": "收到 ClipVal 項目",
   "nearbyReceiveFrom": "來自 {name}",
   "@nearbyReceiveFrom": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "nearbyReceivePrivacyNote": "只經你的 Wi‑Fi。你接受後才會儲存。",
   "nearbyDecline": "拒絕",
   "nearbyAcceptSave": "儲存到保險庫",
   "nearbyReceiveSaved": "已儲存到保險庫",
-  "nearbySendAction": "傳送到附近"
-
+  "nearbySendAction": "傳送到附近",
+  "clipboardSuggest": "建議儲存剪貼簿",
+  "clipboardSuggestSubtitle": "開啟 ClipVal 時，詢問是否儲存新的剪貼簿文字（不會自動儲存）",
+  "clipboardSuggestFooter": "可選。只在開啟此功能且在保險庫畫面時讀取剪貼簿。略過後，相同文字不會再提示，直至內容變更。",
+  "clipboardSuggestBannerTitle": "儲存到 ClipVal？",
+  "clipboardSuggestSave": "儲存",
+  "clipboardSuggestNotNow": "暫時不要",
+  "clipboardSuggestSaved": "已從剪貼簿儲存",
+  "nearbyPinLabel": "對方的 6 位代碼",
+  "nearbyPinInvalid": "請輸入對方裝置顯示的 6 位代碼",
+  "nearbyPinWrong": "代碼錯誤 — 請核對方裝置",
+  "nearbySendSubtitlePin": "選擇裝置，然後輸入對方「設定 → 附近」顯示的代碼。內容傳輸時會加密。",
+  "nearbySessionPin": "你的代碼",
+  "nearbySessionPinSubtitle": "其他裝置要輸入此代碼才能傳給你。重新整理或重開附近會更換。",
+  "nearbyRotatePin": "換新代碼",
+  "iCloudDiagnose": "檢查 iCloud 狀態",
+  "iCloudDiagnoseOk": "iCloud 看起來就緒",
+  "iCloudDiagnoseSchema": "正式版 schema 未就緒 — 請在 CloudKit Dashboard 部署類型（見文件）",
+  "iCloudDiagnoseNoAccount": "此裝置未登入 iCloud",
+  "iCloudDiagnoseNetwork": "連線 iCloud 時網絡錯誤",
+  "iCloudDiagnoseOther": "iCloud 檢查失敗"
 }

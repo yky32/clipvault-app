@@ -1,23 +1,21 @@
-# Nearby send (LocalSend-inspired MVP)
+# Nearby send — protocol v2
 
 ## What
 Send **one vault item** to another ClipVal on the **same Wi‑Fi**.
-No cloud, no account. Receiver must **Accept** before save.
+No cloud, no account.
 
-## Protocol v1
-- Bonjour: `_clipval-nearby._tcp`
-- `GET /v1/ping` → `{ok, name, deviceId, protocolVersion}`
-- `POST /v1/offer` JSON `{title, value, fromName, fromId, isSensitive?, categoryName?}`
-  - Holds until Accept/Reject (~55s)
-  - `200` accepted · `403` rejected · `408` timeout
+## Trust (v2)
+1. **Session PIN** — 6 digits, shown on receiver Settings → Nearby  
+2. **AES-GCM** — value encrypted with key = SHA-256(`clipval-nearby-v2|pin|receiverDeviceId`)  
+3. **Human Accept** — nothing saved until receiver taps Save  
+4. **Offer queue** — multiple inbound offers wait in order (not dropped)
 
-## UX
-- Settings → Nearby (default **off**)
-- Long-press item → **Send nearby** (only if enabled)
-- Receiver dialog → Save to vault / Decline
+## Protocol
+- Bonjour: `_clipval-nearby._tcp` (TXT `id`, `v=2`)
+- `GET /v1/ping` → `{ok, name, deviceId, protocolVersion, pinRequired: true}`
+- `POST /v1/offer` JSON:
+  - `pin`, `title`, `ciphertext`, `nonce`, `fromName`, `fromId`, `isSensitive?`
+  - `401` bad pin · `200` accepted · `403` rejected · `408` timeout
 
-## Trust
-LAN + human Accept (AirDrop-like). Values do not leave the local network via ClipVal servers.
-
-## Not in MVP
-- File transfer · multi-item · PIN · internet relay · background receive when killed
+## Not included
+Files · multi-item · internet relay · background when killed · TLS (LAN + PIN + GCM)

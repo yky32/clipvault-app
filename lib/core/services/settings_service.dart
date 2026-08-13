@@ -141,6 +141,8 @@ class SettingsService {
   static const _nearbyEnabledKey = 'nearby_enabled';
   static const _nearbyDeviceIdKey = 'nearby_device_id';
   static const _nearbyDisplayNameKey = 'nearby_display_name';
+  static const _clipboardSuggestEnabledKey = 'clipboard_suggest_enabled';
+  static const _clipboardSuggestDismissedKey = 'clipboard_suggest_dismissed';
 
   late SharedPreferences _prefs;
 
@@ -284,6 +286,26 @@ class SettingsService {
 
   Future<void> setNearbyDisplayName(String value) =>
       _prefs.setString(_nearbyDisplayNameKey, value);
+
+  // ── Clipboard suggest (opt-in) ─────────────────────────────────────────
+
+  bool get clipboardSuggestEnabled =>
+      _prefs.getBool(_clipboardSuggestEnabledKey) ?? false;
+
+  Future<void> setClipboardSuggestEnabled(bool value) =>
+      _prefs.setBool(_clipboardSuggestEnabledKey, value);
+
+  String? get clipboardSuggestLastDismissed =>
+      _prefs.getString(_clipboardSuggestDismissedKey);
+
+  Future<void> setClipboardSuggestLastDismissed(String? value) async {
+    if (value == null || value.isEmpty) {
+      await _prefs.remove(_clipboardSuggestDismissedKey);
+    } else {
+      await _prefs.setString(_clipboardSuggestDismissedKey, value);
+    }
+  }
+
 
 
 

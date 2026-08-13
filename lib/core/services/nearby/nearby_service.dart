@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:bonsoir/bonsoir.dart';
@@ -10,6 +12,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../settings_service.dart';
+import 'nearby_crypto.dart';
 import 'nearby_models.dart';
 
 /// Coordinates LAN advertise / discover / send / receive for vault items.
@@ -18,12 +21,12 @@ class NearbyService {
   static final NearbyService instance = NearbyService._();
 
   static const serviceType = '_clipval-nearby._tcp';
-  static const protocolVersion = 1;
+  static const protocolVersion = NearbyCrypto.protocolVersion;
   static const _offerTimeout = Duration(seconds: 55);
   static const _discoverWindow = Duration(seconds: 4);
 
   final _uuid = const Uuid();
-  final _devices = <String, NearbyDevice>{}; // key = id or host:port
+  final _devices = <String, NearbyDevice>{};
   final _deviceController = StreamController<List<NearbyDevice>>.broadcast();
 
   HttpServer? _server;
@@ -35,9 +38,18 @@ class NearbyService {
   String _deviceName = 'ClipVal';
   bool _running = false;
 
-  /// Incoming offers waiting for UI Accept/Reject.
+  /// Session PIN (6 digits). Regenerated each time Nearby starts.
+  String? _sessionPin;
+  final _pinController = StreamController<String?>.broadcast();
+
+  /// UI listens here — offers are already dequeued one-at-a-time.
   final _offerController = StreamController<NearbyIncomingOffer>.broadcast();
+  final Queue<NearbyIncomingOffer> _offerQueue = Queue<NearbyIncomingOffer>();
+  bool _presentingOffer = false;
+
   Stream<NearbyIncomingOffer> get incomingOffers => _offerController.stream;
+  Stream<String?> get sessionPin$ => _pinController.stream;
+  String? get sessionPin => _sessionPin;
 
   Stream<List<NearbyDevice>> get devices$ => _deviceController.stream;
   List<NearbyDevice> get devices =>
@@ -59,7 +71,6 @@ class NearbyService {
     }
   }
 
-  /// Start HTTP + Bonjour when user enabled Nearby in Settings.
   Future<void> startIfEnabled() async {
     await init();
     if (!SettingsService.instance.nearbyEnabled) {
@@ -68,10 +79,12 @@ class NearbyService {
     }
     if (_running) return;
     try {
+      _sessionPin = NearbyCrypto.generatePin();
+      _pinController.add(_sessionPin);
       await _startServer();
       await _startBroadcast();
       _running = true;
-      _log('started on port ${_server?.port} as $_deviceName');
+      _log('started on port ${_server?.port} as $_deviceName (pin session)');
     } catch (e, st) {
       _log('start failed: $e\n$st');
       await stop();
@@ -81,6 +94,14 @@ class NearbyService {
 
   Future<void> stop() async {
     _running = false;
+    // Reject anything still waiting.
+    while (_offerQueue.isNotEmpty) {
+      _offerQueue.removeFirst().reject();
+    }
+    _presentingOffer = false;
+    _sessionPin = null;
+    _pinController.add(null);
+
     await _discoverySub?.cancel();
     _discoverySub = null;
     try {
@@ -100,6 +121,13 @@ class NearbyService {
     _log('stopped');
   }
 
+  /// Rotate PIN (Settings refresh). Keeps server up.
+  void rotatePin() {
+    if (!_running) return;
+    _sessionPin = NearbyCrypto.generatePin();
+    _pinController.add(_sessionPin);
+  }
+
   Future<void> setEnabled(bool enabled) async {
     await SettingsService.instance.setNearbyEnabled(enabled);
     if (enabled) {
@@ -114,13 +142,11 @@ class NearbyService {
     _deviceName = n;
     await SettingsService.instance.setNearbyDisplayName(n);
     if (_running) {
-      // Re-advertise with new name.
       await stop();
       await startIfEnabled();
     }
   }
 
-  /// Active scan for a few seconds; also returns cached list.
   Future<List<NearbyDevice>> discover({
     Duration window = _discoverWindow,
   }) async {
@@ -134,21 +160,35 @@ class NearbyService {
     required NearbyDevice device,
     required String title,
     required String value,
+    required String pin,
     String? categoryName,
     bool isSensitive = false,
   }) async {
     if (!SettingsService.instance.nearbyEnabled) {
       return const NearbySendReport(NearbySendResult.disabled);
     }
+    if (!NearbyCrypto.isValidPin(pin)) {
+      return const NearbySendReport(NearbySendResult.badPin);
+    }
     await init();
-    final payload = NearbyOfferPayload(
+
+    final sealed = NearbyCrypto.encryptValue(
+      value: value,
+      pin: pin,
+      receiverDeviceId: device.id,
+    );
+
+    final wire = NearbyOfferWire(
       fromName: _deviceName,
       fromId: _deviceId!,
       title: title,
-      value: value,
+      pin: pin,
+      ciphertext: sealed.ciphertext,
+      nonce: sealed.nonce,
       categoryName: categoryName,
       isSensitive: isSensitive,
     );
+
     final uri = device.baseUri.replace(path: '/v1/offer');
     try {
       final res = await http
@@ -158,11 +198,14 @@ class NearbyService {
               'Content-Type': 'application/json; charset=utf-8',
               'Accept': 'application/json',
             },
-            body: jsonEncode(payload.toJson()),
+            body: jsonEncode(wire.toJson()),
           )
           .timeout(_offerTimeout + const Duration(seconds: 5));
       if (res.statusCode == 200) {
         return const NearbySendReport(NearbySendResult.accepted);
+      }
+      if (res.statusCode == 401) {
+        return const NearbySendReport(NearbySendResult.badPin);
       }
       if (res.statusCode == 403) {
         return const NearbySendReport(NearbySendResult.rejected);
@@ -194,13 +237,9 @@ class NearbyService {
     router.post('/v1/offer', _handleOffer);
 
     final handler = const Pipeline()
-        .addMiddleware(logRequests(logger: (m, isError) {
-          if (isError) _log(m);
-        }))
         .addMiddleware(_cors())
         .addHandler(router.call);
 
-    // Bind all interfaces so LAN peers can connect.
     _server = await shelf_io.serve(handler, InternetAddress.anyIPv4, 0);
     _server!.autoCompress = true;
   }
@@ -230,35 +269,59 @@ class NearbyService {
         'protocolVersion': protocolVersion,
         'deviceId': _deviceId,
         'name': _deviceName,
+        'pinRequired': true,
       }),
       headers: {'Content-Type': 'application/json; charset=utf-8'},
     );
   }
 
   Future<Response> _handleOffer(Request request) async {
-    if (!SettingsService.instance.nearbyEnabled) {
-      return Response(403, body: jsonEncode({'accepted': false, 'reason': 'disabled'}));
+    if (!SettingsService.instance.nearbyEnabled || _sessionPin == null) {
+      return Response(
+        403,
+        body: jsonEncode({'accepted': false, 'reason': 'disabled'}),
+      );
     }
-    Map<String, dynamic> json;
+    Map<String, dynamic> jsonBody;
     try {
       final raw = await request.readAsString();
-      json = jsonDecode(raw) as Map<String, dynamic>;
+      jsonBody = jsonDecode(raw) as Map<String, dynamic>;
     } catch (_) {
       return Response(400, body: jsonEncode({'error': 'invalid_json'}));
     }
-    final payload = NearbyOfferPayload.fromJson(json);
-    if (payload == null || payload.value.isEmpty) {
-      return Response(400, body: jsonEncode({'error': 'empty_item'}));
+
+    final wire = NearbyOfferWire.tryParse(jsonBody);
+    if (wire == null) {
+      return Response(400, body: jsonEncode({'error': 'invalid_offer'}));
     }
+
+    // Constant-time-ish PIN check (length already constrained).
+    if (!_pinMatches(wire.pin)) {
+      return Response(401, body: jsonEncode({'error': 'bad_pin'}));
+    }
+
+    final plain = NearbyCrypto.decryptValue(
+      ciphertext: wire.ciphertext,
+      nonce: wire.nonce,
+      pin: wire.pin,
+      receiverDeviceId: _deviceId!,
+    );
+    if (plain == null || plain.isEmpty) {
+      return Response(400, body: jsonEncode({'error': 'decrypt_failed'}));
+    }
+
+    final payload = NearbyOfferPayload(
+      fromName: wire.fromName,
+      fromId: wire.fromId,
+      title: wire.title,
+      value: plain,
+      categoryName: wire.categoryName,
+      isSensitive: wire.isSensitive,
+    );
 
     final completer = Completer<bool>();
     final offer = NearbyIncomingOffer(payload: payload, completer: completer);
-    if (!_offerController.hasListener) {
-      // No UI attached — reject so sender is not stuck forever.
-      _log('offer with no UI listener — reject');
-      return Response(403, body: jsonEncode({'accepted': false, 'reason': 'no_ui'}));
-    }
-    _offerController.add(offer);
+    _enqueueOffer(offer);
 
     try {
       final accepted = await completer.future.timeout(_offerTimeout);
@@ -270,11 +333,45 @@ class NearbyService {
       }
       return Response(403, body: jsonEncode({'accepted': false}));
     } on TimeoutException {
-      if (!completer.isCompleted) {
-        completer.complete(false);
-      }
-      return Response(408, body: jsonEncode({'accepted': false, 'reason': 'timeout'}));
+      if (!completer.isCompleted) completer.complete(false);
+      return Response(
+        408,
+        body: jsonEncode({'accepted': false, 'reason': 'timeout'}),
+      );
     }
+  }
+
+  bool _pinMatches(String pin) {
+    final expected = _sessionPin;
+    if (expected == null || pin.length != expected.length) return false;
+    var diff = 0;
+    for (var i = 0; i < expected.length; i++) {
+      diff |= expected.codeUnitAt(i) ^ pin.codeUnitAt(i);
+    }
+    return diff == 0;
+  }
+
+  void _enqueueOffer(NearbyIncomingOffer offer) {
+    _offerQueue.add(offer);
+    _pumpOfferQueue();
+  }
+
+  void _pumpOfferQueue() {
+    if (_presentingOffer || _offerQueue.isEmpty) return;
+    if (!_offerController.hasListener) {
+      // No UI — reject all queued.
+      while (_offerQueue.isNotEmpty) {
+        _offerQueue.removeFirst().reject();
+      }
+      return;
+    }
+    _presentingOffer = true;
+    final next = _offerQueue.removeFirst();
+    _offerController.add(next);
+    next.completer.future.whenComplete(() {
+      _presentingOffer = false;
+      _pumpOfferQueue();
+    });
   }
 
   // ── Discovery ─────────────────────────────────────────────────────────
@@ -365,8 +462,7 @@ class NearbyService {
   }
 
   static void _log(String m) {
-    // ignore: avoid_print
-    print('[ClipVal Nearby] $m');
+    developer.log(m, name: 'clipval.nearby');
   }
 }
 

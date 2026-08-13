@@ -13,7 +13,7 @@ import '../../../../core/widgets/copied_hud.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../vault/bloc/vault_bloc.dart';
 
-/// Pick a nearby ClipVal device and send [title]/value].
+/// Pick a nearby ClipVal device, enter their session PIN, send item.
 class NearbySendSheet extends StatefulWidget {
   const NearbySendSheet({
     required this.title,
@@ -58,6 +58,8 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
   bool _scanning = true;
   String? _sendingToId;
   String? _status;
+  final _pinController = TextEditingController();
+  NearbyDevice? _selected;
 
   @override
   void initState() {
@@ -75,7 +77,6 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
       _status = null;
     });
     try {
-      // Ensure advertise/listen is up when user opens send (if enabled).
       await NearbyService.instance.startIfEnabled();
       final list = await NearbyService.instance.discover();
       if (!mounted) return;
@@ -92,8 +93,16 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
     }
   }
 
-  Future<void> _send(NearbyDevice device) async {
+  Future<void> _send() async {
+    final device = _selected;
+    if (device == null) return;
     final l10n = AppLocalizations.of(context);
+    final pin = _pinController.text.trim();
+    if (pin.length != 6) {
+      setState(() => _status = l10n.nearbyPinInvalid);
+      return;
+    }
+
     setState(() {
       _sendingToId = device.id;
       _status = null;
@@ -103,6 +112,7 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
       device: device,
       title: widget.title,
       value: widget.value,
+      pin: pin,
       categoryName: widget.categoryName,
       isSensitive: widget.isSensitive,
     );
@@ -116,8 +126,8 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
       NearbySendResult.unreachable => l10n.nearbySendUnreachable,
       NearbySendResult.disabled => l10n.nearbyDisabledHint,
       NearbySendResult.cancelled => l10n.cancel,
-      NearbySendResult.error =>
-        report.message ?? l10n.nearbySendError,
+      NearbySendResult.badPin => l10n.nearbyPinWrong,
+      NearbySendResult.error => report.message ?? l10n.nearbySendError,
     };
 
     if (report.result == NearbySendResult.accepted) {
@@ -133,6 +143,7 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
   @override
   void dispose() {
     _sub?.cancel();
+    _pinController.dispose();
     super.dispose();
   }
 
@@ -141,129 +152,173 @@ class _NearbySendSheetState extends State<NearbySendSheet> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final busy = _sendingToId != null;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.groupedBackground(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 36,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.tertiaryLabel(context).withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.nearbySendTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                CupertinoButton(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  onPressed: _scanning ? null : _scan,
-                  child: _scanning
-                      ? const CupertinoActivityIndicator()
-                      : Icon(CupertinoIcons.refresh, color: AppColors.primary),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Text(
-              l10n.nearbySendSubtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.secondaryLabel(context),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.groupedBackground(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 36,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.tertiaryLabel(context).withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(3),
               ),
             ),
-          ),
-          if (_status != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.nearbySendTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    onPressed: _scanning || busy ? null : _scan,
+                    child: _scanning
+                        ? const CupertinoActivityIndicator()
+                        : Icon(CupertinoIcons.refresh, color: AppColors.primary),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Text(
-                _status!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.error,
+                l10n.nearbySendSubtitlePin,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.secondaryLabel(context),
                 ),
               ),
             ),
-          Flexible(
-            child: _devices.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Text(
-                      _scanning
-                          ? l10n.nearbyScanning
-                          : l10n.nearbyNoDevices,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.secondaryLabel(context),
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottom),
-                    itemCount: _devices.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) {
-                      final d = _devices[i];
-                      final busy = _sendingToId == d.id;
-                      return Material(
-                        color: AppColors.cardBackground(context),
-                        borderRadius: BorderRadius.circular(14),
-                        child: ListTile(
-                          leading: busy
-                              ? const CupertinoActivityIndicator()
-                              : Icon(
-                                  CupertinoIcons.antenna_radiowaves_left_right,
-                                  color: AppColors.primary,
-                                ),
-                          title: Text(
-                            d.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            d.host,
-                            style: TextStyle(
-                              color: AppColors.tertiaryLabel(context),
-                              fontSize: 13,
-                            ),
-                          ),
-                          trailing: Icon(
-                            CupertinoIcons.paperplane,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          onTap: busy ? null : () => _send(d),
-                        ),
-                      );
-                    },
+            if (_status != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  _status!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.error,
                   ),
-          ),
-        ],
+                ),
+              ),
+            Flexible(
+              child: _devices.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(
+                        _scanning ? l10n.nearbyScanning : l10n.nearbyNoDevices,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.secondaryLabel(context),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      itemCount: _devices.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        final d = _devices[i];
+                        final selected = _selected?.id == d.id;
+                        return Material(
+                          color: selected
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.cardBackground(context),
+                          borderRadius: BorderRadius.circular(14),
+                          child: ListTile(
+                            leading: Icon(
+                              CupertinoIcons.antenna_radiowaves_left_right,
+                              color: AppColors.primary,
+                            ),
+                            title: Text(
+                              d.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              d.host,
+                              style: TextStyle(
+                                color: AppColors.tertiaryLabel(context),
+                                fontSize: 13,
+                              ),
+                            ),
+                            trailing: selected
+                                ? Icon(CupertinoIcons.checkmark_circle_fill,
+                                    color: AppColors.primary)
+                                : null,
+                            onTap: busy
+                                ? null
+                                : () => setState(() => _selected = d),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 12 + bottom),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.nearbyPinLabel,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: AppColors.secondaryLabel(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoTextField(
+                    controller: _pinController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    placeholder: '••••••',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 8,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    enabled: !busy,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: busy || _selected == null ? null : _send,
+                    child: busy
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(l10n.nearbySendAction),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Host-level listener: Accept/Reject incoming nearby offers.
+/// Host-level listener: Accept/Reject incoming nearby offers (queued).
 class NearbyOfferHost extends StatefulWidget {
   const NearbyOfferHost({required this.child, super.key});
   final Widget child;
@@ -274,7 +329,6 @@ class NearbyOfferHost extends StatefulWidget {
 
 class _NearbyOfferHostState extends State<NearbyOfferHost> {
   StreamSubscription<NearbyIncomingOffer>? _sub;
-  bool _dialogOpen = false;
 
   @override
   void initState() {
@@ -287,12 +341,6 @@ class _NearbyOfferHostState extends State<NearbyOfferHost> {
       offer.reject();
       return;
     }
-    // Queue simply: if a dialog is open, reject new ones for MVP.
-    if (_dialogOpen) {
-      offer.reject();
-      return;
-    }
-    _dialogOpen = true;
     final l10n = AppLocalizations.of(context);
     final payload = offer.payload;
     final preview = payload.isSensitive
@@ -350,8 +398,6 @@ class _NearbyOfferHostState extends State<NearbyOfferHost> {
       ),
     );
 
-    _dialogOpen = false;
-
     if (accepted == true) {
       try {
         await AppBootstrap.clipItemRepository.create(
@@ -363,9 +409,7 @@ class _NearbyOfferHostState extends State<NearbyOfferHost> {
         if (mounted) {
           try {
             context.read<VaultBloc>().add(const VaultRefreshed());
-          } catch (_) {
-            // VaultBloc may not be in tree on lock screen — still saved.
-          }
+          } catch (_) {}
           CopiedHud.show(
             context,
             message: AppLocalizations.of(context).nearbyReceiveSaved,
