@@ -17,6 +17,7 @@
 		47605B3A9D97291BCDE347FA /* ClipValWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E505CF228894DBD2EAEDBD5E /* ClipValWidgetBundle.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		C1E0D5A000000000000001 /* CloudKitSyncChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E0D5A000000000000002 /* CloudKitSyncChannel.swift */; };
+		C1E0D5A000000000000011 /* SpotlightChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E0D5A000000000000012 /* SpotlightChannel.swift */; };
 		93DE67B8685E92CC6D349528 /* ClipValWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16A51B2A24056EFBA64F3CF4 /* ClipValWidget.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
@@ -80,6 +81,7 @@
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C1E0D5A000000000000002 /* CloudKitSyncChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudKitSyncChannel.swift; sourceTree = "<group>"; };
+		C1E0D5A000000000000012 /* SpotlightChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpotlightChannel.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		94A1D2AEBA4700087599744E /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				C1E0D5A000000000000002 /* CloudKitSyncChannel.swift */,
+				C1E0D5A000000000000012 /* SpotlightChannel.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				94A1D2AEBA4700087599744E /* Runner.entitlements */,
 			);
@@ -566,6 +569,7 @@
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				C1E0D5A000000000000001 /* CloudKitSyncChannel.swift in Sources */,
+				C1E0D5A000000000000011 /* SpotlightChannel.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -9,6 +9,7 @@ import UIKit
   private static let shareAtKey = "pending_share_at"
 
   private let cloudKitSync = CloudKitSyncChannel()
+  private let spotlight = SpotlightChannel()
   private var nativeChannelsRegistered = false
 
   override func application(
@@ -36,8 +37,9 @@ import UIKit
     if let messenger = flutterBinaryMessenger() {
       registerShareChannel(with: messenger)
       cloudKitSync.register(with: messenger)
+      spotlight.register(with: messenger)
       nativeChannelsRegistered = true
-      NSLog("[ClipVal] Native channels registered (share + icloud_sync)")
+      NSLog("[ClipVal] Native channels registered (share + icloud_sync + spotlight)")
       return
     }
 
@@ -115,4 +117,25 @@ import UIKit
       result(map)
     }
   }
+
+  override func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    if let url = SpotlightChannel.handleUserActivity(userActivity) {
+      // Reuse widget deep-link path: clipval://copy?id=
+      DispatchQueue.main.async { [weak self] in
+        guard let self else { return }
+        _ = self.application(UIApplication.shared, open: url, options: [:])
+      }
+      return true
+    }
+    return super.application(
+      application,
+      continue: userActivity,
+      restorationHandler: restorationHandler
+    )
+  }
+
 }
