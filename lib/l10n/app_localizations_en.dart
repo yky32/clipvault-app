@@ -1084,4 +1084,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get iCloudDiagnoseOther => 'iCloud check failed';
+
+  @override
+  String get backupReminderTitle => 'Protect your vault';
+
+  @override
+  String get backupReminderBody =>
+      'No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.';
+
+  @override
+  String get backupReminderExport => 'Back up now';
+
+  @override
+  String get backupReminderLater => 'Remind me later';
 }

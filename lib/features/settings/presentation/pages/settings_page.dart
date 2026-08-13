@@ -650,6 +650,7 @@ class _SettingsPageState extends State<SettingsPage> {
         subject: 'ClipVal secure backup',
         successMessage: l10n.exportSecureShared,
       );
+      await SettingsService.instance.setLastSecureBackupAt(DateTime.now());
     } catch (_) {
       if (!context.mounted) return;
       HapticFeedback.heavyImpact();

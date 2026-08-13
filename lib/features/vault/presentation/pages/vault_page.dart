@@ -13,6 +13,7 @@ import '../../../../core/models/clip_item.dart';
 import '../../../../core/services/review_prompt_service.dart';
 import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/services/clipboard_suggest_service.dart';
+import '../../../../core/services/backup_reminder_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/services/share_intake_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -43,6 +44,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   String? _clipboardSuggestText;
   bool _clipboardSuggestBusy = false;
   bool _clipboardSuggestChecking = false;
+  bool _showBackupReminder = false;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
       _maybeShowWelcome();
       ShareIntakeService.consumePending();
       _maybeSuggestClipboard();
+      _maybeBackupReminder();
     });
   }
 
@@ -68,6 +71,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _maybeSuggestClipboard();
+      _maybeBackupReminder();
     }
   }
 
@@ -129,6 +133,94 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
       setState(() => _clipboardSuggestBusy = false);
       CopiedHud.show(context, message: '$e');
     }
+  }
+
+
+  void _maybeBackupReminder() {
+    if (!mounted || _selecting) return;
+    final show = BackupReminderService(
+      items: AppBootstrap.clipItemRepository,
+    ).shouldShow();
+    if (show != _showBackupReminder) {
+      setState(() => _showBackupReminder = show);
+    }
+  }
+
+  Future<void> _snoozeBackupReminder() async {
+    await BackupReminderService(
+      items: AppBootstrap.clipItemRepository,
+    ).snooze();
+    if (!mounted) return;
+    setState(() => _showBackupReminder = false);
+  }
+
+  void _openBackupFromReminder() {
+    context.go('/vault/settings');
+  }
+
+  Widget _backupReminderBanner(AppLocalizations l10n) {
+    if (!_showBackupReminder || _selecting) return const SizedBox.shrink();
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.warning.withValues(alpha: 0.45),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  CupertinoIcons.lock_shield_fill,
+                  color: AppColors.warning,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.backupReminderTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.backupReminderBody,
+              style: TextStyle(
+                color: AppColors.secondaryLabel(context),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _snoozeBackupReminder,
+                  child: Text(l10n.backupReminderLater),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _openBackupFromReminder,
+                  child: Text(l10n.backupReminderExport),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _clipboardSuggestBanner(AppLocalizations l10n) {
@@ -767,6 +859,12 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                             SliverToBoxAdapter(
                               child: _clipboardSuggestBanner(l10n),
                             ),
+                          if (_showBackupReminder &&
+                              _clipboardSuggestText == null &&
+                              !_selecting)
+                            SliverToBoxAdapter(
+                              child: _backupReminderBanner(l10n),
+                            ),
                           if (state.categories.isNotEmpty)
                             SliverToBoxAdapter(
                               child: SizedBox(
@@ -837,6 +935,12 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                           if (_clipboardSuggestText != null && !_selecting)
                             SliverToBoxAdapter(
                               child: _clipboardSuggestBanner(l10n),
+                            ),
+                          if (_showBackupReminder &&
+                              _clipboardSuggestText == null &&
+                              !_selecting)
+                            SliverToBoxAdapter(
+                              child: _backupReminderBanner(l10n),
                             ),
                           SliverFillRemaining(
                             hasScrollBody: false,

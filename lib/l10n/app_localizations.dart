@@ -2047,6 +2047,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'iCloud check failed'**
   String get iCloudDiagnoseOther;
+
+  /// No description provided for @backupReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect your vault'**
+  String get backupReminderTitle;
+
+  /// No description provided for @backupReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.'**
+  String get backupReminderBody;
+
+  /// No description provided for @backupReminderExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get backupReminderExport;
+
+  /// No description provided for @backupReminderLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me later'**
+  String get backupReminderLater;
 }
 
 class _AppLocalizationsDelegate

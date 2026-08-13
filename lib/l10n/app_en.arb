@@ -528,5 +528,9 @@
   "iCloudDiagnoseSchema": "Production schema not ready — deploy CloudKit types from Dashboard (see docs)",
   "iCloudDiagnoseNoAccount": "No iCloud account on this device",
   "iCloudDiagnoseNetwork": "Network error talking to iCloud",
-  "iCloudDiagnoseOther": "iCloud check failed"
+  "iCloudDiagnoseOther": "iCloud check failed",
+  "backupReminderTitle": "Protect your vault",
+  "backupReminderBody": "No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.",
+  "backupReminderExport": "Back up now",
+  "backupReminderLater": "Remind me later"
 }
