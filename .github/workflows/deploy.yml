@@ -27,7 +27,8 @@ on:
 
 concurrency:
   group: deploy-main
-  cancel-in-progress: true
+  # Never cancel an in-flight TestFlight upload (wastes ASC + leaves gaps).
+  cancel-in-progress: false
 
 permissions:
   contents: write

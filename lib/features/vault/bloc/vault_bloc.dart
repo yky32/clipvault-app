@@ -9,6 +9,7 @@ import '../../../core/services/category_repository.dart';
 import '../../../core/services/clip_item_repository.dart';
 import '../../../core/services/clipboard_service.dart';
 import '../../../core/services/settings_service.dart';
+import '../../../core/utils/app_log.dart';
 
 part 'vault_event.dart';
 part 'vault_state.dart';
@@ -47,24 +48,24 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   Future<void> _syncWidget() async {
     try {
       await AppBootstrap.widgetSnapshotService.sync();
-    } catch (_) {
-      // Widget is best-effort; never fail vault actions.
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.widget', context: 'widget sync');
     }
   }
 
   void _scheduleICloud() {
     try {
       AppBootstrap.iCloudSyncService.scheduleSync();
-    } catch (_) {
-      // iCloud is optional; never fail vault actions.
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.icloud', context: 'scheduleSync');
     }
   }
 
   Future<void> _syncSpotlight() async {
     try {
       await AppBootstrap.spotlightIndexService.reindexAll(_items.getAll());
-    } catch (_) {
-      // Spotlight is best-effort.
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.spotlight', context: 'reindex');
     }
   }
 
@@ -147,10 +148,14 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _syncWidget();
     try {
       await AppBootstrap.spotlightIndexService.delete([event.itemId]);
-    } catch (_) {}
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.icloud', context: 'tombstone');
+    }
     try {
       await AppBootstrap.iCloudSyncService.pushItemTombstone(event.itemId);
-    } catch (_) {}
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.icloud', context: 'tombstone');
+    }
     _scheduleICloud();
   }
 
@@ -164,11 +169,15 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _syncWidget();
     try {
       await AppBootstrap.spotlightIndexService.delete(event.itemIds);
-    } catch (_) {}
+    } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.icloud', context: 'tombstone');
+    }
     for (final id in event.itemIds) {
       try {
         await AppBootstrap.iCloudSyncService.pushItemTombstone(id);
-      } catch (_) {}
+      } catch (e, st) {
+      AppLog.ignore(e, st, name: 'clipval.icloud', context: 'tombstone');
+    }
     }
     _scheduleICloud();
   }

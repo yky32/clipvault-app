@@ -37,6 +37,7 @@ class NearbyOfferWire {
     required this.pin,
     required this.ciphertext,
     required this.nonce,
+    required this.mac,
     this.categoryName,
     this.isSensitive = false,
     this.protocolVersion = 2,
@@ -49,6 +50,7 @@ class NearbyOfferWire {
   final String pin;
   final String ciphertext;
   final String nonce;
+  final String mac;
   final String? categoryName;
   final bool isSensitive;
 
@@ -60,6 +62,7 @@ class NearbyOfferWire {
         'pin': pin,
         'ciphertext': ciphertext,
         'nonce': nonce,
+        'mac': mac,
         if (categoryName != null && categoryName!.isNotEmpty)
           'categoryName': categoryName,
         'isSensitive': isSensitive,
@@ -70,8 +73,9 @@ class NearbyOfferWire {
     final pin = json['pin']?.toString() ?? '';
     final ct = json['ciphertext']?.toString() ?? '';
     final nonce = json['nonce']?.toString() ?? '';
+    final mac = json['mac']?.toString() ?? '';
     // v1 plaintext fallback rejected — force v2 crypto.
-    if (ct.isEmpty || nonce.isEmpty) return null;
+    if (ct.isEmpty || nonce.isEmpty || mac.isEmpty) return null;
     if (title.trim().isEmpty) return null;
     return NearbyOfferWire(
       protocolVersion: (json['protocolVersion'] as num?)?.toInt() ?? 2,
@@ -81,6 +85,7 @@ class NearbyOfferWire {
       pin: pin,
       ciphertext: ct,
       nonce: nonce,
+      mac: mac,
       categoryName: json['categoryName']?.toString(),
       isSensitive: json['isSensitive'] == true,
     );

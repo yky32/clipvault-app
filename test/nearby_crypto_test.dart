@@ -24,6 +24,7 @@ void main() {
       nonce: sealed.nonce,
       pin: pin,
       receiverDeviceId: deviceId,
+      mac: sealed.mac,
     );
     expect(out, plain);
   });
@@ -39,6 +40,23 @@ void main() {
       nonce: sealed.nonce,
       pin: '222222',
       receiverDeviceId: 'd1',
+      mac: sealed.mac,
+    );
+    expect(out, isNull);
+  });
+
+  test('tampered mac fails', () {
+    final sealed = NearbyCrypto.encryptValue(
+      value: 'hello',
+      pin: '111111',
+      receiverDeviceId: 'd1',
+    );
+    final out = NearbyCrypto.decryptValue(
+      ciphertext: sealed.ciphertext,
+      nonce: sealed.nonce,
+      pin: '111111',
+      receiverDeviceId: 'd1',
+      mac: sealed.mac.replaceRange(0, 4, 'AAAA'),
     );
     expect(out, isNull);
   });
