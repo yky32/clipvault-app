@@ -143,6 +143,8 @@ class SettingsService {
   static const _nearbyDisplayNameKey = 'nearby_display_name';
   static const _clipboardSuggestEnabledKey = 'clipboard_suggest_enabled';
   static const _clipboardSuggestDismissedKey = 'clipboard_suggest_dismissed';
+  static const _lastSecureBackupAtKey = 'last_secure_backup_at';
+  static const _backupReminderSnoozeKey = 'backup_reminder_snooze_until';
 
   late SharedPreferences _prefs;
 
@@ -305,6 +307,32 @@ class SettingsService {
       await _prefs.setString(_clipboardSuggestDismissedKey, value);
     }
   }
+
+  // ── Secure backup reminder ───────────────────────────────────────────
+
+  DateTime? get lastSecureBackupAt {
+    final raw = _prefs.getString(_lastSecureBackupAtKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> setLastSecureBackupAt(DateTime value) =>
+      _prefs.setString(_lastSecureBackupAtKey, value.toIso8601String());
+
+  DateTime? get backupReminderSnoozeUntil {
+    final raw = _prefs.getString(_backupReminderSnoozeKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> setBackupReminderSnoozeUntil(DateTime? value) async {
+    if (value == null) {
+      await _prefs.remove(_backupReminderSnoozeKey);
+    } else {
+      await _prefs.setString(_backupReminderSnoozeKey, value.toIso8601String());
+    }
+  }
+
 
 
 

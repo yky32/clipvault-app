@@ -68,7 +68,7 @@
 | Recently copied strip | Done — denser; hold to pin |
 | Duplicate item | Done — action sheet |
 | Sort vault | Done — updated / last used / A–Z |
-| Spotlight / Handoff | Later — title only |
+| Spotlight (title only) | Done — tap → copy |
 
 **Exit:** Top 8 values reachable in &lt;1s from Home Screen or search.
 

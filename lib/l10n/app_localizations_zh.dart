@@ -1051,4 +1051,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get iCloudDiagnoseOther => 'iCloud 檢查失敗';
+
+  @override
+  String get backupReminderTitle => '保護你的保險庫';
+
+  @override
+  String get backupReminderBody =>
+      '沒有最近的安全備份，且 iCloud 已關閉。匯出 .clipval，避免手機遺失等於資料遺失。';
+
+  @override
+  String get backupReminderExport => '立即備份';
+
+  @override
+  String get backupReminderLater => '稍後提醒';
 }

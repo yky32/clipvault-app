@@ -213,13 +213,28 @@ struct ClipValWidgetEntryView: View {
   }
 
   private var emptyState: some View {
-    Text(entry.pinnedOnly
-          ? "Pin items in ClipVal to show them here"
-          : "Open ClipVal to add values")
-      .font(.system(size: 12, weight: .medium, design: .rounded))
-      .foregroundStyle(.secondary)
-      .multilineTextAlignment(.center)
+    // Teach: pin favorites → widget shows them. Link opens app.
+    Link(destination: URL(string: "clipval://vault")!) {
+      VStack(spacing: 8) {
+        Image(systemName: entry.pinnedOnly ? "pin.fill" : "plus.app.fill")
+          .font(.system(size: 22, weight: .semibold))
+          .foregroundStyle(Color.accentColor.opacity(0.9))
+        Text(entry.pinnedOnly
+              ? "Pin favorites in ClipVal"
+              : "Add values in ClipVal")
+          .font(.system(size: 13, weight: .semibold, design: .rounded))
+          .foregroundStyle(.primary)
+          .multilineTextAlignment(.center)
+        Text(entry.pinnedOnly
+              ? "Home Screen shows pinned items only"
+              : "Then pin · they appear here for one-tap copy")
+          .font(.system(size: 11, weight: .medium, design: .rounded))
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+      }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(8)
+    }
   }
 
   /// Columns adapt to count so fewer items get bigger tap targets;
