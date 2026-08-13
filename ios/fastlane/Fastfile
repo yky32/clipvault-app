@@ -1038,11 +1038,35 @@ platform :ios do
     end
 
     # ASC Build.attributes.version is typically CFBundleVersion (build number).
-    builds = Spaceship::ConnectAPI.get_builds(
-      filter: { app: [app.id], processingState: ["VALID"], expired: false },
-      sort: "-uploadedDate",
-      limit: 40
-    ) || []
+    # Avoid Spaceship default includes (betaBuildMetrics) + invalid expired filter.
+    builds = []
+    begin
+      builds = app.get_builds(
+        filter: { processingState: "VALID" },
+        sort: "-uploadedDate",
+        limit: 40
+      ) || []
+    rescue => ex
+      UI.important("app.get_builds failed (#{ex.message}) — trying raw client…")
+      begin
+        builds = Spaceship::ConnectAPI.get_builds(
+          filter: { app: app.id, processingState: "VALID" },
+          includes: nil,
+          sort: "-uploadedDate",
+          limit: 40
+        ) || []
+      rescue => ex2
+        UI.important("get_builds retry: #{ex2.message}")
+        # Last resort: list builds without processing filter
+        builds = Spaceship::ConnectAPI.get_builds(
+          filter: { app: app.id },
+          includes: "",
+          sort: "-uploadedDate",
+          limit: 40
+        ) || []
+        builds = builds.select { |b| b.processing_state.to_s == "VALID" || b.processing_state.nil? }
+      end
+    end
     UI.user_error!("No VALID builds") if builds.empty?
 
     builds.first(15).each do |b|
