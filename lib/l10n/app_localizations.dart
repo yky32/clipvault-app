@@ -1789,6 +1789,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Small'**
   String get gridTitleSizeSmall;
+
+  /// No description provided for @nearbySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get nearbySection;
+
+  /// No description provided for @nearbyEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby send & receive'**
+  String get nearbyEnabled;
+
+  /// No description provided for @nearbyEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a vault item to another ClipVal on the same Wi‑Fi — no cloud'**
+  String get nearbyEnabledSubtitle;
+
+  /// No description provided for @nearbyDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'This device name'**
+  String get nearbyDisplayName;
+
+  /// No description provided for @nearbyDisplayNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown to nearby ClipVal devices'**
+  String get nearbyDisplayNameHint;
+
+  /// No description provided for @nearbyFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.'**
+  String get nearbyFooter;
+
+  /// No description provided for @nearbySendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send nearby'**
+  String get nearbySendTitle;
+
+  /// No description provided for @nearbySendSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a ClipVal device on this Wi‑Fi. They’ll get a prompt to save the item.'**
+  String get nearbySendSubtitle;
+
+  /// No description provided for @nearbyScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for nearby ClipVal…'**
+  String get nearbyScanning;
+
+  /// No description provided for @nearbyNoDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices found. Open ClipVal on the other phone and enable Nearby in Settings.'**
+  String get nearbyNoDevices;
+
+  /// No description provided for @nearbySendAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on {name}'**
+  String nearbySendAccepted(String name);
+
+  /// No description provided for @nearbySendRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined by {name}'**
+  String nearbySendRejected(String name);
+
+  /// No description provided for @nearbySendTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'No response — try again'**
+  String get nearbySendTimeout;
+
+  /// No description provided for @nearbySendUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach device'**
+  String get nearbySendUnreachable;
+
+  /// No description provided for @nearbySendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Send failed'**
+  String get nearbySendError;
+
+  /// No description provided for @nearbyDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Nearby in Settings first'**
+  String get nearbyDisabledHint;
+
+  /// No description provided for @nearbyReceiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming ClipVal item'**
+  String get nearbyReceiveTitle;
+
+  /// No description provided for @nearbyReceiveFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From {name}'**
+  String nearbyReceiveFrom(String name);
+
+  /// No description provided for @nearbyReceivePrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'On your Wi‑Fi only. Nothing is saved until you accept.'**
+  String get nearbyReceivePrivacyNote;
+
+  /// No description provided for @nearbyDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get nearbyDecline;
+
+  /// No description provided for @nearbyAcceptSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to vault'**
+  String get nearbyAcceptSave;
+
+  /// No description provided for @nearbyReceiveSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to vault'**
+  String get nearbyReceiveSaved;
+
+  /// No description provided for @nearbySendAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send nearby'**
+  String get nearbySendAction;
 }
 
 class _AppLocalizationsDelegate

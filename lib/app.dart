@@ -7,12 +7,14 @@ import 'package:home_widget/home_widget.dart';
 import 'core/bootstrap/app_bootstrap.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/settings_service.dart';
+import 'core/services/nearby/nearby_service.dart';
 import 'core/services/share_intake_service.dart';
 import 'core/services/widget_deep_link.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/palette_controller.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/nearby/presentation/nearby_send_sheet.dart';
 import 'l10n/app_localizations.dart';
 
 class ClipVaultApp extends StatefulWidget {
@@ -83,6 +85,12 @@ class _ClipVaultAppState extends State<ClipVaultApp>
       if (SettingsService.instance.iCloudSyncEnabled) {
         try {
           AppBootstrap.iCloudSyncService.scheduleSync();
+        } catch (_) {}
+      }
+      if (SettingsService.instance.nearbyEnabled) {
+        try {
+          // ignore: unawaited_futures
+          NearbyService.instance.startIfEnabled();
         } catch (_) {}
       }
     }
@@ -164,6 +172,11 @@ class _ClipVaultAppState extends State<ClipVaultApp>
               ],
               supportedLocales: AppLocalizations.supportedLocales,
               routerConfig: AppRouter.router,
+              builder: (context, child) {
+                return NearbyOfferHost(
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
             );
           },
         ),

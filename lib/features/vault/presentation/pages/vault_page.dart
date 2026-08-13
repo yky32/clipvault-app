@@ -20,6 +20,7 @@ import '../../../../core/widgets/copied_hud.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../item_editor/presentation/bottom_sheets/item_editor_bottom_sheet.dart';
 import '../../../welcome/presentation/bottom_sheets/welcome_explainer_sheet.dart';
+import '../../../nearby/presentation/nearby_send_sheet.dart';
 import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
@@ -245,6 +246,23 @@ class _VaultPageState extends State<VaultPage> {
             },
             child: Text(l10n.duplicateItem),
           ),
+          if (SettingsService.instance.nearbyEnabled)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(ctx);
+                if (!SettingsService.instance.nearbyEnabled) {
+                  CopiedHud.show(context, message: l10n.nearbyDisabledHint);
+                  return;
+                }
+                NearbySendSheet.show(
+                  context,
+                  title: item.displayTitle,
+                  value: item.value,
+                  isSensitive: item.isSensitive,
+                );
+              },
+              child: Text(l10n.nearbySendAction),
+            ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {

@@ -407,5 +407,39 @@
   "gridTitleSizeLarge": "Large",
   "gridTitleSizeMedium": "Medium",
   "gridTitleSizeSmall": "Small"
-}
+,
 
+  "nearbySection": "Nearby",
+  "nearbyEnabled": "Nearby send & receive",
+  "nearbyEnabledSubtitle": "Send a vault item to another ClipVal on the same Wi‑Fi — no cloud",
+  "nearbyDisplayName": "This device name",
+  "nearbyDisplayNameHint": "Shown to nearby ClipVal devices",
+  "nearbyFooter": "Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.",
+  "nearbySendTitle": "Send nearby",
+  "nearbySendSubtitle": "Choose a ClipVal device on this Wi‑Fi. They’ll get a prompt to save the item.",
+  "nearbyScanning": "Looking for nearby ClipVal…",
+  "nearbyNoDevices": "No devices found. Open ClipVal on the other phone and enable Nearby in Settings.",
+  "nearbySendAccepted": "Saved on {name}",
+  "@nearbySendAccepted": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbySendRejected": "Declined by {name}",
+  "@nearbySendRejected": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbySendTimeout": "No response — try again",
+  "nearbySendUnreachable": "Couldn’t reach device",
+  "nearbySendError": "Send failed",
+  "nearbyDisabledHint": "Turn on Nearby in Settings first",
+  "nearbyReceiveTitle": "Incoming ClipVal item",
+  "nearbyReceiveFrom": "From {name}",
+  "@nearbyReceiveFrom": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbyReceivePrivacyNote": "On your Wi‑Fi only. Nothing is saved until you accept.",
+  "nearbyDecline": "Decline",
+  "nearbyAcceptSave": "Save to vault",
+  "nearbyReceiveSaved": "Saved to vault",
+  "nearbySendAction": "Send nearby"
+
+}

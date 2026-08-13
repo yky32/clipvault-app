@@ -137,6 +137,10 @@ class SettingsService {
   static const _successfulCopyCountKey = 'successful_copy_count';
   /// True after we asked StoreKit for a review (once).
   static const _reviewPromptedKey = 'in_app_review_prompted';
+  /// Nearby LAN send/receive (LocalSend-inspired). Default off.
+  static const _nearbyEnabledKey = 'nearby_enabled';
+  static const _nearbyDeviceIdKey = 'nearby_device_id';
+  static const _nearbyDisplayNameKey = 'nearby_display_name';
 
   late SharedPreferences _prefs;
 
@@ -261,6 +265,26 @@ class SettingsService {
     if (inAppReviewPrompted) return false;
     return successfulCopyCount >= 10;
   }
+
+
+  // ── Nearby LAN (LocalSend-inspired item send) ─────────────────────────
+
+  bool get nearbyEnabled => _prefs.getBool(_nearbyEnabledKey) ?? false;
+
+  Future<void> setNearbyEnabled(bool value) =>
+      _prefs.setBool(_nearbyEnabledKey, value);
+
+  String? get nearbyDeviceId => _prefs.getString(_nearbyDeviceIdKey);
+
+  Future<void> setNearbyDeviceId(String value) =>
+      _prefs.setString(_nearbyDeviceIdKey, value);
+
+  String get nearbyDisplayName =>
+      _prefs.getString(_nearbyDisplayNameKey) ?? 'ClipVal';
+
+  Future<void> setNearbyDisplayName(String value) =>
+      _prefs.setString(_nearbyDisplayNameKey, value);
+
 
 
   /// Widget shows only pinned items (default false = pinned + recent + rest).

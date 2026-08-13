@@ -913,4 +913,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gridTitleSizeSmall => '小';
+
+  @override
+  String get nearbySection => '附近裝置';
+
+  @override
+  String get nearbyEnabled => '附近傳送與接收';
+
+  @override
+  String get nearbyEnabledSubtitle => '經同一 Wi‑Fi 傳送保險庫項目到另一部 ClipVal — 不經雲端';
+
+  @override
+  String get nearbyDisplayName => '此裝置名稱';
+
+  @override
+  String get nearbyDisplayNameHint => '顯示給附近的 ClipVal';
+
+  @override
+  String get nearbyFooter => '只使用區域網路（類似 Wi‑Fi 上的 AirDrop）。對方必須接受。不用時請關閉。';
+
+  @override
+  String get nearbySendTitle => '傳送到附近';
+
+  @override
+  String get nearbySendSubtitle => '選擇同一 Wi‑Fi 上的 ClipVal。對方會收到是否儲存的提示。';
+
+  @override
+  String get nearbyScanning => '正在尋找附近的 ClipVal…';
+
+  @override
+  String get nearbyNoDevices => '找不到裝置。請在另一部手機開啟 ClipVal，並在設定啟用「附近」。';
+
+  @override
+  String nearbySendAccepted(String name) {
+    return '已儲存到 $name';
+  }
+
+  @override
+  String nearbySendRejected(String name) {
+    return '$name 已拒絕';
+  }
+
+  @override
+  String get nearbySendTimeout => '沒有回應 — 請再試';
+
+  @override
+  String get nearbySendUnreachable => '無法連線到裝置';
+
+  @override
+  String get nearbySendError => '傳送失敗';
+
+  @override
+  String get nearbyDisabledHint => '請先在設定開啟「附近」';
+
+  @override
+  String get nearbyReceiveTitle => '收到 ClipVal 項目';
+
+  @override
+  String nearbyReceiveFrom(String name) {
+    return '來自 $name';
+  }
+
+  @override
+  String get nearbyReceivePrivacyNote => '只經你的 Wi‑Fi。你接受後才會儲存。';
+
+  @override
+  String get nearbyDecline => '拒絕';
+
+  @override
+  String get nearbyAcceptSave => '儲存到保險庫';
+
+  @override
+  String get nearbyReceiveSaved => '已儲存到保險庫';
+
+  @override
+  String get nearbySendAction => '傳送到附近';
 }
