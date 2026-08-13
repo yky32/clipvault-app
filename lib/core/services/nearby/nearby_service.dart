@@ -185,6 +185,7 @@ class NearbyService {
       pin: pin,
       ciphertext: sealed.ciphertext,
       nonce: sealed.nonce,
+      mac: sealed.mac,
       categoryName: categoryName,
       isSensitive: isSensitive,
     );
@@ -305,6 +306,7 @@ class NearbyService {
       nonce: wire.nonce,
       pin: wire.pin,
       receiverDeviceId: _deviceId!,
+      mac: wire.mac,
     );
     if (plain == null || plain.isEmpty) {
       return Response(400, body: jsonEncode({'error': 'decrypt_failed'}));

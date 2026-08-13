@@ -5,14 +5,13 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 
-/// Nearby protocol helpers — PIN session + AES-GCM payload (v2).
+/// Nearby protocol helpers — PIN session + AES-CBC + HMAC (v2).
 class NearbyCrypto {
   NearbyCrypto._();
 
   static const protocolVersion = 2;
   static const _kdfPrefix = 'clipval-nearby-v2';
 
-  /// 6-digit PIN, never 000000.
   static String generatePin([Random? random]) {
     final r = random ?? Random.secure();
     final n = r.nextInt(1000000);
@@ -25,26 +24,32 @@ class NearbyCrypto {
     return RegExp(r'^\d{6}$').hasMatch(pin);
   }
 
-  static enc.Key keyFor({
+  static Uint8List _keyBytes({
     required String pin,
     required String receiverDeviceId,
   }) {
     final material = utf8.encode('$_kdfPrefix|$pin|$receiverDeviceId');
-    final digest = sha256.convert(material);
-    return enc.Key(Uint8List.fromList(digest.bytes));
+    return Uint8List.fromList(sha256.convert(material).bytes);
   }
 
-  /// Encrypt UTF-8 value → base64 ciphertext + base64 nonce.
-  static ({String ciphertext, String nonce}) encryptValue({
+  static ({String ciphertext, String nonce, String mac}) encryptValue({
     required String value,
     required String pin,
     required String receiverDeviceId,
   }) {
-    final key = keyFor(pin: pin, receiverDeviceId: receiverDeviceId);
-    final iv = enc.IV.fromSecureRandom(12);
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm, padding: null));
-    final encrypted = encrypter.encryptBytes(utf8.encode(value), iv: iv);
-    return (ciphertext: encrypted.base64, nonce: iv.base64);
+    final keyBytes = _keyBytes(pin: pin, receiverDeviceId: receiverDeviceId);
+    final key = enc.Key(keyBytes);
+    final iv = enc.IV.fromSecureRandom(16);
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+    final encrypted = encrypter.encrypt(value, iv: iv);
+    final mac = Hmac(sha256, keyBytes)
+        .convert(iv.bytes + encrypted.bytes)
+        .bytes;
+    return (
+      ciphertext: encrypted.base64,
+      nonce: iv.base64,
+      mac: base64Encode(mac),
+    );
   }
 
   static String? decryptValue({
@@ -52,19 +57,34 @@ class NearbyCrypto {
     required String nonce,
     required String pin,
     required String receiverDeviceId,
+    String? mac,
   }) {
     try {
-      final key = keyFor(pin: pin, receiverDeviceId: receiverDeviceId);
+      final keyBytes = _keyBytes(pin: pin, receiverDeviceId: receiverDeviceId);
+      final key = enc.Key(keyBytes);
       final iv = enc.IV.fromBase64(nonce);
-      final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm, padding: null));
-      final bytes = encrypter.decryptBytes(enc.Encrypted.fromBase64(ciphertext), iv: iv);
-      return utf8.decode(bytes);
+      final encrypted = enc.Encrypted.fromBase64(ciphertext);
+
+      if (mac != null && mac.isNotEmpty) {
+        final expected = Hmac(sha256, keyBytes)
+            .convert(iv.bytes + encrypted.bytes)
+            .bytes;
+        final got = base64Decode(mac);
+        if (expected.length != got.length) return null;
+        var diff = 0;
+        for (var i = 0; i < expected.length; i++) {
+          diff |= expected[i] ^ got[i];
+        }
+        if (diff != 0) return null;
+      }
+
+      final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+      return encrypter.decrypt(encrypted, iv: iv);
     } catch (_) {
       return null;
     }
   }
 
-  /// Privacy: store hash of dismissed clipboard, not plaintext.
   static String clipboardFingerprint(String text) {
     return sha256.convert(utf8.encode('clipval-cb|$text')).toString();
   }

@@ -28,6 +28,7 @@ import '../../bloc/vault_bloc.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
 import '../widgets/vault_home_skeleton.dart';
+import '../widgets/vault_nudge_banners.dart';
 
 class VaultPage extends StatefulWidget {
   const VaultPage({super.key});
@@ -139,7 +140,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   void _maybeBackupReminder() {
     if (!mounted || _selecting) return;
     final show = BackupReminderService(
-      items: AppBootstrap.clipItemRepository,
+      itemCount: () => AppBootstrap.clipItemRepository.getAll().length,
     ).shouldShow();
     if (show != _showBackupReminder) {
       setState(() => _showBackupReminder = show);
@@ -147,9 +148,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   }
 
   Future<void> _snoozeBackupReminder() async {
-    await BackupReminderService(
-      items: AppBootstrap.clipItemRepository,
-    ).snooze();
+    await BackupReminderService().snooze();
     if (!mounted) return;
     setState(() => _showBackupReminder = false);
   }
@@ -158,139 +157,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
     context.go('/vault/settings');
   }
 
-  Widget _backupReminderBanner(AppLocalizations l10n) {
-    if (!_showBackupReminder || _selecting) return const SizedBox.shrink();
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.warning.withValues(alpha: 0.45),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  CupertinoIcons.lock_shield_fill,
-                  color: AppColors.warning,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.backupReminderTitle,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.backupReminderBody,
-              style: TextStyle(
-                color: AppColors.secondaryLabel(context),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: _snoozeBackupReminder,
-                  child: Text(l10n.backupReminderLater),
-                ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: _openBackupFromReminder,
-                  child: Text(l10n.backupReminderExport),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _clipboardSuggestBanner(AppLocalizations l10n) {
-    final text = _clipboardSuggestText;
-    if (text == null) return const SizedBox.shrink();
-    final preview = text.length > 100 ? '${text.substring(0, 100)}…' : text;
-    return Material(
-      color: AppColors.cardBackground(context),
-      elevation: 0,
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.35),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(CupertinoIcons.doc_on_clipboard, color: AppColors.primary, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.clipboardSuggestBannerTitle,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              preview,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.secondaryLabel(context),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: _clipboardSuggestBusy ? null : _dismissClipboardSuggest,
-                  child: Text(l10n.clipboardSuggestNotNow),
-                ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: _clipboardSuggestBusy ? null : _saveClipboardSuggest,
-                  child: _clipboardSuggestBusy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.clipboardSuggestSave),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _openSharedPayload(SharedClipPayload payload) {
     if (!mounted) return;
@@ -857,13 +724,23 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                           ),
                           if (_clipboardSuggestText != null && !_selecting)
                             SliverToBoxAdapter(
-                              child: _clipboardSuggestBanner(l10n),
+                              child: ClipboardSuggestBanner(
+                                preview: _clipboardSuggestText!.length > 100
+                                    ? '${_clipboardSuggestText!.substring(0, 100)}…'
+                                    : _clipboardSuggestText!,
+                                busy: _clipboardSuggestBusy,
+                                onSave: _saveClipboardSuggest,
+                                onDismiss: _dismissClipboardSuggest,
+                              ),
                             ),
                           if (_showBackupReminder &&
                               _clipboardSuggestText == null &&
                               !_selecting)
                             SliverToBoxAdapter(
-                              child: _backupReminderBanner(l10n),
+                              child: BackupReminderBanner(
+                                onBackup: _openBackupFromReminder,
+                                onLater: _snoozeBackupReminder,
+                              ),
                             ),
                           if (state.categories.isNotEmpty)
                             SliverToBoxAdapter(
@@ -934,13 +811,23 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                         if (isEmpty) ...[
                           if (_clipboardSuggestText != null && !_selecting)
                             SliverToBoxAdapter(
-                              child: _clipboardSuggestBanner(l10n),
+                              child: ClipboardSuggestBanner(
+                                preview: _clipboardSuggestText!.length > 100
+                                    ? '${_clipboardSuggestText!.substring(0, 100)}…'
+                                    : _clipboardSuggestText!,
+                                busy: _clipboardSuggestBusy,
+                                onSave: _saveClipboardSuggest,
+                                onDismiss: _dismissClipboardSuggest,
+                              ),
                             ),
                           if (_showBackupReminder &&
                               _clipboardSuggestText == null &&
                               !_selecting)
                             SliverToBoxAdapter(
-                              child: _backupReminderBanner(l10n),
+                              child: BackupReminderBanner(
+                                onBackup: _openBackupFromReminder,
+                                onLater: _snoozeBackupReminder,
+                              ),
                             ),
                           SliverFillRemaining(
                             hasScrollBody: false,
