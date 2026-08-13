@@ -377,5 +377,39 @@
   "gridTitleSizeLarge": "大",
   "gridTitleSizeMedium": "中",
   "gridTitleSizeSmall": "小"
-}
+,
 
+  "nearbySection": "附近裝置",
+  "nearbyEnabled": "附近傳送與接收",
+  "nearbyEnabledSubtitle": "經同一 Wi‑Fi 傳送保險庫項目到另一部 ClipVal — 不經雲端",
+  "nearbyDisplayName": "此裝置名稱",
+  "nearbyDisplayNameHint": "顯示給附近的 ClipVal",
+  "nearbyFooter": "只使用區域網路（類似 Wi‑Fi 上的 AirDrop）。對方必須接受。不用時請關閉。",
+  "nearbySendTitle": "傳送到附近",
+  "nearbySendSubtitle": "選擇同一 Wi‑Fi 上的 ClipVal。對方會收到是否儲存的提示。",
+  "nearbyScanning": "正在尋找附近的 ClipVal…",
+  "nearbyNoDevices": "找不到裝置。請在另一部手機開啟 ClipVal，並在設定啟用「附近」。",
+  "nearbySendAccepted": "已儲存到 {name}",
+  "@nearbySendAccepted": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbySendRejected": "{name} 已拒絕",
+  "@nearbySendRejected": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbySendTimeout": "沒有回應 — 請再試",
+  "nearbySendUnreachable": "無法連線到裝置",
+  "nearbySendError": "傳送失敗",
+  "nearbyDisabledHint": "請先在設定開啟「附近」",
+  "nearbyReceiveTitle": "收到 ClipVal 項目",
+  "nearbyReceiveFrom": "來自 {name}",
+  "@nearbyReceiveFrom": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "nearbyReceivePrivacyNote": "只經你的 Wi‑Fi。你接受後才會儲存。",
+  "nearbyDecline": "拒絕",
+  "nearbyAcceptSave": "儲存到保險庫",
+  "nearbyReceiveSaved": "已儲存到保險庫",
+  "nearbySendAction": "傳送到附近"
+
+}

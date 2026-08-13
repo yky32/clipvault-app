@@ -51,6 +51,12 @@ dependencies:
   # App Store rating prompt (P1 activation loop)
   in_app_review: ^2.0.10
 
+  # Nearby send (LocalSend-inspired LAN item transfer)
+  bonsoir: ^5.1.11
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

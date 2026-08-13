@@ -11,6 +11,7 @@ import '../services/icloud_sync_service.dart';
 import '../services/settings_service.dart';
 import '../services/vault_migration_service.dart';
 import '../services/widget_snapshot_service.dart';
+import '../services/nearby/nearby_service.dart';
 
 /// Central startup wiring (pattern from Triftly AppBootstrap).
 class AppBootstrap {
@@ -60,5 +61,8 @@ class AppBootstrap {
     if (SettingsService.instance.iCloudSyncEnabled) {
       unawaited(iCloudSyncService.syncNow());
     }
+
+    // Nearby LAN send/receive — only if user opted in.
+    unawaited(NearbyService.instance.startIfEnabled());
   }
 }

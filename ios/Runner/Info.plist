@@ -59,6 +59,12 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>ClipVal does not use your location. This key is required because a system file/share component may reference location APIs.</string>
 	<!-- Same as Triftly/Depozio: skip App Store Connect export-compliance questionnaire. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ClipVal uses the local network so you can send a vault item to another ClipVal device nearby — without the cloud.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_clipval-nearby._tcp</string>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- Home Screen widget deep links (iOS 15–16 copy fallback). -->

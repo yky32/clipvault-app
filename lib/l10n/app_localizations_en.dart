@@ -938,4 +938,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gridTitleSizeSmall => 'Small';
+
+  @override
+  String get nearbySection => 'Nearby';
+
+  @override
+  String get nearbyEnabled => 'Nearby send & receive';
+
+  @override
+  String get nearbyEnabledSubtitle =>
+      'Send a vault item to another ClipVal on the same Wi‑Fi — no cloud';
+
+  @override
+  String get nearbyDisplayName => 'This device name';
+
+  @override
+  String get nearbyDisplayNameHint => 'Shown to nearby ClipVal devices';
+
+  @override
+  String get nearbyFooter =>
+      'Uses your local network only (like AirDrop on Wi‑Fi). The other person must Accept. Turn off when you don’t need it.';
+
+  @override
+  String get nearbySendTitle => 'Send nearby';
+
+  @override
+  String get nearbySendSubtitle =>
+      'Choose a ClipVal device on this Wi‑Fi. They’ll get a prompt to save the item.';
+
+  @override
+  String get nearbyScanning => 'Looking for nearby ClipVal…';
+
+  @override
+  String get nearbyNoDevices =>
+      'No devices found. Open ClipVal on the other phone and enable Nearby in Settings.';
+
+  @override
+  String nearbySendAccepted(String name) {
+    return 'Saved on $name';
+  }
+
+  @override
+  String nearbySendRejected(String name) {
+    return 'Declined by $name';
+  }
+
+  @override
+  String get nearbySendTimeout => 'No response — try again';
+
+  @override
+  String get nearbySendUnreachable => 'Couldn’t reach device';
+
+  @override
+  String get nearbySendError => 'Send failed';
+
+  @override
+  String get nearbyDisabledHint => 'Turn on Nearby in Settings first';
+
+  @override
+  String get nearbyReceiveTitle => 'Incoming ClipVal item';
+
+  @override
+  String nearbyReceiveFrom(String name) {
+    return 'From $name';
+  }
+
+  @override
+  String get nearbyReceivePrivacyNote =>
+      'On your Wi‑Fi only. Nothing is saved until you accept.';
+
+  @override
+  String get nearbyDecline => 'Decline';
+
+  @override
+  String get nearbyAcceptSave => 'Save to vault';
+
+  @override
+  String get nearbyReceiveSaved => 'Saved to vault';
+
+  @override
+  String get nearbySendAction => 'Send nearby';
 }

@@ -16,6 +16,7 @@ import '../../../../core/bootstrap/app_bootstrap.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/build_info.dart';
 import '../../../../core/services/icloud_sync_service.dart';
+import '../../../../core/services/nearby/nearby_service.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/services/vault_backup.dart';
 import '../../../../core/services/vault_migration_service.dart';
@@ -50,6 +51,9 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _iCloudSync;
   DateTime? _iCloudLastSync;
   bool _iCloudBusy = false;
+  late bool _nearbyEnabled;
+  late String _nearbyName;
+  bool _nearbyBusy = false;
   String _versionLabel = '1.0.0';
 
   @override
@@ -68,6 +72,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _vaultSort = s.vaultSortMode;
     _iCloudSync = s.iCloudSyncEnabled;
     _iCloudLastSync = s.iCloudLastSyncAt;
+    _nearbyEnabled = s.nearbyEnabled;
+    _nearbyName = s.nearbyDisplayName;
     _loadVersion();
   }
 
@@ -121,6 +127,73 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+  }
+
+
+  Future<void> _toggleNearby(bool value) async {
+    setState(() => _nearbyBusy = true);
+    try {
+      await NearbyService.instance.setEnabled(value);
+      if (!mounted) return;
+      HapticFeedback.selectionClick();
+      setState(() => _nearbyEnabled = value);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _nearbyEnabled = SettingsService.instance.nearbyEnabled);
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: Text(AppLocalizations.of(context).nearbyEnabled),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('$e'),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(AppLocalizations.of(context).cancel),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _nearbyBusy = false);
+    }
+  }
+
+  Future<void> _editNearbyName() async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController(text: _nearbyName);
+    final result = await showCupertinoDialog<String>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.nearbyDisplayName),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: controller,
+            placeholder: l10n.nearbyDisplayNameHint,
+            autofocus: true,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    if (result == null || !mounted) return;
+    final name = result.isEmpty ? 'ClipVal' : result;
+    await NearbyService.instance.updateDisplayName(name);
+    if (!mounted) return;
+    setState(() => _nearbyName = name);
   }
 
   Future<void> _toggleICloudSync(bool value) async {
@@ -1275,6 +1348,39 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 if (!kIsWeb && Platform.isIOS) const SizedBox(height: 28),
+                IosGroup(
+                  header: l10n.nearbySection,
+                  footer: l10n.nearbyFooter,
+                  children: [
+                    IosGroupTile(
+                      title: l10n.nearbyEnabled,
+                      subtitle: l10n.nearbyEnabledSubtitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.antenna_radiowaves_left_right,
+                        color: AppColors.iconView,
+                      ),
+                      trailing: _nearbyBusy
+                          ? const CupertinoActivityIndicator()
+                          : CupertinoSwitch(
+                              value: _nearbyEnabled,
+                              activeTrackColor: AppColors.primary,
+                              onChanged: _toggleNearby,
+                            ),
+                    ),
+                    if (_nearbyEnabled)
+                      IosGroupTile(
+                        title: l10n.nearbyDisplayName,
+                        subtitle: _nearbyName,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.device_phone_portrait,
+                          color: AppColors.iconView,
+                        ),
+                        trailing: const IosChevron(),
+                        onTap: _editNearbyName,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 28),
                 IosGroup(
                   header: l10n.settingsData,
                   children: [
