@@ -1,8 +1,12 @@
-# Master source (drop here first)
+# App icon source
 
-| Suggested file | Size | Notes |
-|----------------|------|--------|
-| `app-icon-1024.png` | 1024×1024 | Main store icon, **no transparency** |
-| `app-icon-removed-background.png` | any square | Optional mark with alpha (like Triftly) |
+- `app-icon-1024.png` — **master** full-bleed brand purple (no white canvas corners).
+- Used by `flutter_launcher_icons` (see root `pubspec.yaml`).
 
-Then generate platform sizes with https://appiconmaker.co/ and place them in `../ios/` and `../android/`.
+## Rules
+- Corners must be brand purple `#4E57AA` (78,87,170), **not white**.
+- iOS masks to squircle; white corners still show as fringe on some surfaces / previews.
+- Regenerate: `dart run flutter_launcher_icons`
+
+## History
+- Older master had white corners; replaced from `clipval-www/public/app-icon.png` + outer-ring clean (2026-08).
