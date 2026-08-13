@@ -60,6 +60,14 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     }
   }
 
+  Future<void> _syncSpotlight() async {
+    try {
+      await AppBootstrap.spotlightIndexService.reindexAll(_items.getAll());
+    } catch (_) {
+      // Spotlight is best-effort.
+    }
+  }
+
   Future<void> _onStarted(VaultStarted event, Emitter<VaultState> emit) async {
     emit(state.copyWith(status: VaultStatus.loading));
     final sw = Stopwatch()..start();
@@ -81,6 +89,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         clearError: true,
       ),
     );
+    await _syncSpotlight();
   }
 
   void _onSearchChanged(VaultSearchChanged event, Emitter<VaultState> emit) {
@@ -137,6 +146,9 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
     try {
+      await AppBootstrap.spotlightIndexService.delete([event.itemId]);
+    } catch (_) {}
+    try {
       await AppBootstrap.iCloudSyncService.pushItemTombstone(event.itemId);
     } catch (_) {}
     _scheduleICloud();
@@ -150,6 +162,9 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.deleteMany(event.itemIds);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    try {
+      await AppBootstrap.spotlightIndexService.delete(event.itemIds);
+    } catch (_) {}
     for (final id in event.itemIds) {
       try {
         await AppBootstrap.iCloudSyncService.pushItemTombstone(id);
@@ -166,6 +181,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.restoreMany(event.items);
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    await _syncSpotlight();
     _scheduleICloud();
   }
 
@@ -178,6 +194,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     await _items.update(item.copyWith(isPinned: !item.isPinned));
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    // Title unchanged — skip full reindex.
     _scheduleICloud();
   }
 
@@ -199,6 +216,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     );
     emit(state.copyWith(items: _items.getAll()));
     await _syncWidget();
+    await _syncSpotlight();
     _scheduleICloud();
   }
 
@@ -227,6 +245,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       ),
     );
     await _syncWidget();
+    await _syncSpotlight();
     _scheduleICloud();
   }
 }

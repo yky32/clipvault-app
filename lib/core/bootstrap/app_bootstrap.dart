@@ -12,6 +12,7 @@ import '../services/settings_service.dart';
 import '../services/vault_migration_service.dart';
 import '../services/widget_snapshot_service.dart';
 import '../services/nearby/nearby_service.dart';
+import '../services/spotlight_index_service.dart';
 
 /// Central startup wiring (pattern from Triftly AppBootstrap).
 class AppBootstrap {
@@ -25,6 +26,7 @@ class AppBootstrap {
   static late final VaultMigrationService vaultMigrationService;
   static late final WidgetSnapshotService widgetSnapshotService;
   static late final ICloudSyncService iCloudSyncService;
+  static late final SpotlightIndexService spotlightIndexService;
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -51,6 +53,8 @@ class AppBootstrap {
     // Best-effort: keep home-screen widget in sync after cold start.
     await widgetSnapshotService.sync();
 
+    spotlightIndexService = SpotlightIndexService();
+
     iCloudSyncService = ICloudSyncService(
       encryption: encryptionService,
       items: clipItemRepository,
@@ -64,5 +68,8 @@ class AppBootstrap {
 
     // Nearby LAN send/receive — only if user opted in.
     unawaited(NearbyService.instance.startIfEnabled());
+    unawaited(
+      spotlightIndexService.reindexAll(clipItemRepository.getAll()),
+    );
   }
 }
