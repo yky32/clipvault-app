@@ -956,9 +956,9 @@ platform :ios do
   end
 
 
-  desc "Create/update App Store version, attach latest TF build, set What's New, submit for review"
-  # CI-only friendly (API key). Does not rebuild — uses existing TestFlight build.
-  # Usage: bundle exec fastlane ios submit_app_store version:1.1.0 build:65
+
+  desc "Attach TF build + What's New + submit for App Review (API key / CI)"
+  # bundle exec fastlane ios submit_app_store version:1.1.0 build:65
   lane :submit_app_store do |options|
     version_string = (options[:version] || ENV["SUBMIT_VERSION"] || "1.1.0").to_s
     prefer_build = (options[:build] || ENV["SUBMIT_BUILD"] || "").to_s.strip
@@ -971,69 +971,56 @@ platform :ios do
     UI.user_error!("Missing API key at #{key_path}") unless File.exist?(key_path)
 
     require "spaceship"
-    token = Spaceship::ConnectAPI::Token.create(
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
       key_id: key_id,
       issuer_id: issuer_id,
       filepath: key_path
     )
-    Spaceship::ConnectAPI.token = token
 
     app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
     UI.user_error!("App not found: #{APP_IDENTIFIER}") unless app
-    UI.message("📱 App: #{app.name} (#{app.id})")
-
+    UI.message("App: #{app.name}")
     platform = Spaceship::ConnectAPI::Platform::IOS
-    version = app.get_edit_app_store_version(platform: platform)
 
+    version = app.get_edit_app_store_version(platform: platform)
     if version.nil?
       UI.message("Creating App Store version #{version_string}…")
       version = app.create_version!(version_string: version_string, platform: platform)
     elsif version.version_string.to_s != version_string
-      UI.important("Editable version is #{version.version_string}, expected #{version_string}")
-      # If editable is older train still open, fail clearly
-      if Gem::Version.new(version.version_string.to_s) < Gem::Version.new(version_string)
-        UI.message("Creating newer version #{version_string}…")
-        begin
-          version = app.create_version!(version_string: version_string, platform: platform)
-        rescue => ex
-          UI.user_error!("Could not create version #{version_string}: #{ex.message}. Finish or discard the editable version #{version.version_string} in ASC first.")
-        end
+      begin
+        older = Gem::Version.new(version.version_string.to_s) < Gem::Version.new(version_string)
+      rescue StandardError
+        older = false
+      end
+      if older
+        UI.message("Creating #{version_string} (editable was #{version.version_string})…")
+        version = app.create_version!(version_string: version_string, platform: platform)
       else
-        UI.user_error!("ASC editable version is #{version.version_string}. Pass version:#{version.version_string} or fix ASC.")
+        UI.user_error!("Editable ASC version is #{version.version_string}, not #{version_string}")
       end
     end
-    UI.success("Using App Store version #{version.version_string} (state=#{version.app_store_state})")
+    UI.success("Using version #{version.version_string} state=#{version.app_store_state}")
 
-    # What's New
     en_path = File.join(PROJECT_ROOT, "store", "whats_new_1.1_en-US.txt")
     zh_path = File.join(PROJECT_ROOT, "store", "whats_new_1.1_zh-Hant.txt")
     review_path = File.join(PROJECT_ROOT, "store", "REVIEW_NOTES_1.1_icloud.txt")
-    en_whats = File.exist?(en_path) ? File.read(en_path).strip : nil
-    zh_whats = File.exist?(zh_path) ? File.read(zh_path).strip : nil
-    review_notes = File.exist?(review_path) ? File.read(review_path).strip : nil
+    en_whats = File.exist?(en_path) ? File.read(en_path).strip : ""
+    zh_whats = File.exist?(zh_path) ? File.read(zh_path).strip : en_whats
+    review_notes = File.exist?(review_path) ? File.read(review_path).strip : ""
 
-    locs = version.get_app_store_version_localizations || []
-    locs.each do |loc|
+    (version.get_app_store_version_localizations || []).each do |loc|
       locale = loc.locale.to_s
-      body = nil
-      if locale == "en-US" || locale == "en-GB"
-        body = en_whats
-      elsif locale.start_with?("zh-Hant") || locale == "zh-TW" || locale == "zh-HK"
-        body = zh_whats || en_whats
-      elsif locale.start_with?("zh")
-        body = zh_whats || en_whats
-      end
-      next if body.to_s.empty?
+      body = locale.start_with?("zh") ? zh_whats : en_whats
+      next if body.empty?
       begin
         loc.update(attributes: { whatsNew: body })
-        UI.message("📝 What's New → #{locale}")
+        UI.message("What's New → #{locale}")
       rescue => ex
-        UI.important("What's New update failed for #{locale}: #{ex.message}")
+        UI.important("What's New #{locale}: #{ex.message}")
       end
     end
 
-    # Review notes
-    if review_notes && !review_notes.empty?
+    unless review_notes.empty?
       begin
         detail = version.fetch_app_store_review_detail
         if detail
@@ -1044,121 +1031,52 @@ platform :ios do
             attributes: { notes: review_notes }
           )
         end
-        UI.message("📋 Review notes set")
+        UI.message("Review notes set")
       rescue => ex
-        UI.important("Review notes skipped: #{ex.message}")
+        UI.important("Review notes: #{ex.message}")
       end
     end
 
-    # Find VALID build for this marketing version
-    UI.message("🔎 Looking for VALID TestFlight build (version=#{version_string}" + (prefer_build.empty? ? "" : " build=#{prefer_build}") + ")…")
+    # ASC Build.attributes.version is typically CFBundleVersion (build number).
     builds = Spaceship::ConnectAPI.get_builds(
-      filter: {
-        app: [app.id],
-        processingState: ["VALID"],
-        expired: false
-      },
+      filter: { app: [app.id], processingState: ["VALID"], expired: false },
       sort: "-uploadedDate",
-      limit: 50
+      limit: 40
     ) || []
+    UI.user_error!("No VALID builds") if builds.empty?
 
-    candidates = builds.select do |b|
-      ver = b.version.to_s
-      ver == version_string || ver.start_with?("#{version_string}.")
-    end
-    if candidates.empty?
-      # fallback: any recent VALID and match via pre_release_version
-      candidates = builds
+    builds.first(15).each do |b|
+      UI.message("build id=#{b.id} version=#{b.version} uploaded=#{b.uploaded_date}")
     end
 
-    build = nil
+    chosen = nil
     if !prefer_build.empty?
-      build = candidates.find { |b| b.version.to_s == version_string && b.uploaded_date && b.respond_to?(:version) && (
-        # CFBundleVersion often on build.version for marketing? Actually:
-        # Spaceship Build: version = CFBundleShortVersionString, but we need build number
-        true
-      ) }
-      # Build number field
-      build = candidates.find do |b|
-        bn = b.respond_to?(:build_number) ? b.build_number.to_s : nil
-        bn = b.attributes["version"] if bn.nil? # wrong
-        # Connect API: version is marketing, and there's no buildNumber on all wrappers —
-        # use b.version for short version and b.uploadedDate; build number is often `b.version` vs nested.
-        # Spaceship::ConnectAPI::Build has .version (CFBundleShortVersionString) and method for number:
-        num = b.try(:version).to_s # marketing
-        # Actual API field is `version` for short and we need:
-        b_num = b.respond_to?(:build_number) ? b.build_number : (b.attributes && (b.attributes["buildNumber"] || b.attributes[:buildNumber]))
-        b_num = b.version if b_num.nil? # some mappings put number in different place
-        # In recent Spaceship, Build has:
-        #   version -> CFBundleShortVersionString  
-        #   And get build number via:
-        (b.respond_to?(:version) ? nil : nil)
-        true
-      end
+      chosen = builds.find { |b| b.version.to_s == prefer_build }
     end
-
-    # Prefer matching marketing version; pick newest
-    matched = candidates.select { |b| b.version.to_s == version_string }
-    matched = candidates if matched.empty?
-    # Filter by build number string via attributes
-    if !prefer_build.empty?
-      with_num = matched.select do |b|
-        attrs = b.respond_to?(:attributes) ? b.attributes : {}
-        num = attrs["version"].to_s # NO
-        # Spaceship Build#version is short version string
-        # Build number is often exposed as:
-        n = b.respond_to?(:build_number) ? b.build_number.to_s : nil
-        if n.nil? && b.respond_to?(:[])
-          n = b["version"].to_s
-        end
-        # Try inspect
-        n = attrs[:version].to_s if n.to_s.empty?
-        # Connect API Build has property `version` = CFBundleVersion in SOME versions of API
-        # Actually in App Store Connect API:
-        #   attributes.version = CFBundleVersion (build number)
-        #   preReleaseVersion.version = CFBundleShortVersionString
-        # Spaceship maps confusingly — dump candidate labels
-        label = "#{b.id} version=#{b.version} uploaded=#{b.uploaded_date}"
-        UI.message("  candidate #{label}")
-        # Match prefer_build against b.version OR attributes
-        bn = b.version.to_s
-        # If marketing was 1.1.0, version field might be 65
-        bn == prefer_build || label.include?(prefer_build)
-      end
-      matched = with_num unless with_num.empty?
+    if chosen.nil?
+      # Prefer builds that look like our marketing train when version field is short version
+      chosen = builds.find { |b| b.version.to_s == version_string }
     end
-
-    build = matched.first
-    UI.user_error!("No VALID build found for #{version_string}. Upload TF first.") unless build
-    UI.success("Using build id=#{build.id} version_attr=#{build.version} uploaded=#{build.uploaded_date}")
+    chosen ||= builds.first
+    UI.success("Selected build id=#{chosen.id} version=#{chosen.version}")
 
     begin
-      version.select_build(build_id: build.id)
-      UI.success("Attached build to App Store version")
+      version.select_build(build_id: chosen.id)
+      UI.success("Build attached")
     rescue => ex
-      UI.important("select_build: #{ex.message} (may already be attached)")
+      UI.important("select_build: #{ex.message}")
     end
 
-    # Refresh version object
     version = app.get_edit_app_store_version(platform: platform)
     UI.user_error!("No editable version after attach") unless version
 
-    # Submit for review
     begin
       submission = version.create_app_store_version_submission
-      UI.success("✅ Submitted for App Review! submission=#{submission&.id}")
+      UI.success("SUBMITTED FOR REVIEW id=#{submission&.id}")
     rescue => ex
-      msg = ex.message.to_s
-      if msg.include?("already") || msg.include?("state")
-        UI.user_error!("Submit failed (check ASC state): #{msg}")
-      else
-        UI.user_error!("Submit failed: #{msg}")
-      end
+      UI.user_error!("Submit failed: #{ex.message}")
     end
-
-    UI.success("Done. Watch App Store Connect → ClipVal → 1.1 Waiting for Review.")
   end
-
 
   desc "Upload App Store screenshots only (no binary) — from store/screenshots/"
   # Uses Spaceship single-pass upload (not deliver overwrite_screenshots), which can
