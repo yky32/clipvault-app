@@ -988,4 +988,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nearbySendAction => '傳送到附近';
+
+  @override
+  String get clipboardSuggest => '建議儲存剪貼簿';
+
+  @override
+  String get clipboardSuggestSubtitle => '開啟 ClipVal 時，詢問是否儲存新的剪貼簿文字（不會自動儲存）';
+
+  @override
+  String get clipboardSuggestFooter =>
+      '可選。只在開啟此功能且在保險庫畫面時讀取剪貼簿。略過後，相同文字不會再提示，直至內容變更。';
+
+  @override
+  String get clipboardSuggestBannerTitle => '儲存到 ClipVal？';
+
+  @override
+  String get clipboardSuggestSave => '儲存';
+
+  @override
+  String get clipboardSuggestNotNow => '暫時不要';
+
+  @override
+  String get clipboardSuggestSaved => '已從剪貼簿儲存';
 }

@@ -1927,6 +1927,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send nearby'**
   String get nearbySendAction;
+
+  /// No description provided for @clipboardSuggest.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest saving clipboard'**
+  String get clipboardSuggest;
+
+  /// No description provided for @clipboardSuggestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When you open ClipVal, ask to save new clipboard text (never automatic)'**
+  String get clipboardSuggestSubtitle;
+
+  /// No description provided for @clipboardSuggestFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. ClipVal only reads the clipboard when this is on and the vault is open. Dismiss skips the same text until it changes.'**
+  String get clipboardSuggestFooter;
+
+  /// No description provided for @clipboardSuggestBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to ClipVal?'**
+  String get clipboardSuggestBannerTitle;
+
+  /// No description provided for @clipboardSuggestSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get clipboardSuggestSave;
+
+  /// No description provided for @clipboardSuggestNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get clipboardSuggestNotNow;
+
+  /// No description provided for @clipboardSuggestSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved from clipboard'**
+  String get clipboardSuggestSaved;
 }
 
 class _AppLocalizationsDelegate

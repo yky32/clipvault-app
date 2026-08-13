@@ -440,6 +440,12 @@
   "nearbyDecline": "Decline",
   "nearbyAcceptSave": "Save to vault",
   "nearbyReceiveSaved": "Saved to vault",
-  "nearbySendAction": "Send nearby"
-
+  "nearbySendAction": "Send nearby",
+  "clipboardSuggest": "Suggest saving clipboard",
+  "clipboardSuggestSubtitle": "When you open ClipVal, ask to save new clipboard text (never automatic)",
+  "clipboardSuggestFooter": "Optional. ClipVal only reads the clipboard when this is on and the vault is open. Dismiss skips the same text until it changes.",
+  "clipboardSuggestBannerTitle": "Save to ClipVal?",
+  "clipboardSuggestSave": "Save",
+  "clipboardSuggestNotNow": "Not now",
+  "clipboardSuggestSaved": "Saved from clipboard"
 }

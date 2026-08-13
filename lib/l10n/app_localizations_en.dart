@@ -1018,4 +1018,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nearbySendAction => 'Send nearby';
+
+  @override
+  String get clipboardSuggest => 'Suggest saving clipboard';
+
+  @override
+  String get clipboardSuggestSubtitle =>
+      'When you open ClipVal, ask to save new clipboard text (never automatic)';
+
+  @override
+  String get clipboardSuggestFooter =>
+      'Optional. ClipVal only reads the clipboard when this is on and the vault is open. Dismiss skips the same text until it changes.';
+
+  @override
+  String get clipboardSuggestBannerTitle => 'Save to ClipVal?';
+
+  @override
+  String get clipboardSuggestSave => 'Save';
+
+  @override
+  String get clipboardSuggestNotNow => 'Not now';
+
+  @override
+  String get clipboardSuggestSaved => 'Saved from clipboard';
 }

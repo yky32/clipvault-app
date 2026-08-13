@@ -45,6 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late GridTitleSize _gridTitleSize;
   late AppLocalePreference _localePref;
   late int _clipboardSeconds;
+  late bool _clipboardSuggest;
   late bool _widgetPinnedOnly;
   late bool _widgetHideTitlesWhenLocked;
   late VaultSortMode _vaultSort;
@@ -67,6 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _gridTitleSize = s.gridTitleSize;
     _localePref = s.localePreference;
     _clipboardSeconds = s.clipboardClearSeconds;
+    _clipboardSuggest = s.clipboardSuggestEnabled;
     _widgetPinnedOnly = s.widgetPinnedOnly;
     _widgetHideTitlesWhenLocked = s.widgetHideTitlesWhenLocked;
     _vaultSort = s.vaultSortMode;
@@ -1214,8 +1216,27 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 28),
                 IosGroup(
                   header: l10n.settingsClipboard,
-                  footer: l10n.clipboardAutoClearSubtitle,
+                  footer: l10n.clipboardSuggestFooter,
                   children: [
+                    IosGroupTile(
+                      title: l10n.clipboardSuggest,
+                      subtitle: l10n.clipboardSuggestSubtitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.lightbulb_fill,
+                        color: AppColors.iconClipboard,
+                      ),
+                      trailing: CupertinoSwitch(
+                        value: _clipboardSuggest,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (v) async {
+                          HapticFeedback.selectionClick();
+                          await SettingsService.instance
+                              .setClipboardSuggestEnabled(v);
+                          if (!mounted) return;
+                          setState(() => _clipboardSuggest = v);
+                        },
+                      ),
+                    ),
                     IosGroupTile(
                       title: l10n.clipboardAutoClear,
                       leading: _LeadingIcon(
