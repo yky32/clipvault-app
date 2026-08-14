@@ -53,3 +53,10 @@ ios/ExportOptions.ci.plist
 ios/distribution.ci.p12
 **/AuthKey_*.p8
 *.mobileprovision
+
+# Android release secrets (never commit)
+android/key.properties
+android/*.jks
+android/*.keystore
+android/play-store-key*.json
+android/.play_metadata/
