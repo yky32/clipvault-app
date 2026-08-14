@@ -744,49 +744,63 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                             ),
                           if (state.categories.isNotEmpty)
                             SliverToBoxAdapter(
-                              child: SizedBox(
-                                height: 36,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  physics: const BouncingScrollPhysics(),
-                                  children: [
-                                    _SegmentChip(
-                                      label: l10n.filterAll,
-                                      icon: CupertinoIcons.square_grid_2x2,
-                                      selected:
-                                          state.selectedCategoryId == null,
-                                      onTap: () => context
-                                          .read<VaultBloc>()
-                                          .add(
-                                            const VaultCategoryFilterChanged(
-                                              null,
-                                            ),
-                                          ),
+                              // Keep chips fully inside this slot — height 36
+                              // overflowed vertically and painted over banners.
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(0, 10, 0, 4),
+                                child: SizedBox(
+                                  height: 44,
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.hardEdge,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
                                     ),
-                                    ...state.categories.map((c) {
-                                      final count = state.countInCategory(c.id);
-                                      final selected =
-                                          state.selectedCategoryId == c.id;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(left: 8),
+                                    physics: const BouncingScrollPhysics(),
+                                    children: [
+                                      Center(
                                         child: _SegmentChip(
-                                          label: categoryDisplayName(c, l10n),
-                                          icon: categoryIcon(c),
-                                          count: count,
-                                          selected: selected,
-                                          onTap: () =>
-                                              context.read<VaultBloc>().add(
+                                          label: l10n.filterAll,
+                                          icon: CupertinoIcons.square_grid_2x2,
+                                          selected:
+                                              state.selectedCategoryId == null,
+                                          onTap: () => context
+                                              .read<VaultBloc>()
+                                              .add(
+                                                const VaultCategoryFilterChanged(
+                                                  null,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                      ...state.categories.map((c) {
+                                        final count =
+                                            state.countInCategory(c.id);
+                                        final selected =
+                                            state.selectedCategoryId == c.id;
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8),
+                                          child: Center(
+                                            child: _SegmentChip(
+                                              label:
+                                                  categoryDisplayName(c, l10n),
+                                              icon: categoryIcon(c),
+                                              count: count,
+                                              selected: selected,
+                                              onTap: () => context
+                                                  .read<VaultBloc>()
+                                                  .add(
                                                     VaultCategoryFilterChanged(
                                                       selected ? null : c.id,
                                                     ),
                                                   ),
-                                        ),
-                                      );
-                                    }),
-                                  ],
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

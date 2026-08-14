@@ -22,13 +22,14 @@ class ClipboardSuggestBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Opaque material so nothing from the next sliver paints "through" the card.
     return Material(
-      color: AppColors.cardBackground(context),
+      color: Colors.transparent,
       elevation: 0,
       child: Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         decoration: BoxDecoration(
           color: AppColors.cardBackground(context),
           borderRadius: BorderRadius.circular(14),
@@ -36,13 +37,18 @@ class ClipboardSuggestBanner extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: 0.35),
           ),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                Icon(CupertinoIcons.doc_on_clipboard,
-                    color: AppColors.primary, size: 18),
+                Icon(
+                  CupertinoIcons.doc_on_clipboard,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -63,23 +69,40 @@ class ClipboardSuggestBanner extends StatelessWidget {
               style: TextStyle(
                 color: AppColors.secondaryLabel(context),
                 fontSize: 14,
+                height: 1.25,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            // Wrap actions so long l10n never collides with chips below.
             Row(
               children: [
-                TextButton(
-                  onPressed: busy ? null : onDismiss,
-                  child: Text(l10n.clipboardSuggestNotNow),
+                Flexible(
+                  child: TextButton(
+                    onPressed: busy ? null : onDismiss,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 40),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(l10n.clipboardSuggestNotNow),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 FilledButton(
                   onPressed: busy ? null : onSave,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: busy
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(l10n.clipboardSuggestSave),
                 ),
@@ -109,8 +132,8 @@ class BackupReminderBanner extends StatelessWidget {
       color: Colors.transparent,
       child: Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         decoration: BoxDecoration(
           color: AppColors.cardBackground(context),
           borderRadius: BorderRadius.circular(14),
@@ -118,6 +141,7 @@ class BackupReminderBanner extends StatelessWidget {
             color: AppColors.warning.withValues(alpha: 0.45),
           ),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
