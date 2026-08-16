@@ -18,9 +18,9 @@
 
 ## Should (soon after MVP)
 
-- [ ] Share intent → open editor (manifest filter stubbed)
+- [x] Share intent → open editor (Android MainActivity + same Flutter channel)
 - [ ] Nearby permissions tested on Android 12+
-- [ ] Adaptive icon brand purple background
+- [x] Adaptive icon brand purple background
 - [ ] Data safety form
 
 ## Won’t (V1)

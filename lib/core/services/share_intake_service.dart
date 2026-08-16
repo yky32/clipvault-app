@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 import '../constants/app_constants.dart';
 
-/// Pending text from the iOS Share Extension (App Group → host app).
+/// Pending text from iOS Share Extension or Android ACTION_SEND.
 class SharedClipPayload {
   const SharedClipPayload({required this.value, this.title});
 
@@ -10,10 +10,12 @@ class SharedClipPayload {
   final String? title;
 }
 
-/// Reads one-shot share payload from the native App Group (no cloud).
+/// Reads one-shot share payload from native (no cloud).
 ///
-/// Extension writes keys under [AppConstants.widgetAppGroupId], then opens
-/// `clipval://share`. Host drains via method channel and opens the item editor.
+/// - **iOS:** App Group keys → open `clipval://share`
+/// - **Android:** MainActivity stashes SEND text/plain → same channel
+///
+/// Host drains via method channel and opens the item editor.
 abstract final class ShareIntakeService {
   static const _channel = MethodChannel('com.clipval/share');
 
@@ -21,7 +23,7 @@ abstract final class ShareIntakeService {
 
   static SharedClipPayload? _held;
 
-  /// Drain App Group pending share (if any). Invokes [onShare] or holds.
+  /// Drain native pending share (if any). Invokes [onShare] or holds.
   static Future<void> consumePending() async {
     try {
       final raw = await _channel.invokeMethod<dynamic>('takePendingShare');
@@ -35,7 +37,7 @@ abstract final class ShareIntakeService {
       );
       _deliver(payload);
     } on MissingPluginException {
-      // Android / tests without channel.
+      // Platform without channel (tests / web).
     } catch (_) {
       // Best-effort; never crash host.
     }
