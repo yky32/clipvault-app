@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,7 +49,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         icon: CupertinoIcons.lock_shield_fill,
         color: AppColors.accentDark,
         title: l10n.onboardingTitle2,
-        body: l10n.onboardingBody2,
+        body: (!kIsWeb && Platform.isAndroid)
+            ? l10n.onboardingBody2Android
+            : l10n.onboardingBody2,
       ),
       _OnboardSlide(
         icon: CupertinoIcons.hand_raised_fill,

@@ -487,6 +487,32 @@
   "iCloudDiagnoseNoAccount": "此裝置未登入 iCloud",
   "iCloudDiagnoseNetwork": "連線 iCloud 時網絡錯誤",
   "iCloudDiagnoseOther": "iCloud 檢查失敗",
+  "cloudBackupSection": "雲端備份",
+  "cloudBackup": "雲端備份",
+  "cloudBackupSubtitle": "由你保管的加密檔 — Google Drive 或檔案",
+  "cloudBackupFooter": "沒有 ClipVal 帳號。數值在裝置上加密後，你再將 .clipval 備份存到 Google Drive 或檔案。自動 Drive 同步概念上等同 iPhone 的 iCloud，下一版會加上；檔案備份現已可用。",
+  "cloudBackupEnableTitle": "開啟雲端備份？",
+  "cloudBackupEnableBody": "你會用有密碼保護的 .clipval 檔備份到 Google Drive 或檔案。ClipVal 沒有可看到你數值的伺服器。私隱概念與 iPhone 的 iCloud 同步相同，雲端是你的 Google 帳號。",
+  "cloudBackupTurnOn": "開啟",
+  "cloudBackupNow": "立即備份",
+  "cloudBackupRestore": "還原備份",
+  "cloudBackupRestoreSubtitle": "從 Drive 或檔案匯入 .clipval",
+  "cloudBackupNever": "尚未備份",
+  "cloudBackupLastAt": "上次備份：{when}",
+  "@cloudBackupLastAt": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudBackupHowTitle": "Android 備份如何運作",
+  "cloudBackupHowBody": "iPhone 用私人 iCloud。Android 用你存到 Google Drive 或檔案的加密 .clipval。\n\n1. 開啟雲端備份\n2. 立即備份 → 設定密碼 → 分享／存到 Drive\n3. 新手機：還原備份 → 選檔 → 輸入密碼\n\n沒有 ClipVal 帳號。跨平台：同一 .clipval 亦可在 iOS 使用。",
+  "cloudBackupOnHint": "撳「立即備份」將加密 .clipval 存到 Drive 或檔案。",
+  "onboardingBody2Android": "數值留在裝置並靜態加密。可選雲端備份是放在 Google Drive 或檔案的加密檔 — 絕不是 ClipVal 伺服器。",
+  "welcomeLocalBodyAndroid": "保險庫以 AES-256 留在本機。沒有 ClipVal 帳號。可選雲端備份是你保存在 Google Drive 或檔案的 .clipval — 我們看不到你的數值。",
+  "welcomeCloudTitleAndroid": "可選雲端備份",
+  "welcomeCloudBodyAndroid": "在設定開啟雲端備份，並將 .clipval 存到 Google Drive，方便第二部裝置。仍然沒有 ClipVal 帳號 — 只有密文，在你自己的儲存空間。",
   "backupReminderTitle": "保護你的保險庫",
   "backupReminderBody": "沒有最近的安全備份。匯出 .clipval 檔，避免手機遺失等於資料遺失。",
   "backupReminderBodyIos": "沒有最近的安全備份，且 iCloud 已關閉。匯出 .clipval，避免手機遺失等於資料遺失。",

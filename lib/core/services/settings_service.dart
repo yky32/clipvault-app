@@ -133,6 +133,8 @@ class SettingsService {
   /// Phase E: optional CloudKit private sync (default off).
   static const _iCloudSyncKey = 'icloud_sync_enabled';
   static const _iCloudLastSyncKey = 'icloud_last_sync_at';
+  /// Android: user opted into cloud-style backup (file → Drive/Files).
+  static const _androidCloudBackupKey = 'android_cloud_backup_enabled';
   /// Lifetime successful one-tap copies (for review prompt).
   static const _successfulCopyCountKey = 'successful_copy_count';
   /// True after we asked StoreKit for a review (once).
@@ -310,7 +312,15 @@ class SettingsService {
 
   // ── Secure backup reminder ───────────────────────────────────────────
 
-  DateTime? get lastSecureBackupAt {
+  
+  /// Android cloud-style backup opt-in (encrypted .clipval → user's Drive/Files).
+  bool get androidCloudBackupEnabled =>
+      _prefs.getBool(_androidCloudBackupKey) ?? false;
+
+  Future<void> setAndroidCloudBackupEnabled(bool value) =>
+      _prefs.setBool(_androidCloudBackupKey, value);
+
+DateTime? get lastSecureBackupAt {
     final raw = _prefs.getString(_lastSecureBackupAtKey);
     if (raw == null || raw.isEmpty) return null;
     return DateTime.tryParse(raw);

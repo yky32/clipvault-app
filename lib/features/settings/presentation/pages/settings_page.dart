@@ -53,6 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _iCloudSync;
   DateTime? _iCloudLastSync;
   bool _iCloudBusy = false;
+  late bool _androidCloudBackup;
   late bool _nearbyEnabled;
   late String _nearbyName;
   bool _nearbyBusy = false;
@@ -77,6 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _vaultSort = s.vaultSortMode;
     _iCloudSync = s.iCloudSyncEnabled;
     _iCloudLastSync = s.iCloudLastSyncAt;
+    _androidCloudBackup = s.androidCloudBackupEnabled;
     _nearbyEnabled = s.nearbyEnabled;
     _nearbyName = s.nearbyDisplayName;
     _nearbyPin = NearbyService.instance.sessionPin;
@@ -144,6 +146,76 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+
+
+  String _cloudBackupLastLabel(AppLocalizations l10n) {
+    final at = SettingsService.instance.lastSecureBackupAt;
+    if (at == null) return l10n.cloudBackupNever;
+    final local = at.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    final hh = local.hour.toString().padLeft(2, '0');
+    final mm = local.minute.toString().padLeft(2, '0');
+    return l10n.cloudBackupLastAt('$y-$m-$d $hh:$mm');
+  }
+
+  Future<void> _toggleAndroidCloudBackup(bool value) async {
+    final l10n = AppLocalizations.of(context);
+    if (!value) {
+      await SettingsService.instance.setAndroidCloudBackupEnabled(false);
+      if (!mounted) return;
+      setState(() => _androidCloudBackup = false);
+      return;
+    }
+    final ok = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.cloudBackupEnableTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.cloudBackupEnableBody),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.cloudBackupTurnOn),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await SettingsService.instance.setAndroidCloudBackupEnabled(true);
+    if (!mounted) return;
+    setState(() => _androidCloudBackup = true);
+    CopiedHud.show(context, message: l10n.cloudBackupOnHint);
+  }
+
+  Future<void> _showAndroidCloudHow() async {
+    final l10n = AppLocalizations.of(context);
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.cloudBackupHowTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.cloudBackupHowBody, textAlign: TextAlign.left),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _toggleNearby(bool value) async {
     setState(() => _nearbyBusy = true);
@@ -651,6 +723,7 @@ class _SettingsPageState extends State<SettingsPage> {
         successMessage: l10n.exportSecureShared,
       );
       await SettingsService.instance.setLastSecureBackupAt(DateTime.now());
+      if (mounted) setState(() {});
     } catch (_) {
       if (!context.mounted) return;
       HapticFeedback.heavyImpact();
@@ -1428,6 +1501,59 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 if (!kIsWeb && Platform.isIOS) const SizedBox(height: 28),
+                if (!kIsWeb && Platform.isAndroid) ...[
+                  IosGroup(
+                    header: l10n.cloudBackupSection,
+                    footer: l10n.cloudBackupFooter,
+                    children: [
+                      IosGroupTile(
+                        title: l10n.cloudBackup,
+                        subtitle: l10n.cloudBackupSubtitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.cloud_fill,
+                          color: AppColors.iconSecurity,
+                        ),
+                        trailing: CupertinoSwitch(
+                          value: _androidCloudBackup,
+                          activeTrackColor: AppColors.primary,
+                          onChanged: _toggleAndroidCloudBackup,
+                        ),
+                      ),
+                      if (_androidCloudBackup)
+                        IosGroupTile(
+                          title: l10n.cloudBackupNow,
+                          subtitle: _cloudBackupLastLabel(l10n),
+                          leading: _LeadingIcon(
+                            icon: CupertinoIcons.arrow_up_doc_fill,
+                            color: AppColors.iconExport,
+                          ),
+                          trailing: const IosChevron(),
+                          onTap: () => _exportSecureBackup(context),
+                        ),
+                      if (_androidCloudBackup)
+                        IosGroupTile(
+                          title: l10n.cloudBackupRestore,
+                          subtitle: l10n.cloudBackupRestoreSubtitle,
+                          leading: _LeadingIcon(
+                            icon: CupertinoIcons.arrow_down_doc_fill,
+                            color: AppColors.iconExport,
+                          ),
+                          trailing: const IosChevron(),
+                          onTap: () => _importBackup(context),
+                        ),
+                      IosGroupTile(
+                        title: l10n.cloudBackupHowTitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.info_circle_fill,
+                          color: AppColors.iconView,
+                        ),
+                        trailing: const IosChevron(),
+                        onTap: _showAndroidCloudHow,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                ],
                 IosGroup(
                   header: l10n.nearbySection,
                   footer: l10n.nearbyFooter,
