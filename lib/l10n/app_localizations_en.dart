@@ -1090,6 +1090,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupReminderBody =>
+      'No recent secure backup. Export a .clipval file so a lost phone isn’t lost data.';
+
+  @override
+  String get backupReminderBodyIos =>
       'No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.';
 
   @override

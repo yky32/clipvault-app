@@ -488,7 +488,8 @@
   "iCloudDiagnoseNetwork": "連線 iCloud 時網絡錯誤",
   "iCloudDiagnoseOther": "iCloud 檢查失敗",
   "backupReminderTitle": "保護你的保險庫",
-  "backupReminderBody": "沒有最近的安全備份，且 iCloud 已關閉。匯出 .clipval，避免手機遺失等於資料遺失。",
+  "backupReminderBody": "沒有最近的安全備份。匯出 .clipval 檔，避免手機遺失等於資料遺失。",
+  "backupReminderBodyIos": "沒有最近的安全備份，且 iCloud 已關閉。匯出 .clipval，避免手機遺失等於資料遺失。",
   "backupReminderExport": "立即備份",
   "backupReminderLater": "稍後提醒"
 }
