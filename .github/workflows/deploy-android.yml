@@ -115,6 +115,11 @@ jobs:
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/clipval-upload.jks
           chmod 600 android/clipval-upload.jks
 
+      - name: Git identity (version bump commits)
+        run: |
+          git config user.email "ci@clipval.app"
+          git config user.name "ClipVal CI"
+
       - name: Fastlane upload_internal
         working-directory: ios
         env:
