@@ -1053,6 +1053,71 @@ class AppLocalizationsZh extends AppLocalizations {
   String get iCloudDiagnoseOther => 'iCloud 檢查失敗';
 
   @override
+  String get cloudBackupSection => '雲端備份';
+
+  @override
+  String get cloudBackup => '雲端備份';
+
+  @override
+  String get cloudBackupSubtitle => '由你保管的加密檔 — Google Drive 或檔案';
+
+  @override
+  String get cloudBackupFooter =>
+      '沒有 ClipVal 帳號。數值在裝置上加密後，你再將 .clipval 備份存到 Google Drive 或檔案。自動 Drive 同步概念上等同 iPhone 的 iCloud，下一版會加上；檔案備份現已可用。';
+
+  @override
+  String get cloudBackupEnableTitle => '開啟雲端備份？';
+
+  @override
+  String get cloudBackupEnableBody =>
+      '你會用有密碼保護的 .clipval 檔備份到 Google Drive 或檔案。ClipVal 沒有可看到你數值的伺服器。私隱概念與 iPhone 的 iCloud 同步相同，雲端是你的 Google 帳號。';
+
+  @override
+  String get cloudBackupTurnOn => '開啟';
+
+  @override
+  String get cloudBackupNow => '立即備份';
+
+  @override
+  String get cloudBackupRestore => '還原備份';
+
+  @override
+  String get cloudBackupRestoreSubtitle => '從 Drive 或檔案匯入 .clipval';
+
+  @override
+  String get cloudBackupNever => '尚未備份';
+
+  @override
+  String cloudBackupLastAt(String when) {
+    return '上次備份：$when';
+  }
+
+  @override
+  String get cloudBackupHowTitle => 'Android 備份如何運作';
+
+  @override
+  String get cloudBackupHowBody =>
+      'iPhone 用私人 iCloud。Android 用你存到 Google Drive 或檔案的加密 .clipval。\n\n1. 開啟雲端備份\n2. 立即備份 → 設定密碼 → 分享／存到 Drive\n3. 新手機：還原備份 → 選檔 → 輸入密碼\n\n沒有 ClipVal 帳號。跨平台：同一 .clipval 亦可在 iOS 使用。';
+
+  @override
+  String get cloudBackupOnHint => '撳「立即備份」將加密 .clipval 存到 Drive 或檔案。';
+
+  @override
+  String get onboardingBody2Android =>
+      '數值留在裝置並靜態加密。可選雲端備份是放在 Google Drive 或檔案的加密檔 — 絕不是 ClipVal 伺服器。';
+
+  @override
+  String get welcomeLocalBodyAndroid =>
+      '保險庫以 AES-256 留在本機。沒有 ClipVal 帳號。可選雲端備份是你保存在 Google Drive 或檔案的 .clipval — 我們看不到你的數值。';
+
+  @override
+  String get welcomeCloudTitleAndroid => '可選雲端備份';
+
+  @override
+  String get welcomeCloudBodyAndroid =>
+      '在設定開啟雲端備份，並將 .clipval 存到 Google Drive，方便第二部裝置。仍然沒有 ClipVal 帳號 — 只有密文，在你自己的儲存空間。';
+
+  @override
   String get backupReminderTitle => '保護你的保險庫';
 
   @override

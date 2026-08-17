@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -117,15 +119,21 @@ class WelcomeExplainerSheet extends StatelessWidget {
                   icon: CupertinoIcons.lock_shield_fill,
                   iconColor: AppColors.iconSecurity,
                   title: l10n.welcomeLocalTitle,
-                  body: l10n.welcomeLocalBody,
+                  body: (!kIsWeb && Platform.isAndroid)
+                      ? l10n.welcomeLocalBodyAndroid
+                      : l10n.welcomeLocalBody,
                 ),
                 const _WelcomeDivider(),
                 _WelcomeSection(
                   emoji: '☁️',
                   icon: CupertinoIcons.cloud,
                   iconColor: AppColors.primary,
-                  title: l10n.welcomeIcloudTitle,
-                  body: l10n.welcomeIcloudBody,
+                  title: (!kIsWeb && Platform.isAndroid)
+                      ? l10n.welcomeCloudTitleAndroid
+                      : l10n.welcomeIcloudTitle,
+                  body: (!kIsWeb && Platform.isAndroid)
+                      ? l10n.welcomeCloudBodyAndroid
+                      : l10n.welcomeIcloudBody,
                 ),
                 const _WelcomeDivider(),
                 _WelcomeSection(

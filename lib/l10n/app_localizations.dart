@@ -2048,6 +2048,120 @@ abstract class AppLocalizations {
   /// **'iCloud check failed'**
   String get iCloudDiagnoseOther;
 
+  /// No description provided for @cloudBackupSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud backup'**
+  String get cloudBackupSection;
+
+  /// No description provided for @cloudBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud backup'**
+  String get cloudBackup;
+
+  /// No description provided for @cloudBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted file you control — Google Drive or Files'**
+  String get cloudBackupSubtitle;
+
+  /// No description provided for @cloudBackupFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'No ClipVal account. Values are encrypted on device before you save a .clipval backup to your Google Drive or Files. Automatic Drive sync is the same idea as iCloud on iPhone — coming next; file backup works today.'**
+  String get cloudBackupFooter;
+
+  /// No description provided for @cloudBackupEnableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on cloud backup?'**
+  String get cloudBackupEnableTitle;
+
+  /// No description provided for @cloudBackupEnableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ll back up with a password-protected .clipval file to your Google Drive or Files. ClipVal never runs a server that sees your values. Same privacy idea as iCloud sync on iPhone, on your Google account.'**
+  String get cloudBackupEnableBody;
+
+  /// No description provided for @cloudBackupTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn On'**
+  String get cloudBackupTurnOn;
+
+  /// No description provided for @cloudBackupNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get cloudBackupNow;
+
+  /// No description provided for @cloudBackupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get cloudBackupRestore;
+
+  /// No description provided for @cloudBackupRestoreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a .clipval file from Drive or Files'**
+  String get cloudBackupRestoreSubtitle;
+
+  /// No description provided for @cloudBackupNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not backed up yet'**
+  String get cloudBackupNever;
+
+  /// No description provided for @cloudBackupLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup: {when}'**
+  String cloudBackupLastAt(String when);
+
+  /// No description provided for @cloudBackupHowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How Android backup works'**
+  String get cloudBackupHowTitle;
+
+  /// No description provided for @cloudBackupHowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone uses private iCloud. Android uses an encrypted .clipval file you save to Google Drive or Files.\n\n1. Turn on Cloud backup\n2. Back up now → choose password → share/save to Drive\n3. New phone: Restore backup → pick the file → password\n\nNo ClipVal account. Cross-platform: same .clipval works on iOS too.'**
+  String get cloudBackupHowBody;
+
+  /// No description provided for @cloudBackupOnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Back up now to save an encrypted .clipval to Drive or Files.'**
+  String get cloudBackupOnHint;
+
+  /// No description provided for @onboardingBody2Android.
+  ///
+  /// In en, this message translates to:
+  /// **'Values stay on your device and encrypted at rest. Optional cloud backup uses a password-protected file on your Google Drive or Files — never a ClipVal server.'**
+  String get onboardingBody2Android;
+
+  /// No description provided for @welcomeLocalBodyAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault lives on this device with AES-256. No ClipVal account. Optional cloud backup is a .clipval file you keep in Google Drive or Files — we never see your values.'**
+  String get welcomeLocalBodyAndroid;
+
+  /// No description provided for @welcomeCloudTitleAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional cloud backup'**
+  String get welcomeCloudTitleAndroid;
+
+  /// No description provided for @welcomeCloudBodyAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'In Settings, turn on Cloud backup and save a .clipval to Google Drive for a second device. Still no ClipVal account — ciphertext only, on your storage.'**
+  String get welcomeCloudBodyAndroid;
+
   /// No description provided for @backupReminderTitle.
   ///
   /// In en, this message translates to:

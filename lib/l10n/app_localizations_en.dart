@@ -1086,6 +1086,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iCloudDiagnoseOther => 'iCloud check failed';
 
   @override
+  String get cloudBackupSection => 'Cloud backup';
+
+  @override
+  String get cloudBackup => 'Cloud backup';
+
+  @override
+  String get cloudBackupSubtitle =>
+      'Encrypted file you control — Google Drive or Files';
+
+  @override
+  String get cloudBackupFooter =>
+      'No ClipVal account. Values are encrypted on device before you save a .clipval backup to your Google Drive or Files. Automatic Drive sync is the same idea as iCloud on iPhone — coming next; file backup works today.';
+
+  @override
+  String get cloudBackupEnableTitle => 'Turn on cloud backup?';
+
+  @override
+  String get cloudBackupEnableBody =>
+      'You’ll back up with a password-protected .clipval file to your Google Drive or Files. ClipVal never runs a server that sees your values. Same privacy idea as iCloud sync on iPhone, on your Google account.';
+
+  @override
+  String get cloudBackupTurnOn => 'Turn On';
+
+  @override
+  String get cloudBackupNow => 'Back up now';
+
+  @override
+  String get cloudBackupRestore => 'Restore backup';
+
+  @override
+  String get cloudBackupRestoreSubtitle =>
+      'Import a .clipval file from Drive or Files';
+
+  @override
+  String get cloudBackupNever => 'Not backed up yet';
+
+  @override
+  String cloudBackupLastAt(String when) {
+    return 'Last backup: $when';
+  }
+
+  @override
+  String get cloudBackupHowTitle => 'How Android backup works';
+
+  @override
+  String get cloudBackupHowBody =>
+      'iPhone uses private iCloud. Android uses an encrypted .clipval file you save to Google Drive or Files.\n\n1. Turn on Cloud backup\n2. Back up now → choose password → share/save to Drive\n3. New phone: Restore backup → pick the file → password\n\nNo ClipVal account. Cross-platform: same .clipval works on iOS too.';
+
+  @override
+  String get cloudBackupOnHint =>
+      'Use Back up now to save an encrypted .clipval to Drive or Files.';
+
+  @override
+  String get onboardingBody2Android =>
+      'Values stay on your device and encrypted at rest. Optional cloud backup uses a password-protected file on your Google Drive or Files — never a ClipVal server.';
+
+  @override
+  String get welcomeLocalBodyAndroid =>
+      'Vault lives on this device with AES-256. No ClipVal account. Optional cloud backup is a .clipval file you keep in Google Drive or Files — we never see your values.';
+
+  @override
+  String get welcomeCloudTitleAndroid => 'Optional cloud backup';
+
+  @override
+  String get welcomeCloudBodyAndroid =>
+      'In Settings, turn on Cloud backup and save a .clipval to Google Drive for a second device. Still no ClipVal account — ciphertext only, on your storage.';
+
+  @override
   String get backupReminderTitle => 'Protect your vault';
 
   @override
