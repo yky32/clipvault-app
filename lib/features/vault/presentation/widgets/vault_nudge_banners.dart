@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -166,7 +169,9 @@ class BackupReminderBanner extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.backupReminderBody,
+              (!kIsWeb && Platform.isIOS)
+                  ? l10n.backupReminderBodyIos
+                  : l10n.backupReminderBody,
               style: TextStyle(
                 color: AppColors.secondaryLabel(context),
                 fontSize: 14,

@@ -1,6 +1,7 @@
 import 'settings_service.dart';
 
-/// Soft nudge when vault has data, no iCloud, and no recent .clipval backup.
+/// Soft nudge when vault has data and no recent .clipval backup.
+/// On iOS, suppressed when private iCloud sync is on (no cloud equivalent on Android).
 class BackupReminderService {
   BackupReminderService({int Function()? itemCount})
       : _itemCount = itemCount;

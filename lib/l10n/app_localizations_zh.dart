@@ -1056,7 +1056,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupReminderTitle => '保護你的保險庫';
 
   @override
-  String get backupReminderBody =>
+  String get backupReminderBody => '沒有最近的安全備份。匯出 .clipval 檔，避免手機遺失等於資料遺失。';
+
+  @override
+  String get backupReminderBodyIos =>
       '沒有最近的安全備份，且 iCloud 已關閉。匯出 .clipval，避免手機遺失等於資料遺失。';
 
   @override

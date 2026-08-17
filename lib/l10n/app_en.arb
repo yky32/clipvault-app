@@ -530,7 +530,8 @@
   "iCloudDiagnoseNetwork": "Network error talking to iCloud",
   "iCloudDiagnoseOther": "iCloud check failed",
   "backupReminderTitle": "Protect your vault",
-  "backupReminderBody": "No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.",
+  "backupReminderBody": "No recent secure backup. Export a .clipval file so a lost phone isn’t lost data.",
+  "backupReminderBodyIos": "No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.",
   "backupReminderExport": "Back up now",
   "backupReminderLater": "Remind me later"
 }

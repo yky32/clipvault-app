@@ -2057,8 +2057,14 @@ abstract class AppLocalizations {
   /// No description provided for @backupReminderBody.
   ///
   /// In en, this message translates to:
-  /// **'No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.'**
+  /// **'No recent secure backup. Export a .clipval file so a lost phone isn’t lost data.'**
   String get backupReminderBody;
+
+  /// No description provided for @backupReminderBodyIos.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent secure backup and iCloud is off. Export a .clipval file so a lost phone isn’t lost data.'**
+  String get backupReminderBodyIos;
 
   /// No description provided for @backupReminderExport.
   ///
