@@ -12,6 +12,17 @@ cd ios && bundle exec fastlane android upload_internal        # needs Play JSON 
 
 Lanes live in `ios/fastlane/Fastfile` under `platform :android`.
 
+## One-shot auto upload (after service account JSON)
+
+```bash
+# Save Play SA JSON once to:
+#   ~/.hermes/secrets/clipval/play-store-key.json
+./scripts/play_ci_setup_and_upload.sh
+# → sets GitHub secrets + triggers Deploy Android upload_play
+```
+
+Keystore secrets are already on GitHub (`ANDROID_KEYSTORE_*`).
+
 ## Local release signing
 
 ```bash
