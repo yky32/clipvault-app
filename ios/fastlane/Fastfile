@@ -268,6 +268,7 @@ def write_ci_export_options_plist!
   profile_name = ENV["SIGH_NAME"]
   widget_profile = ENV["SIGH_NAME_WIDGET"]
   share_profile = ENV["SIGH_NAME_SHARE"]
+  keyboard_profile = ENV["SIGH_NAME_KEYBOARD"]
   UI.user_error!("SIGH_NAME is required to export the App Store IPA on CI.") unless profile_name
   UI.user_error!(
     "SIGH_NAME_WIDGET is required (ClipValWidget extension). Run setup_appstore_signing."
@@ -275,6 +276,9 @@ def write_ci_export_options_plist!
   UI.user_error!(
     "SIGH_NAME_SHARE is required (ClipValShare extension). Run setup_appstore_signing."
   ) unless share_profile
+  UI.user_error!(
+    "SIGH_NAME_KEYBOARD is required (ClipValKeyboard extension). Run setup_appstore_signing."
+  ) unless keyboard_profile
 
   plist_path = File.join(IOS_DIR, "ExportOptions.ci.plist")
   plist_content = <<~PLIST
@@ -296,6 +300,8 @@ def write_ci_export_options_plist!
         <string>#{widget_profile}</string>
         <key>#{SHARE_IDENTIFIER}</key>
         <string>#{share_profile}</string>
+        <key>#{KEYBOARD_IDENTIFIER}</key>
+        <string>#{keyboard_profile}</string>
       </dict>
     </dict>
     </plist>
@@ -312,6 +318,61 @@ def persist_ci_signing_env!
     file.puts "SIGH_NAME=#{ENV['SIGH_NAME']}"
     file.puts "SIGH_NAME_WIDGET=#{ENV['SIGH_NAME_WIDGET']}" if ENV["SIGH_NAME_WIDGET"]
     file.puts "SIGH_NAME_SHARE=#{ENV['SIGH_NAME_SHARE']}" if ENV["SIGH_NAME_SHARE"]
+    file.puts "SIGH_NAME_KEYBOARD=#{ENV['SIGH_NAME_KEYBOARD']}" if ENV["SIGH_NAME_KEYBOARD"]
+  end
+end
+
+# Register App ID on Developer Portal (extensions are not App Store Connect apps).
+def ensure_devcenter_app_id!(identifier, name:)
+  UI.message("🪪 Ensuring Developer Portal App ID #{identifier}…")
+  produce(
+    username: APPLE_ID,
+    app_identifier: identifier,
+    app_name: name,
+    team_id: TEAM_ID,
+    skip_itc: true,
+    skip_devcenter: false,
+    enable_services: {
+      app_group: "on"
+    }
+  )
+  UI.success("✅ App ID ready: #{identifier}")
+rescue => ex
+  msg = ex.message.to_s
+  if msg.include?("already exists") ||
+     msg.include?("already registered") ||
+     msg.include?("already been taken")
+    UI.important("ℹ️  App ID already exists: #{identifier}")
+  else
+    # produce may need API key on CI
+    api_key = build_app_store_connect_api_key
+    if api_key
+      begin
+        produce(
+          api_key: api_key,
+          app_identifier: identifier,
+          app_name: name,
+          team_id: TEAM_ID,
+          skip_itc: true,
+          skip_devcenter: false,
+          enable_services: {
+            app_group: "on"
+          }
+        )
+        UI.success("✅ App ID ready (API): #{identifier}")
+        return
+      rescue => ex2
+        msg2 = ex2.message.to_s
+        if msg2.include?("already exists") ||
+           msg2.include?("already registered") ||
+           msg2.include?("already been taken")
+          UI.important("ℹ️  App ID already exists: #{identifier}")
+          return
+        end
+        UI.user_error!("Could not create App ID #{identifier}: #{msg2}")
+      end
+    end
+    UI.user_error!("Could not create App ID #{identifier}: #{msg}")
   end
 end
 
@@ -726,6 +787,9 @@ platform :ios do
       UI.user_error!(
         "SIGH_NAME_SHARE must be set for ClipValShare. Run setup_appstore_signing."
       ) unless ENV["SIGH_NAME_SHARE"]
+      UI.user_error!(
+        "SIGH_NAME_KEYBOARD must be set for ClipValKeyboard. Run setup_appstore_signing."
+      ) unless ENV["SIGH_NAME_KEYBOARD"]
 
       update_code_signing_settings(
         use_automatic_signing: false,
@@ -753,6 +817,15 @@ platform :ios do
         profile_name: ENV["SIGH_NAME_SHARE"],
         code_sign_identity: "Apple Distribution",
         targets: ["ClipValShare"]
+      )
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "#{IOS_DIR}/Runner.xcodeproj",
+        team_id: TEAM_ID,
+        bundle_identifier: KEYBOARD_IDENTIFIER,
+        profile_name: ENV["SIGH_NAME_KEYBOARD"],
+        code_sign_identity: "Apple Distribution",
+        targets: ["ClipValKeyboard"]
       )
 
       export_plist = write_ci_export_options_plist!
@@ -1192,6 +1265,7 @@ platform :ios do
       )
       ENV["SIGH_NAME_SHARE"] = share_profile
 
+      ensure_devcenter_app_id!(KEYBOARD_IDENTIFIER, name: "ClipVal Keyboard")
       UI.message("📋 Getting App Store provisioning profile for #{KEYBOARD_IDENTIFIER}...")
       keyboard_profile = fetch_appstore_profile!(
         app_identifier: KEYBOARD_IDENTIFIER,
