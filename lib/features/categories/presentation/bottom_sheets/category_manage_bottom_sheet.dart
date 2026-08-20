@@ -17,7 +17,7 @@ import '../../../settings/presentation/bottom_sheets/address_language_settings_s
 import 'category_color_picker_sheet.dart';
 import 'category_editor_bottom_sheet.dart';
 
-/// Manage custom categories; product defaults are read-only.
+/// Manage custom categories; product defaults are read-only (except color).
 class CategoryManageBottomSheet extends StatefulWidget {
   const CategoryManageBottomSheet({super.key});
 
@@ -37,6 +37,9 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
   List<Category> _system = const [];
   List<Category> _custom = const [];
 
+  /// When set, sheet body swaps to color picker (no nested modal).
+  Category? _colorTarget;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +51,10 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
     setState(() {
       _system = repo.systemCategories;
       _custom = repo.customCategories;
+      // Refresh target if still editing color after save.
+      if (_colorTarget != null) {
+        _colorTarget = repo.getById(_colorTarget!.id) ?? _colorTarget;
+      }
     });
   }
 
@@ -65,10 +72,24 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
     if (updated != null && mounted) _reload();
   }
 
-  Future<void> _pickColor(Category category) async {
+  void _openColor(Category category) {
     HapticFeedback.selectionClick();
-    final changed = await CategoryColorPickerSheet.show(context, category);
-    if (changed && mounted) _reload();
+    setState(() => _colorTarget = category);
+  }
+
+  void _closeColor() {
+    HapticFeedback.selectionClick();
+    setState(() => _colorTarget = null);
+  }
+
+  Future<void> _applyColor(int? index) async {
+    final target = _colorTarget;
+    if (target == null) return;
+    HapticFeedback.selectionClick();
+    await AppBootstrap.categoryRepository.setColorIndex(target.id, index);
+    if (!mounted) return;
+    _reload();
+    setState(() => _colorTarget = null);
   }
 
   Future<void> _delete(Category category) async {
@@ -102,7 +123,6 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
     if (mounted) _reload();
   }
 
-  /// Addresses is the only product default with extra setup (language tags).
   Future<void> _openAddressLanguages() async {
     HapticFeedback.selectionClick();
     await AddressLanguageSettingsSheet.show(context);
@@ -112,7 +132,38 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colorTarget = _colorTarget;
 
+    // —— Color picker mode (same sheet, no second modal) ——
+    if (colorTarget != null) {
+      return SheetScaffold(
+        title: l10n.categoryColorTitle,
+        subtitle: categoryDisplayName(colorTarget, l10n),
+        showCloseButton: false,
+        compactBody: true,
+        footer: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            OutlinedButton(
+              onPressed: () => _applyColor(null),
+              child: Text(l10n.categoryColorReset),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _closeColor,
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
+        child: CategoryColorPickerBody(
+          category: colorTarget,
+          onApplied: _applyColor,
+        ),
+      );
+    }
+
+    // —— List mode ——
     return SheetScaffold(
       title: l10n.categoryManageTitle,
       subtitle: l10n.categoryManageSubtitle,
@@ -135,18 +186,16 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                   icon: categoryIcon(c),
                   label: categoryDisplayName(c, l10n),
                   color: CategoryColors.forCategory(c),
-                  // Row: Addresses → language tags; others → color picker.
-                  // Color dot always opens palette (system + custom).
                   onTap: c.supportsLanguageTag
                       ? _openAddressLanguages
-                      : () => _pickColor(c),
+                      : () => _openColor(c),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CupertinoButton(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         minimumSize: Size.zero,
-                        onPressed: () => _pickColor(c),
+                        onPressed: () => _openColor(c),
                         child: CategoryColorDot(
                           color: CategoryColors.forCategory(c),
                           size: 14,
@@ -204,7 +253,7 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           minimumSize: Size.zero,
-                          onPressed: () => _pickColor(c),
+                          onPressed: () => _openColor(c),
                           child: CategoryColorDot(
                             color: CategoryColors.forCategory(c),
                             size: 14,
@@ -236,8 +285,6 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
   }
 }
 
-/// Default badge + optional chevron. Chevron slot is always reserved so
-/// badges line up across product-default rows.
 class _DefaultTrailing extends StatelessWidget {
   const _DefaultTrailing({
     required this.badgeLabel,
