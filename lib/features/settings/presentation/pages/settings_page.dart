@@ -1464,6 +1464,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: const IosChevron(),
                       onTap: () async {
                         await CategoryManageBottomSheet.show(context);
+                        if (context.mounted) {
+                          try {
+                            context.read<VaultBloc>().add(const VaultRefreshed());
+                          } catch (_) {}
+                        }
                         if (!context.mounted) return;
                         // Refresh vault chips if shell has VaultBloc.
                         try {

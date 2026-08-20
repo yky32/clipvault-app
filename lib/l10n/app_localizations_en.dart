@@ -1189,6 +1189,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyboardOpenSettings => 'Open iOS Settings';
 
   @override
+  String get categoryColorTitle => 'Category color';
+
+  @override
+  String get categoryColorSubtitle =>
+      'Used on filter chips and vault icons. Pick any color — defaults can be customized too.';
+
+  @override
+  String get categoryColorReset => 'Use default color';
+
+  @override
+  String get categoryColorHint => 'Tap color to change';
+
+  @override
   String get backupReminderTitle => 'Protect your vault';
 
   @override

@@ -1153,6 +1153,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyboardOpenSettings => '打開 iOS 設定';
 
   @override
+  String get categoryColorTitle => '分類顏色';
+
+  @override
+  String get categoryColorSubtitle =>
+      '用於頂部 chips 同 vault icon。任何分類都可改色，包括預設分類。';
+
+  @override
+  String get categoryColorReset => '還原預設顏色';
+
+  @override
+  String get categoryColorHint => '點顏色更改';
+
+  @override
   String get backupReminderTitle => '保護你的保險庫';
 
   @override

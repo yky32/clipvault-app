@@ -2228,6 +2228,30 @@ abstract class AppLocalizations {
   /// **'Open iOS Settings'**
   String get keyboardOpenSettings;
 
+  /// No description provided for @categoryColorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category color'**
+  String get categoryColorTitle;
+
+  /// No description provided for @categoryColorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Used on filter chips and vault icons. Pick any color — defaults can be customized too.'**
+  String get categoryColorSubtitle;
+
+  /// No description provided for @categoryColorReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default color'**
+  String get categoryColorReset;
+
+  /// No description provided for @categoryColorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap color to change'**
+  String get categoryColorHint;
+
   /// No description provided for @backupReminderTitle.
   ///
   /// In en, this message translates to:
