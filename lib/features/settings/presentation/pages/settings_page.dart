@@ -217,6 +217,28 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+
+  Future<void> _showKeyboardSetup() async {
+    final l10n = AppLocalizations.of(context);
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.keyboardHowTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(l10n.keyboardHowBody, textAlign: TextAlign.left),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleNearby(bool value) async {
     setState(() => _nearbyBusy = true);
     try {
@@ -1500,7 +1522,25 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
-                if (!kIsWeb && Platform.isIOS) const SizedBox(height: 28),
+                if (!kIsWeb && Platform.isIOS) ...[
+                  IosGroup(
+                    header: l10n.keyboardSection,
+                    footer: l10n.keyboardFooter,
+                    children: [
+                      IosGroupTile(
+                        title: l10n.keyboardTitle,
+                        subtitle: l10n.keyboardSubtitle,
+                        leading: _LeadingIcon(
+                          icon: CupertinoIcons.keyboard,
+                          color: AppColors.iconView,
+                        ),
+                        trailing: const IosChevron(),
+                        onTap: _showKeyboardSetup,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                ],
                 if (!kIsWeb && Platform.isAndroid) ...[
                   IosGroup(
                     header: l10n.cloudBackupSection,

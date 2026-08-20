@@ -2186,6 +2186,48 @@ abstract class AppLocalizations {
   /// **'In Settings, turn on Cloud backup and save a .clipval to Google Drive for a second device. Still no ClipVal account — ciphertext only, on your storage.'**
   String get welcomeCloudBodyAndroid;
 
+  /// No description provided for @keyboardSection.
+  ///
+  /// In en, this message translates to:
+  /// **'ClipVal Keyboard'**
+  String get keyboardSection;
+
+  /// No description provided for @keyboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'System keyboard'**
+  String get keyboardTitle;
+
+  /// No description provided for @keyboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert pinned & recent items while typing'**
+  String get keyboardSubtitle;
+
+  /// No description provided for @keyboardFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ClipVal under Settings → General → Keyboard → Keyboards. Apple requires Full Access so the keyboard can read your on-device vault snapshot from ClipVal — not the internet. ClipVal never logs what you type and the keyboard has no network. Sensitive items never appear on the keyboard.'**
+  String get keyboardFooter;
+
+  /// No description provided for @keyboardHowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up ClipVal Keyboard'**
+  String get keyboardHowTitle;
+
+  /// No description provided for @keyboardHowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'1. iPhone Settings → General → Keyboard → Keyboards → Add New Keyboard → ClipVal\n2. Tap ClipVal → turn on Allow Full Access\n3. Open ClipVal app once (refreshes pinned/recent cache)\n4. In any app, switch keyboards to ClipVal\n\nPrivacy: Full Access is only for the shared App Group on this device. No keylogging. No upload. Sensitive items are hidden.'**
+  String get keyboardHowBody;
+
+  /// No description provided for @keyboardOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open iOS Settings'**
+  String get keyboardOpenSettings;
+
   /// No description provided for @backupReminderTitle.
   ///
   /// In en, this message translates to:

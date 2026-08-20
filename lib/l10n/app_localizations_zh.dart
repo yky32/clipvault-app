@@ -1130,6 +1130,29 @@ class AppLocalizationsZh extends AppLocalizations {
       '在設定開啟雲端備份，並將 .clipval 存到 Google Drive，方便第二部裝置。仍然沒有 ClipVal 帳號 — 只有密文，在你自己的儲存空間。';
 
   @override
+  String get keyboardSection => 'ClipVal 鍵盤';
+
+  @override
+  String get keyboardTitle => '系統鍵盤';
+
+  @override
+  String get keyboardSubtitle => '打字時插入置頂／最近項目';
+
+  @override
+  String get keyboardFooter =>
+      '到「設定 → 一般 → 鍵盤 → 鍵盤」加入 ClipVal。Apple 要求開啟完全取用，鍵盤先可讀取本機 vault 快取（唔係互聯網）。ClipVal 唔會記錄你輸入，鍵盤亦無網絡。敏感項目唔會出現喺鍵盤。';
+
+  @override
+  String get keyboardHowTitle => '設定 ClipVal 鍵盤';
+
+  @override
+  String get keyboardHowBody =>
+      '1. iPhone 設定 → 一般 → 鍵盤 → 鍵盤 → 加入新鍵盤 → ClipVal\n2. 點 ClipVal → 開啟「允許完全取用」\n3. 打開一次 ClipVal App（更新置頂／最近快取）\n4. 任何 App 切換鍵盤到 ClipVal\n\n私隱：完全取用只用於本機 App Group。無鍵記、無上傳。敏感項目會隱藏。';
+
+  @override
+  String get keyboardOpenSettings => '打開 iOS 設定';
+
+  @override
   String get backupReminderTitle => '保護你的保險庫';
 
   @override

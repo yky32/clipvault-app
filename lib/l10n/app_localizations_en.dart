@@ -1166,6 +1166,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'In Settings, turn on Cloud backup and save a .clipval to Google Drive for a second device. Still no ClipVal account — ciphertext only, on your storage.';
 
   @override
+  String get keyboardSection => 'ClipVal Keyboard';
+
+  @override
+  String get keyboardTitle => 'System keyboard';
+
+  @override
+  String get keyboardSubtitle => 'Insert pinned & recent items while typing';
+
+  @override
+  String get keyboardFooter =>
+      'Add ClipVal under Settings → General → Keyboard → Keyboards. Apple requires Full Access so the keyboard can read your on-device vault snapshot from ClipVal — not the internet. ClipVal never logs what you type and the keyboard has no network. Sensitive items never appear on the keyboard.';
+
+  @override
+  String get keyboardHowTitle => 'Set up ClipVal Keyboard';
+
+  @override
+  String get keyboardHowBody =>
+      '1. iPhone Settings → General → Keyboard → Keyboards → Add New Keyboard → ClipVal\n2. Tap ClipVal → turn on Allow Full Access\n3. Open ClipVal app once (refreshes pinned/recent cache)\n4. In any app, switch keyboards to ClipVal\n\nPrivacy: Full Access is only for the shared App Group on this device. No keylogging. No upload. Sensitive items are hidden.';
+
+  @override
+  String get keyboardOpenSettings => 'Open iOS Settings';
+
+  @override
   String get backupReminderTitle => 'Protect your vault';
 
   @override
