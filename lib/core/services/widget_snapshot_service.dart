@@ -98,12 +98,24 @@ class WidgetSnapshotService {
         name: AppConstants.widgetIosName,
       );
 
-      // Ensure App Group defaults are visible to the widget process.
+      // Authoritative native write (per-id keys + file + synchronize).
+      // home_widget alone has been insufficient for App Intent pasteboard copy.
       try {
-        await const MethodChannel('com.clipval/widget')
-            .invokeMethod<void>('flushAndReload');
+        await const MethodChannel('com.clipval/widget').invokeMethod<void>(
+          'writeSnapshot',
+          {
+            'json': payload,
+            'keyboardJson': kbPayload,
+          },
+        );
       } catch (e) {
-        debugPrint('WidgetSnapshotService.flushAndReload: $e');
+        debugPrint('WidgetSnapshotService.writeSnapshot: $e');
+        try {
+          await const MethodChannel('com.clipval/widget')
+              .invokeMethod<void>('flushAndReload');
+        } catch (e2) {
+          debugPrint('WidgetSnapshotService.flushAndReload: $e2');
+        }
       }
     } catch (e, st) {
       debugPrint('WidgetSnapshotService.sync failed: $e\n$st');

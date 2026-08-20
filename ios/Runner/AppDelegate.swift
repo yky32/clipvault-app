@@ -87,7 +87,7 @@ import WidgetKit
     return nil
   }
 
-  /// Flush App Group UserDefaults + reload WidgetKit timelines after Flutter writes snapshot.
+  /// Flush / write App Group snapshot for WidgetKit + keyboard (authoritative).
   private func registerWidgetChannel(with messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(
       name: "com.clipval/widget",
@@ -96,15 +96,72 @@ import WidgetKit
     channel.setMethodCallHandler { call, result in
       switch call.method {
       case "flushAndReload":
-        UserDefaults(suiteName: Self.appGroupId)?.synchronize()
-        if #available(iOS 14.0, *) {
-          WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-          WidgetCenter.shared.reloadAllTimelines()
+        Self.persistAndReloadWidget(json: nil, keyboardJson: nil)
+        result(true)
+      case "writeSnapshot":
+        // args: { json: String, keyboardJson: String? }
+        guard let args = call.arguments as? [String: Any],
+              let json = args["json"] as? String
+        else {
+          result(
+            FlutterError(
+              code: "bad_args",
+              message: "writeSnapshot requires json",
+              details: nil
+            )
+          )
+          return
         }
+        let kb = args["keyboardJson"] as? String
+        Self.persistAndReloadWidget(json: json, keyboardJson: kb)
         result(true)
       default:
         result(FlutterMethodNotImplemented)
       }
+    }
+  }
+
+  /// Authoritative write into App Group: UserDefaults JSON + per-id values + file.
+  private static func persistAndReloadWidget(json: String?, keyboardJson: String?) {
+    let defaults = UserDefaults(suiteName: Self.appGroupId)
+    if let json {
+      defaults?.set(json, forKey: "widget_items_json")
+      // Per-item keys — Intent reads these first (most reliable).
+      if let data = json.data(using: .utf8),
+         let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+         let items = obj["items"] as? [[String: Any]]
+      {
+        for item in items {
+          guard let id = item["id"] as? String else { continue }
+          let value = (item["value"] as? String) ?? ""
+          defaults?.set(value, forKey: "wv_\(id)")
+        }
+        // File backup in shared container
+        if let container = FileManager.default.containerURL(
+          forSecurityApplicationGroupIdentifier: Self.appGroupId
+        ) {
+          let file = container.appendingPathComponent("widget_items.json")
+          try? json.data(using: .utf8)?.write(to: file, options: .atomic)
+        }
+      }
+    }
+    if let keyboardJson {
+      defaults?.set(keyboardJson, forKey: "keyboard_items_json")
+      if let data = keyboardJson.data(using: .utf8),
+         let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+         let items = obj["items"] as? [[String: Any]]
+      {
+        for item in items {
+          guard let id = item["id"] as? String else { continue }
+          let value = (item["value"] as? String) ?? ""
+          defaults?.set(value, forKey: "wv_\(id)")
+        }
+      }
+    }
+    defaults?.synchronize()
+    if #available(iOS 14.0, *) {
+      WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+      WidgetCenter.shared.reloadAllTimelines()
     }
   }
 

@@ -142,35 +142,85 @@ struct CopyValueIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    let resolved = Self.lookupItem(id: id)
-    let value = resolved?.value ?? ""
-    let title = {
-      let t = (resolved?.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-      if !t.isEmpty { return t }
-      if let m = resolved?.monogram, !m.isEmpty { return m }
-      return "ClipVal"
-    }()
+    let resolved = Self.resolveValue(id: id)
+    let value = resolved.value
+    let title = resolved.title
 
     guard !value.isEmpty else {
-      return .result(dialog: IntentDialog(stringLiteral: "Nothing to copy — open ClipVal to refresh the widget."))
+      return .result(
+        dialog: IntentDialog(
+          stringLiteral: "Nothing to copy. Open ClipVal once to refresh the widget, then try again."
+        )
+      )
     }
 
-    UIPasteboard.general.string = value
+    // Write pasteboard multiple ways — WhatsApp / some hosts ignore bare `.string` from intents.
+    let pb = UIPasteboard.general
+    pb.string = value
+    pb.setValue(value, forPasteboardType: "public.utf8-plain-text")
+    pb.setItems(
+      [["public.utf8-plain-text": value]],
+      options: [UIPasteboard.OptionsKey.localOnly: false]
+    )
+
     UINotificationFeedbackGenerator().notificationOccurred(.success)
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(id, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
+      d.set(value, forKey: "last_widget_copy_value") // debug / deep-link fallback
       d.synchronize()
     }
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
     return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
   }
 
-  /// Load plaintext value from the App Group snapshot written by the Flutter app.
+  /// Resolve plaintext: per-id key → shared file → JSON blob.
+  private static func resolveValue(id: String) -> (value: String, title: String) {
+    guard !id.isEmpty else { return ("", "ClipVal") }
+    let defaults = UserDefaults(suiteName: appGroupId)
+    defaults?.synchronize()
+
+    // 1) Per-id key (written by native writeSnapshot)
+    if let v = defaults?.string(forKey: "wv_\(id)"), !v.isEmpty {
+      let title = Self.lookupItem(id: id)?.displayTitle ?? "ClipVal"
+      return (v, title)
+    }
+
+    // 2) Shared container file
+    if let container = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: appGroupId
+    ) {
+      let file = container.appendingPathComponent("widget_items.json")
+      if let data = try? Data(contentsOf: file),
+         let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data),
+         let item = payload.items.first(where: { $0.id == id }),
+         !item.value.isEmpty
+      {
+        return (item.value, item.displayTitle)
+      }
+    }
+
+    // 3) JSON in UserDefaults
+    if let item = lookupItem(id: id), !item.value.isEmpty {
+      return (item.value, item.displayTitle)
+    }
+
+    return ("", "ClipVal")
+  }
+
+  /// Load item from the App Group JSON snapshot written by the Flutter app.
   private static func lookupItem(id: String) -> WidgetItem? {
     guard !id.isEmpty,
-          let defaults = UserDefaults(suiteName: appGroupId),
-          let raw = defaults.string(forKey: itemsKey),
+          let defaults = UserDefaults(suiteName: appGroupId)
+    else { return nil }
+    defaults.synchronize()
+    guard let raw = defaults.string(forKey: itemsKey) ?? {
+      // Some home_widget versions store as Data
+      if let data = defaults.data(forKey: itemsKey) {
+        return String(data: data, encoding: .utf8)
+      }
+      return nil
+    }(),
           let data = raw.data(using: .utf8),
           let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
     else { return nil }
