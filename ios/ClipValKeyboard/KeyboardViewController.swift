@@ -249,7 +249,7 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
     secondaryButton.backgroundColor = brandSoft
     secondaryButton.layer.cornerRadius = 10
     secondaryButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
-    secondaryButton.addTarget(self, action: #selector(tapOpenApp), for: .touchUpInside)
+    secondaryButton.addTarget(self, action: #selector(tapSecondary), for: .touchUpInside)
 
     setupStack.addArrangedSubview(primaryButton)
     setupStack.addArrangedSubview(secondaryButton)
@@ -319,26 +319,36 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
     tableView.isHidden = !ready
     setupCard.superview?.isHidden = ready
     tableHeightConstraint?.constant = ready ? 144 : 0
-    setupHeightConstraint?.constant = ready ? 0 : 152
+    // Taller setup card so steps fit (no dead "button does nothing" UX)
+    setupHeightConstraint?.constant = ready ? 0 : 188
 
     switch mode {
     case .needsFullAccess:
       countLabel.text = "Setup"
       setupIcon.image = UIImage(systemName: "lock.open.fill")
-      setupTitle.text = "Enable Full Access"
-      setupBody.text = "Required so the keyboard can read your vault on this iPhone. ClipVal never logs keys or uses the network."
-      primaryButton.setTitle("Open iPhone Settings", for: .normal)
+      setupTitle.text = "Enable Full Access first"
+      // Apple blocks openURL from keyboards until Full Access is ON.
+      // Fake "Open Settings" buttons feel broken — show real steps instead.
+      setupBody.text =
+        "iOS blocks buttons here until Full Access is on.\n"
+        + "1. Leave keyboard → Settings\n"
+        + "2. General → Keyboard → Keyboards → ClipVal\n"
+        + "3. Turn on Allow Full Access\n"
+        + "4. Return here · Open ClipVal once"
+      primaryButton.setTitle("I’ve enabled it — Refresh", for: .normal)
       primaryButton.tag = 1
-      secondaryButton.setTitle("Open ClipVal", for: .normal)
+      secondaryButton.setTitle("Try Open ClipVal", for: .normal)
       secondaryButton.isHidden = false
     case .needsSync:
       countLabel.text = "Almost ready"
       setupIcon.image = UIImage(systemName: "arrow.triangle.2.circlepath")
-      setupTitle.text = "Sync your vault"
-      setupBody.text = "Open ClipVal once so pinned and recent items appear here for one-tap insert."
+      setupTitle.text = "Open ClipVal once"
+      setupBody.text =
+        "Full Access is on. Open the ClipVal app so pinned & recent items sync to this keyboard."
       primaryButton.setTitle("Open ClipVal", for: .normal)
       primaryButton.tag = 2
-      secondaryButton.isHidden = true
+      secondaryButton.setTitle("Refresh list", for: .normal)
+      secondaryButton.isHidden = false
     case .ready:
       let n = visible.count
       countLabel.text = n == 0 ? "No matches" : "\(n) item\(n == 1 ? "" : "s")"
@@ -360,8 +370,9 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
 
     let defaults = UserDefaults(suiteName: appGroupId)
     defaults?.synchronize()
-    let raw = defaults?.string(forKey: keyboardItemsKey)
-      ?? defaults?.string(forKey: widgetItemsKey)
+    // Prefer keyboard payload; also try Data form; fallback widget JSON
+    let raw = Self.readAppGroupString(defaults: defaults, key: keyboardItemsKey)
+      ?? Self.readAppGroupString(defaults: defaults, key: widgetItemsKey)
 
     guard let raw,
           let data = raw.data(using: .utf8),
@@ -377,7 +388,20 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
 
     allItems = payload.items
       .filter { ($0.sensitive != true) && !$0.value.isEmpty }
-    // Pinned first, then rest (stable)
+      .map { item in
+        // Prefer per-id native key if present (writeSnapshot)
+        if let v = defaults?.string(forKey: "wv_\(item.id)"), !v.isEmpty {
+          return KeyboardItem(
+            id: item.id,
+            title: item.title,
+            value: v,
+            monogram: item.monogram,
+            pinned: item.pinned,
+            sensitive: item.sensitive
+          )
+        }
+        return item
+      }
     allItems.sort { a, b in
       if a.isPinned != b.isPinned { return a.isPinned && !b.isPinned }
       return a.displayTitle.localizedCaseInsensitiveCompare(b.displayTitle) == .orderedAscending
@@ -390,6 +414,14 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
       mode = .ready
     }
     applyFilter()
+  }
+
+  private static func readAppGroupString(defaults: UserDefaults?, key: String) -> String? {
+    if let s = defaults?.string(forKey: key), !s.isEmpty { return s }
+    if let data = defaults?.data(forKey: key), let s = String(data: data, encoding: .utf8), !s.isEmpty {
+      return s
+    }
+    return nil
   }
 
   private func applyFilter() {
@@ -406,10 +438,22 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
   // MARK: - Actions
 
   @objc private func tapPrimary() {
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
     if primaryButton.tag == 1 {
-      openSystemSettings()
+      // needsFullAccess: refresh after user enabled manually
+      reloadItems()
+      if mode == .needsFullAccess {
+        flash("Still off — Settings → Keyboard → ClipVal → Full Access")
+      } else if mode == .needsSync {
+        flash("Full Access OK · open ClipVal once")
+      } else {
+        flash("Ready · tap an item to insert")
+      }
     } else {
-      tapOpenApp()
+      // needsSync: open app
+      openURL(URL(string: "clipval://vault")!) { ok in
+        if !ok { self.flash("Couldn’t open app — switch to ClipVal manually") }
+      }
     }
   }
 
@@ -422,30 +466,58 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
   }
 
   @objc private func tapOpenApp() {
-    openURL(URL(string: "clipval://vault")!)
-  }
-
-  private func openSystemSettings() {
-    // Opens ClipVal's settings page (user can jump to Keyboard from there).
-    if let url = URL(string: UIApplication.openSettingsURLString) {
-      openURL(url)
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    if mode == .needsFullAccess {
+      flash("Enable Full Access first — iOS blocks Open App from keyboard")
+      return
+    }
+    openURL(URL(string: "clipval://vault")!) { ok in
+      if !ok {
+        self.flash("Open ClipVal from Home Screen, then return")
+      }
     }
   }
 
-  private func openURL(_ url: URL) {
-    var responder: UIResponder? = self
-    while let r = responder {
-      if let app = r as? UIApplication {
-        app.open(url, options: [:], completionHandler: nil)
-        return
+  @objc private func tapSecondary() {
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    switch mode {
+    case .needsFullAccess:
+      flash("iOS blocks Open App until Full Access is ON")
+      // Still try — rarely works if user partially granted
+      openURL(URL(string: "clipval://vault")!) { ok in
+        if ok { self.flash("Opened ClipVal") }
       }
-      if r.responds(to: Selector(("openURL:"))) {
-        r.perform(Selector(("openURL:")), with: url)
+    case .needsSync:
+      reloadItems()
+      flash(mode == .ready ? "Vault loaded" : "Still empty — open ClipVal app once")
+    case .ready:
+      break
+    }
+  }
+
+  /// Open URL from keyboard extension. Fails silently without Full Access (Apple policy).
+  private func openURL(_ url: URL, completion: ((Bool) -> Void)? = nil) {
+    // 1) Responder chain (classic keyboard trick)
+    var responder: UIResponder? = self
+    let selOpen = sel_registerName("openURL:")
+    while let r = responder {
+      if r.responds(to: selOpen) {
+        r.perform(selOpen, with: url)
+        completion?(true)
         return
       }
       responder = r.next
     }
-    extensionContext?.open(url, completionHandler: nil)
+
+    // 2) extensionContext (works for some extension types; often no for keyboard)
+    if let ctx = extensionContext {
+      ctx.open(url) { ok in
+        DispatchQueue.main.async { completion?(ok) }
+      }
+      return
+    }
+
+    completion?(false)
   }
 
   private func insert(_ item: KeyboardItem) {
@@ -461,7 +533,8 @@ final class KeyboardViewController: UIInputViewController, UISearchBarDelegate, 
   private func flash(_ text: String) {
     toast.text = text
     toast.alpha = 1
-    UIView.animate(withDuration: 0.25, delay: 1.0, options: .curveEaseOut) {
+    toast.numberOfLines = 2
+    UIView.animate(withDuration: 0.25, delay: 1.6, options: .curveEaseOut) {
       self.toast.alpha = 0
     }
   }
