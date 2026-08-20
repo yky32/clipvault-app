@@ -345,21 +345,18 @@ def ensure_devcenter_app_id!(identifier, name:)
     UI.success("✅ Created App ID: #{identifier}")
   end
 
-  # Keyboard needs App Groups (same group.com.clipval as host).
+  # create_capability expects positional capability_type (not keyword).
   begin
     caps = bid.get_capabilities
-    has_groups = caps.any? do |c|
-      type = c.capability_type.to_s
-      type.include?("APP_GROUPS") || type.include?("appGroups")
-    end
+    has_groups = caps.any? { |c| c.is_type?(Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS) }
     unless has_groups
-      bid.create_capability(
-        capability_type: Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS
-      )
-      UI.success("✅ Enabled App Groups on #{identifier}")
+      bid.create_capability(Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS)
+      UI.success("✅ Enabled App Groups capability on #{identifier}")
+    else
+      UI.message("App Groups capability already on #{identifier}")
     end
   rescue => cap_ex
-    UI.important("⚠️  App Groups capability note: #{cap_ex.message}")
+    UI.important("⚠️  App Groups capability: #{cap_ex.message}")
   end
 end
 
@@ -1254,9 +1251,10 @@ platform :ios do
 
       ensure_devcenter_app_id!(KEYBOARD_IDENTIFIER, name: "ClipVal Keyboard")
       UI.message("📋 Getting App Store provisioning profile for #{KEYBOARD_IDENTIFIER}...")
+      # Always force-refresh: capability/group changes invalidate old profiles.
       keyboard_profile = fetch_appstore_profile!(
         app_identifier: KEYBOARD_IDENTIFIER,
-        force: ENV["CI"] == "true"
+        force: true
       )
       ENV["SIGH_NAME_KEYBOARD"] = keyboard_profile
       # Restore main SIGH_NAME (fetch overwrites it)
