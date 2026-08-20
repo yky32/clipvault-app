@@ -322,57 +322,44 @@ def persist_ci_signing_env!
   end
 end
 
-# Register App ID on Developer Portal (extensions are not App Store Connect apps).
+# Register App ID on Developer Portal via ASC API (produce has no api_key on CI).
 def ensure_devcenter_app_id!(identifier, name:)
   UI.message("🪪 Ensuring Developer Portal App ID #{identifier}…")
-  produce(
-    username: APPLE_ID,
-    app_identifier: identifier,
-    app_name: name,
-    team_id: TEAM_ID,
-    skip_itc: true,
-    skip_devcenter: false,
-    enable_services: {
-      app_group: "on"
-    }
-  )
-  UI.success("✅ App ID ready: #{identifier}")
-rescue => ex
-  msg = ex.message.to_s
-  if msg.include?("already exists") ||
-     msg.include?("already registered") ||
-     msg.include?("already been taken")
-    UI.important("ℹ️  App ID already exists: #{identifier}")
+  unless connect_api_for_spaceship
+    UI.user_error!(
+      "ASC API key required to create App ID #{identifier}. " \
+      "Set APP_STORE_CONNECT_API_KEY_* secrets."
+    )
+  end
+
+  existing = Spaceship::ConnectAPI::BundleId.all(filter: { identifier: identifier }).first
+  if existing
+    UI.important("ℹ️  App ID already exists: #{identifier} (#{existing.id})")
+    bid = existing
   else
-    # produce may need API key on CI
-    api_key = build_app_store_connect_api_key
-    if api_key
-      begin
-        produce(
-          api_key: api_key,
-          app_identifier: identifier,
-          app_name: name,
-          team_id: TEAM_ID,
-          skip_itc: true,
-          skip_devcenter: false,
-          enable_services: {
-            app_group: "on"
-          }
-        )
-        UI.success("✅ App ID ready (API): #{identifier}")
-        return
-      rescue => ex2
-        msg2 = ex2.message.to_s
-        if msg2.include?("already exists") ||
-           msg2.include?("already registered") ||
-           msg2.include?("already been taken")
-          UI.important("ℹ️  App ID already exists: #{identifier}")
-          return
-        end
-        UI.user_error!("Could not create App ID #{identifier}: #{msg2}")
-      end
+    bid = Spaceship::ConnectAPI::BundleId.create(
+      name: name,
+      identifier: identifier,
+      platform: Spaceship::ConnectAPI::BundleIdPlatform::IOS
+    )
+    UI.success("✅ Created App ID: #{identifier}")
+  end
+
+  # Keyboard needs App Groups (same group.com.clipval as host).
+  begin
+    caps = bid.get_capabilities
+    has_groups = caps.any? do |c|
+      type = c.capability_type.to_s
+      type.include?("APP_GROUPS") || type.include?("appGroups")
     end
-    UI.user_error!("Could not create App ID #{identifier}: #{msg}")
+    unless has_groups
+      bid.create_capability(
+        capability_type: Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS
+      )
+      UI.success("✅ Enabled App Groups on #{identifier}")
+    end
+  rescue => cap_ex
+    UI.important("⚠️  App Groups capability note: #{cap_ex.message}")
   end
 end
 
