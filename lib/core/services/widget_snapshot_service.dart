@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../constants/app_constants.dart';
@@ -96,6 +97,14 @@ class WidgetSnapshotService {
         iOSName: AppConstants.widgetIosName,
         name: AppConstants.widgetIosName,
       );
+
+      // Ensure App Group defaults are visible to the widget process.
+      try {
+        await const MethodChannel('com.clipval/widget')
+            .invokeMethod<void>('flushAndReload');
+      } catch (e) {
+        debugPrint('WidgetSnapshotService.flushAndReload: $e');
+      }
     } catch (e, st) {
       debugPrint('WidgetSnapshotService.sync failed: $e\n$st');
     }

@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import WidgetKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -36,10 +37,11 @@ import UIKit
 
     if let messenger = flutterBinaryMessenger() {
       registerShareChannel(with: messenger)
+      registerWidgetChannel(with: messenger)
       cloudKitSync.register(with: messenger)
       spotlight.register(with: messenger)
       nativeChannelsRegistered = true
-      NSLog("[ClipVal] Native channels registered (share + icloud_sync + spotlight)")
+      NSLog("[ClipVal] Native channels registered (share + widget + icloud_sync + spotlight)")
       return
     }
 
@@ -83,6 +85,27 @@ import UIKit
       return findFlutterViewController(in: presented)
     }
     return nil
+  }
+
+  /// Flush App Group UserDefaults + reload WidgetKit timelines after Flutter writes snapshot.
+  private func registerWidgetChannel(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(
+      name: "com.clipval/widget",
+      binaryMessenger: messenger
+    )
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "flushAndReload":
+        UserDefaults(suiteName: Self.appGroupId)?.synchronize()
+        if #available(iOS 14.0, *) {
+          WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+          WidgetCenter.shared.reloadAllTimelines()
+        }
+        result(true)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
   }
 
   /// Drain pending share from the Share Extension App Group (one-shot).
