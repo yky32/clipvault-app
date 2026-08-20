@@ -101,7 +101,9 @@ struct ClipValProvider: TimelineProvider {
   }
 
   private func loadPayload() -> (items: [WidgetItem], hideTitles: Bool, pinnedOnly: Bool) {
-    guard let raw = UserDefaults(suiteName: appGroupId)?.string(forKey: itemsKey),
+    let defaults = UserDefaults(suiteName: appGroupId)
+    defaults?.synchronize()
+    guard let raw = defaults?.string(forKey: itemsKey),
           let data = raw.data(using: .utf8),
           let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
     else { return ([], false, false) }
@@ -123,23 +125,36 @@ struct ClipValProvider: TimelineProvider {
 }
 
 // MARK: - Copy (no app open on iOS 17+)
+// IMPORTANT: Do NOT pass the vault value as an AppIntent parameter.
+// iOS silently truncates / empties large or special intent params → clipboard
+// ends up empty in production. Always resolve value from App Group by id.
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
   static var openAppWhenRun: Bool = false
+  static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
-  @Parameter(title: "Value") var value: String
-  @Parameter(title: "Title") var title: String
 
-  init() { id = ""; value = ""; title = "" }
-  init(id: String, value: String, title: String) {
-    self.id = id; self.value = value; self.title = title
-  }
+  init() { id = "" }
+  init(id: String) { self.id = id }
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
+    let resolved = Self.lookupItem(id: id)
+    let value = resolved?.value ?? ""
+    let title = {
+      let t = (resolved?.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+      if !t.isEmpty { return t }
+      if let m = resolved?.monogram, !m.isEmpty { return m }
+      return "ClipVal"
+    }()
+
+    guard !value.isEmpty else {
+      return .result(dialog: IntentDialog(stringLiteral: "Nothing to copy — open ClipVal to refresh the widget."))
+    }
+
     UIPasteboard.general.string = value
     UINotificationFeedbackGenerator().notificationOccurred(.success)
     if let d = UserDefaults(suiteName: appGroupId) {
@@ -149,6 +164,17 @@ struct CopyValueIntent: AppIntent {
     }
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
     return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
+  }
+
+  /// Load plaintext value from the App Group snapshot written by the Flutter app.
+  private static func lookupItem(id: String) -> WidgetItem? {
+    guard !id.isEmpty,
+          let defaults = UserDefaults(suiteName: appGroupId),
+          let raw = defaults.string(forKey: itemsKey),
+          let data = raw.data(using: .utf8),
+          let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
+    else { return nil }
+    return payload.items.first { $0.id == id }
   }
 }
 
@@ -321,7 +347,6 @@ struct ClipValWidgetEntryView: View {
     metrics: CellMetrics
   ) -> some View {
     let shownTitle = hideTitle ? "···" : item.displayTitle
-    let intentTitle = hideTitle ? "Item" : (item.title.isEmpty ? "Item" : item.title)
     let label = VStack(spacing: metrics.stackSpacing) {
       ZStack {
         Circle()
@@ -361,7 +386,8 @@ struct ClipValWidgetEntryView: View {
 
     return Group {
       if #available(iOS 17.0, *) {
-        Button(intent: CopyValueIntent(id: item.id, value: item.value, title: intentTitle)) {
+        // Only pass id — value is loaded from App Group inside the intent.
+        Button(intent: CopyValueIntent(id: item.id)) {
           label
         }
         .buttonStyle(.plain)
