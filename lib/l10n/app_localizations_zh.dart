@@ -312,6 +312,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentSection => '最近複製';
 
   @override
+  String get otherSection => '其他';
+
+  @override
+  String get searchSuggestionsHint => '建議';
+
+  @override
+  String get filterUncategorized => '未分類';
+
+  @override
+  String get azIndexHint => 'A–Z';
+
+  @override
   String get allSection => '全部項目';
 
   @override

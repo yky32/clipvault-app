@@ -668,6 +668,30 @@ abstract class AppLocalizations {
   /// **'Recently copied'**
   String get recentSection;
 
+  /// No description provided for @otherSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything else'**
+  String get otherSection;
+
+  /// No description provided for @searchSuggestionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get searchSuggestionsHint;
+
+  /// No description provided for @filterUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get filterUncategorized;
+
+  /// No description provided for @azIndexHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A–Z'**
+  String get azIndexHint;
+
   /// No description provided for @allSection.
   ///
   /// In en, this message translates to:

@@ -7,6 +7,9 @@ class AppConstants {
   static const encryptionKeyName = 'clipval_aes_key';
   static const recentCopiedLimit = 8;
 
+  /// List/grid body "Recent" section size (separate from horizontal strip).
+  static const recentBodySectionLimit = 6;
+
   /// App Group shared with the iOS home-screen widget.
   static const widgetAppGroupId = 'group.com.clipval';
 

@@ -8,6 +8,7 @@ import '../../../../core/constants/address_languages.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
+import '../../../../core/services/category_suggest.dart';
 import '../../../../core/services/settings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -124,6 +125,15 @@ class _ItemEditorBottomSheetState extends State<ItemEditorBottomSheet> {
       }
       if (seedValue != null && seedValue.isNotEmpty) {
         _valueController.text = seedValue;
+      }
+      // Tier A: guess category from seed (user can change).
+      if (_selectedCategoryId == null) {
+        final key = suggestCategorySystemKey(
+          title: _titleController.text,
+          value: _valueController.text,
+        );
+        final cats = AppBootstrap.categoryRepository.getAll();
+        _selectedCategoryId = resolveCategoryId(cats, key);
       }
       // New items: author already sees what they type.
       _revealUnlocked = true;
