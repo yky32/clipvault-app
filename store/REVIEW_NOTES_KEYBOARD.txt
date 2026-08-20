@@ -1,24 +1,22 @@
 ClipVal Keyboard — App Review notes
 
 WHAT IT IS
-A custom keyboard that inserts short vault snippets (pinned / recently copied)
-the user already saved in ClipVal. It is not a third-party typing keyboard for
-general text entry.
+A custom keyboard that inserts short vault snippets (pinned / recently used)
+the user already saved in ClipVal. Search + tap-to-insert. Not a general typing keyboard.
 
 FULL ACCESS
-iOS requires “Allow Full Access” for a keyboard extension to read an App Group
-shared with the containing app. ClipVal uses Full Access only to read a local
-JSON snapshot (titles + values the user saved). The extension:
+iOS requires “Allow Full Access” for a keyboard to read an App Group shared with
+the containing app. ClipVal uses Full Access only to read a local JSON snapshot.
+The extension:
 • does not log keystrokes
 • does not access the network
 • does not upload data
-• does not use the microphone, contacts, or location
 
 SENSITIVE ITEMS
-Items marked sensitive in ClipVal are excluded from the keyboard UI.
+Items marked sensitive in ClipVal are excluded from the keyboard UI entirely.
 
 HOW TO TEST
-1. Enable ClipVal keyboard + Full Access (Settings → General → Keyboard)
-2. Open ClipVal, pin an item or copy one
-3. In Notes, switch to ClipVal keyboard → tap chip → text inserts
-4. Globe key returns to the system keyboard
+1. Enable ClipVal keyboard + Full Access
+2. Open ClipVal, pin an item
+3. Notes → ClipVal keyboard → search/tap → text inserts
+4. Globe returns to system keyboard

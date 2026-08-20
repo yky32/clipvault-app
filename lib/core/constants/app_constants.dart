@@ -19,8 +19,14 @@ class AppConstants {
   /// JSON payload key in App Group UserDefaults.
   static const widgetItemsKey = 'widget_items_json';
 
+  /// Dedicated keyboard payload (larger than widget; titles always kept).
+  static const keyboardItemsKey = 'keyboard_items_json';
+
   /// Max items pushed to the home-screen widget (medium 4×2, large 4×4).
   static const widgetItemLimit = 16;
+
+  /// Max items for custom keyboard chips (pinned + recent).
+  static const keyboardItemLimit = 24;
 
   /// App Group flag: widget should mask titles (app lock / privacy).
   static const widgetHideTitlesKey = 'widget_hide_titles';
