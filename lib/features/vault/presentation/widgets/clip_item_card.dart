@@ -95,10 +95,6 @@ class _ListRow extends StatelessWidget {
       lastUsedAt: item.lastCopiedAt,
       locale: locale,
     );
-    final icon = item.isPinned && item.categoryId == null
-        ? CupertinoIcons.pin_fill
-        : (categoryIconData ?? categoryIconForId(item.categoryId));
-
     return PressableScale(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -117,7 +113,11 @@ class _ListRow extends StatelessWidget {
               _SelectionCheck(selected: selected, size: 22),
               const SizedBox(width: 12),
             ] else
-              _GlassIconWell(icon: icon, size: 34, iconSize: 17),
+              CategoryLeadingIcon(
+                categoryId: item.categoryId,
+                size: 34,
+                iconSize: 17,
+              ),
             if (!selectionMode) const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -222,10 +222,6 @@ class _GridTile extends StatelessWidget {
       lastUsedAt: item.lastCopiedAt,
       locale: locale,
     );
-    final icon = item.isPinned && item.categoryId == null
-        ? CupertinoIcons.pin_fill
-        : (categoryIconData ?? categoryIconForId(item.categoryId));
-
     final radius = BorderRadius.circular(18);
 
     return PressableScale(
@@ -277,8 +273,8 @@ class _GridTile extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _GlassIconWell(
-                              icon: icon,
+                            CategoryLeadingIcon(
+                              categoryId: item.categoryId,
                               size: iconSize,
                               iconSize: iconGlyph,
                             ),
@@ -468,33 +464,6 @@ class _LanguageCornerBadge extends StatelessWidget {
 }
 
 /// Soft frosted icon chip — no hard ring.
-class _GlassIconWell extends StatelessWidget {
-  const _GlassIconWell({
-    required this.icon,
-    this.size = 30,
-    this.iconSize = 15,
-  });
-
-  final IconData icon;
-  final double size;
-  final double iconSize;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(size * 0.28),
-      ),
-      child: Icon(icon, size: iconSize, color: AppColors.primary),
-    );
-  }
-}
 
 /// Grouped list as one soft glass island (Apple inset list feel).
 class ClipItemGroupedList extends StatelessWidget {

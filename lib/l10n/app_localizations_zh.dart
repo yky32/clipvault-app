@@ -144,7 +144,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryManageTitle => '分類';
 
   @override
-  String get categoryManageSubtitle => '產品預設分類固定。可新增自訂分類。';
+  String get categoryManageSubtitle => '用顏色與類別整理卡片，幾百張也一眼找到。';
 
   @override
   String get categoryAdd => '新增分類';

@@ -82,6 +82,7 @@ class CategoryRepository {
   Future<Category> create(
     String name, {
     bool supportsLanguageTag = false,
+    int? colorIndex,
   }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -97,6 +98,7 @@ class CategoryRepository {
       name: trimmed,
       createdAt: DateTime.now(),
       supportsLanguageTag: supportsLanguageTag,
+      colorIndex: colorIndex,
     );
     await _box.put(category.id, category.toMap());
     return category;
@@ -107,6 +109,7 @@ class CategoryRepository {
     String id, {
     String? name,
     bool? supportsLanguageTag,
+    int? colorIndex,
   }) async {
     final existing = getById(id);
     if (existing == null) {
@@ -128,6 +131,7 @@ class CategoryRepository {
     final updated = existing.copyWith(
       name: trimmed,
       supportsLanguageTag: supportsLanguageTag ?? existing.supportsLanguageTag,
+      colorIndex: colorIndex ?? existing.colorIndex,
     );
     await _box.put(updated.id, updated.toMap());
     return updated;

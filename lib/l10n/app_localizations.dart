@@ -359,7 +359,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryManageSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Product defaults stay fixed. Add your own for custom labels.'**
+  /// **'Color tags + categories so hundreds of cards stay scannable.'**
   String get categoryManageSubtitle;
 
   /// No description provided for @categoryAdd.
