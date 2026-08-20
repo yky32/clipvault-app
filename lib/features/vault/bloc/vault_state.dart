@@ -27,14 +27,28 @@ final class VaultState extends Equatable {
   List<ClipItem> get filteredItems {
     var result = List<ClipItem>.from(items);
     if (selectedCategoryId != null) {
-      result =
-          result.where((i) => i.categoryId == selectedCategoryId).toList();
+      if (selectedCategoryId == uncategorizedFilterId) {
+        result = result.where((i) => i.categoryId == null).toList();
+      } else {
+        result =
+            result.where((i) => i.categoryId == selectedCategoryId).toList();
+      }
     }
     final q = searchQuery.trim().toLowerCase();
     if (q.isNotEmpty) {
       result = result.where((i) => i.title.toLowerCase().contains(q)).toList();
     }
     return _applySort(result, sortMode);
+  }
+
+  /// Pseudo category id for "no category" filter (search suggestions).
+  static const uncategorizedFilterId = '__uncategorized__';
+
+  int countInCategory(String categoryId) {
+    if (categoryId == uncategorizedFilterId) {
+      return items.where((i) => i.categoryId == null).length;
+    }
+    return items.where((i) => i.categoryId == categoryId).length;
   }
 
   /// Pinned first, then [sortMode] among each group.
@@ -75,15 +89,58 @@ final class VaultState extends Equatable {
   List<ClipItem> get unpinnedItems =>
       filteredItems.where((i) => !i.isPinned).toList();
 
-  /// Recently copied among *all* items (not filtered) for quick re-copy.
+  /// Recently copied among *all* items for the quick strip.
+  /// Excludes pinned (already in Pinned section) to reduce duplicates.
   List<ClipItem> get recentlyCopied {
-    final withCopy = items.where((i) => i.lastCopiedAt != null).toList()
+    final withCopy = items
+        .where((i) => i.lastCopiedAt != null && !i.isPinned)
+        .toList()
       ..sort((a, b) => b.lastCopiedAt!.compareTo(a.lastCopiedAt!));
     return withCopy.take(AppConstants.recentCopiedLimit).toList();
   }
 
-  int countInCategory(String categoryId) =>
-      items.where((i) => i.categoryId == categoryId).length;
+  /// Unpinned + recently used slice for list/grid "Recent" body section.
+  List<ClipItem> recentBodySection(List<ClipItem> filtered) {
+    final list = filtered
+        .where((i) => !i.isPinned && i.lastCopiedAt != null)
+        .toList()
+      ..sort((a, b) => b.lastCopiedAt!.compareTo(a.lastCopiedAt!));
+    return list.take(AppConstants.recentBodySectionLimit).toList();
+  }
+
+  /// Search empty-state chips: categories + recent titles (local only).
+  List<VaultSearchSuggestion> get searchSuggestions {
+    final out = <VaultSearchSuggestion>[];
+    final seen = <String>{};
+
+    void add(VaultSearchSuggestion s) {
+      final key = '${s.kind.name}:${s.id ?? s.label}';
+      if (seen.add(key)) out.add(s);
+    }
+
+    for (final c in categories) {
+      if (countInCategory(c.id) == 0) continue;
+      add(
+        VaultSearchSuggestion.category(
+          id: c.id,
+          label: c.name,
+        ),
+      );
+    }
+
+    final uncategorized = items.where((i) => i.categoryId == null).length;
+    if (uncategorized > 0) {
+      add(VaultSearchSuggestion.uncategorized());
+    }
+
+    for (final item in recentlyCopied.take(5)) {
+      final t = item.title.trim();
+      if (t.isEmpty) continue;
+      add(VaultSearchSuggestion.query(label: t));
+    }
+
+    return out.take(12).toList();
+  }
 
   VaultState copyWith({
     List<ClipItem>? items,

@@ -10,6 +10,8 @@ class AppleSearchField extends StatelessWidget {
     required this.hintText,
     required this.onChanged,
     this.onClear,
+    this.focusNode,
+    this.onFocusChange,
     super.key,
   });
 
@@ -17,6 +19,8 @@ class AppleSearchField extends StatelessWidget {
   final String hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback? onClear;
+  final FocusNode? focusNode;
+  final ValueChanged<bool>? onFocusChange;
 
   @override
   Widget build(BuildContext context) {
@@ -41,30 +45,34 @@ class AppleSearchField extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                child: Focus(
+                  onFocusChange: onFocusChange,
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onChanged: onChanged,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
+                    cursorColor: AppColors.primary,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: hintText,
+                      hintStyle: TextStyle(
+                        fontFamily: 'Satoshi',
                         fontSize: 17,
                         fontWeight: FontWeight.w400,
+                        color: AppColors.secondaryLabel(context),
                       ),
-                  cursorColor: AppColors.primary,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: hintText,
-                    hintStyle: TextStyle(
-                      fontFamily: 'Satoshi',
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.secondaryLabel(context),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
                     ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    textInputAction: TextInputAction.search,
                   ),
-                  textInputAction: TextInputAction.search,
                 ),
               ),
               if (hasText)

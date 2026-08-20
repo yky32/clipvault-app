@@ -25,6 +25,7 @@ import '../../../item_editor/presentation/bottom_sheets/item_editor_bottom_sheet
 import '../../../welcome/presentation/bottom_sheets/welcome_explainer_sheet.dart';
 import '../../../nearby/presentation/nearby_send_sheet.dart';
 import '../../bloc/vault_bloc.dart';
+import '../../domain/vault_search_suggestion.dart';
 import '../widgets/clip_item_card.dart';
 import '../widgets/vault_empty_state.dart';
 import '../widgets/vault_home_skeleton.dart';
@@ -39,6 +40,8 @@ class VaultPage extends StatefulWidget {
 
 class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
+  bool _searchFocused = false;
   bool _welcomeChecked = false;
   bool _selecting = false;
   final Set<String> _selectedIds = {};
@@ -52,6 +55,10 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ShareIntakeService.attach(_openSharedPayload);
+    _searchFocus.addListener(() {
+      if (!mounted) return;
+      setState(() => _searchFocused = _searchFocus.hasFocus);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowWelcome();
       ShareIntakeService.consumePending();
@@ -65,6 +72,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     ShareIntakeService.detach();
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -400,12 +408,15 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
     }
   }
 
-  String? _categoryName(
+    String? _categoryName(
     VaultState state,
     String? id,
     AppLocalizations l10n,
   ) {
     if (id == null) return null;
+    if (id == VaultState.uncategorizedFilterId) {
+      return l10n.filterUncategorized;
+    }
     for (final c in state.categories) {
       if (c.id == id) return categoryDisplayName(c, l10n);
     }
@@ -712,6 +723,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                               child: AppleSearchField(
                                 controller: _searchController,
+                                focusNode: _searchFocus,
                                 hintText: l10n.searchHint,
                                 onChanged: (q) => context
                                     .read<VaultBloc>()
@@ -722,6 +734,49 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                               ),
                             ),
                           ),
+                          if (_searchFocused &&
+                              state.searchQuery.trim().isEmpty &&
+                              !_selecting &&
+                              state.searchSuggestions.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: _SearchSuggestionsRow(
+                                suggestions: state.searchSuggestions,
+                                categoryLabel: (id) {
+                                  for (final c in state.categories) {
+                                    if (c.id == id) {
+                                      return categoryDisplayName(c, l10n);
+                                    }
+                                  }
+                                  return id;
+                                },
+                                uncategorizedLabel: l10n.filterUncategorized,
+                                onCategory: (id) {
+                                  _searchFocus.unfocus();
+                                  context.read<VaultBloc>().add(
+                                        VaultCategoryFilterChanged(id),
+                                      );
+                                },
+                                onUncategorized: () {
+                                  _searchFocus.unfocus();
+                                  context.read<VaultBloc>().add(
+                                        const VaultCategoryFilterChanged(
+                                          VaultState.uncategorizedFilterId,
+                                        ),
+                                      );
+                                },
+                                onQuery: (q) {
+                                  _searchController.value = TextEditingValue(
+                                    text: q,
+                                    selection: TextSelection.collapsed(
+                                      offset: q.length,
+                                    ),
+                                  );
+                                  context.read<VaultBloc>().add(
+                                        VaultSearchChanged(q),
+                                      );
+                                },
+                              ),
+                            ),
                           if (_clipboardSuggestText != null && !_selecting)
                             SliverToBoxAdapter(
                               child: ClipboardSuggestBanner(
@@ -970,7 +1025,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
   }
 }
 
-/// Pinned first, then everything else — clearer scanning.
+/// Pinned → Recent → Everything else (Tier A browse).
 class _SectionedList extends StatelessWidget {
   const _SectionedList({
     required this.state,
@@ -996,10 +1051,23 @@ class _SectionedList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final pinned = filtered.where((i) => i.isPinned).toList();
-    final rest = filtered.where((i) => !i.isPinned).toList();
-    final showSections = pinned.isNotEmpty && rest.isNotEmpty;
+    final recent = state.recentBodySection(filtered);
+    final recentIds = recent.map((i) => i.id).toSet();
+    final other = filtered
+        .where((i) => !i.isPinned && !recentIds.contains(i.id))
+        .toList();
 
-    if (!showSections) {
+    final sections = <(String, List<ClipItem>)>[];
+    if (pinned.isNotEmpty) sections.add((l10n.pinnedSection, pinned));
+    if (recent.isNotEmpty && !state.hasActiveFilter) {
+      sections.add((l10n.recentSection, recent));
+    }
+    if (other.isNotEmpty) {
+      final label = sections.isEmpty ? l10n.allSection : l10n.otherSection;
+      sections.add((label, other));
+    }
+
+    if (sections.length <= 1) {
       return ClipItemGroupedList(
         items: filtered,
         categoryNameOf: categoryNameOf,
@@ -1014,31 +1082,24 @@ class _SectionedList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionLabel(l10n.pinnedSection),
-        ClipItemGroupedList(
-          items: pinned,
-          categoryNameOf: categoryNameOf,
-          categoryIconOf: categoryIconOf,
-          selectionMode: selectionMode,
-          isSelected: isSelected,
-          onTap: onTap,
-          onLongPress: onLongPress,
-        ),
-        const SizedBox(height: 20),
-        _SectionLabel(l10n.allSection),
-        ClipItemGroupedList(
-          items: rest,
-          categoryNameOf: categoryNameOf,
-          categoryIconOf: categoryIconOf,
-          selectionMode: selectionMode,
-          isSelected: isSelected,
-          onTap: onTap,
-          onLongPress: onLongPress,
-        ),
+        for (var i = 0; i < sections.length; i++) ...[
+          if (i > 0) const SizedBox(height: 20),
+          _SectionLabel(sections[i].$1),
+          ClipItemGroupedList(
+            items: sections[i].$2,
+            categoryNameOf: categoryNameOf,
+            categoryIconOf: categoryIconOf,
+            selectionMode: selectionMode,
+            isSelected: isSelected,
+            onTap: onTap,
+            onLongPress: onLongPress,
+          ),
+        ],
       ],
     );
   }
 }
+
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
@@ -1244,6 +1305,90 @@ class _SegmentChip extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SearchSuggestionsRow extends StatelessWidget {
+  const _SearchSuggestionsRow({
+    required this.suggestions,
+    required this.categoryLabel,
+    required this.uncategorizedLabel,
+    required this.onCategory,
+    required this.onUncategorized,
+    required this.onQuery,
+  });
+
+  final List<VaultSearchSuggestion> suggestions;
+  final String Function(String id) categoryLabel;
+  final String uncategorizedLabel;
+  final void Function(String id) onCategory;
+  final VoidCallback onUncategorized;
+  final void Function(String query) onQuery;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+            child: Text(
+              l10n.searchSuggestionsHint.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
+                    color: AppColors.secondaryLabel(context),
+                  ),
+            ),
+          ),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              physics: const BouncingScrollPhysics(),
+              itemCount: suggestions.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final s = suggestions[index];
+                final label = switch (s.kind) {
+                  VaultSearchSuggestionKind.category =>
+                    categoryLabel(s.id ?? ''),
+                  VaultSearchSuggestionKind.uncategorized => uncategorizedLabel,
+                  VaultSearchSuggestionKind.query => s.label,
+                };
+                final icon = switch (s.kind) {
+                  VaultSearchSuggestionKind.category => CupertinoIcons.tag,
+                  VaultSearchSuggestionKind.uncategorized =>
+                    CupertinoIcons.tray,
+                  VaultSearchSuggestionKind.query => CupertinoIcons.time,
+                };
+                return ActionChip(
+                  avatar: Icon(icon, size: 16, color: AppColors.primary),
+                  label: Text(label),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    switch (s.kind) {
+                      case VaultSearchSuggestionKind.category:
+                        onCategory(s.id!);
+                      case VaultSearchSuggestionKind.uncategorized:
+                        onUncategorized();
+                      case VaultSearchSuggestionKind.query:
+                        onQuery(s.label);
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../../core/services/clip_item_repository.dart';
 import '../../../core/services/clipboard_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/utils/app_log.dart';
+import '../domain/vault_search_suggestion.dart';
 
 part 'vault_event.dart';
 part 'vault_state.dart';

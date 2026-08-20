@@ -318,6 +318,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentSection => 'Recently copied';
 
   @override
+  String get otherSection => 'Everything else';
+
+  @override
+  String get searchSuggestionsHint => 'Suggestions';
+
+  @override
+  String get filterUncategorized => 'Uncategorized';
+
+  @override
+  String get azIndexHint => 'A–Z';
+
+  @override
   String get allSection => 'All items';
 
   @override
