@@ -564,12 +564,7 @@
   "keyboardSubtitle": "Insert pinned & recent items while typing",
   "keyboardFooter": "Add ClipVal under Settings → General → Keyboard → Keyboards. Apple requires Full Access so the keyboard can read your on-device vault snapshot from ClipVal — not the internet. ClipVal never logs what you type and the keyboard has no network. Sensitive items never appear on the keyboard.",
   "keyboardHowTitle": "Set up ClipVal Keyboard",
-  "keyboardHowBody": "1. Settings → General → Keyboard → Keyboards → Add New Keyboard → ClipVal
-2. Tap ClipVal → Allow Full Access ON
-3. Open ClipVal app once (syncs vault to keyboard)
-4. In any app, long-press globe → ClipVal
-
-Privacy: Full Access only reads your on-device vault snapshot. No keylogging. No network. Sensitive items stay out of the keyboard.",
+  "keyboardHowBody": "1. Settings \u2192 General \u2192 Keyboard \u2192 Keyboards \u2192 Add New Keyboard \u2192 ClipVal\n2. Tap ClipVal \u2192 Allow Full Access ON\n3. Open ClipVal app once (syncs vault to keyboard)\n4. In any app, long-press globe \u2192 ClipVal\n\nPrivacy: Full Access only reads your on-device vault snapshot. No keylogging. No network. Sensitive items stay out of the keyboard.",
   "keyboardOpenSettings": "Open iOS Settings",
   "categoryColorTitle": "Category color",
   "categoryColorSubtitle": "Used on filter chips and vault icons. Pick any color — defaults can be customized too.",
