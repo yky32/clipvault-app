@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C16B010000000000000004 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C16B010000000000000001 /* KeyboardViewController.swift */; };
 		C15A010000000000000004 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C15A010000000000000001 /* ShareViewController.swift */; };
 		09F6F6A57828CDEDC21056A9 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A9E88CEB441BB2A3B3E52DA /* Pods_RunnerTests.framework */; };
 		0EDB1714AE909B1EA248CC07 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6FC8B51D611287851AC56918 /* Foundation.framework */; };
@@ -31,6 +32,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = C15A010000000000000007;
 			remoteInfo = ClipValShare;
+		};
+		C16B01000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C16B010000000000000007;
+			remoteInfo = ClipValKeyboard;
 		};
 		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +74,10 @@
 		C15A010000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C15A010000000000000003 /* ClipValShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipValShare.entitlements; sourceTree = "<group>"; };
 		C15A010000000000000005 /* ClipValShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipValShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C16B010000000000000001 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		C16B010000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C16B010000000000000003 /* ClipValKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipValKeyboard.entitlements; sourceTree = "<group>"; };
+		C16B010000000000000005 /* ClipValKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipValKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1329455B84AA2D48005B7C7B /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
@@ -187,6 +199,7 @@
 				11B3FF81F5302CF2998AE6BF /* Frameworks */,
 				15D15B06666738124F6314CA /* ClipValWidget */,
 				C15A010000000000000006 /* ClipValShare */,
+				C16B010000000000000006 /* ClipValKeyboard */,
 			);
 			sourceTree = "<group>";
 		};
@@ -197,6 +210,7 @@
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				52DA7AD744E2DABC97C2996E /* ClipValWidget.appex */,
 				C15A010000000000000005 /* ClipValShare.appex */,
+				C16B010000000000000005 /* ClipValKeyboard.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -251,6 +265,16 @@
 			path = ClipValShare;
 			sourceTree = "<group>";
 		};
+		C16B010000000000000006 /* ClipValKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				C16B010000000000000001 /* KeyboardViewController.swift */,
+				C16B010000000000000002 /* Info.plist */,
+				C16B010000000000000003 /* ClipValKeyboard.entitlements */,
+			);
+			path = ClipValKeyboard;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -290,6 +314,23 @@
 			productReference = C15A010000000000000005 /* ClipValShare.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		C16B010000000000000007 /* ClipValKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C16B010000000000000011 /* Build configuration list for PBXNativeTarget "ClipValKeyboard" */;
+			buildPhases = (
+				C16B010000000000000008 /* Sources */,
+				C16B010000000000000009 /* Frameworks */,
+				C16B01000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ClipValKeyboard;
+			productName = ClipValKeyboard;
+			productReference = C16B010000000000000005 /* ClipValKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		8CF31E178B258F53CF7A5815 /* ClipValWidget */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1A18F22DEE321E78A996450F /* Build configuration list for PBXNativeTarget "ClipValWidget" */;
@@ -321,12 +362,14 @@
 				278DBA7687800B6527A58229 /* [CP] Embed Pods Frameworks */,
 				2A8382B932C181E384AFD0C9 /* Embed ClipVal Widget */,
 				C15A01000000000000000D /* Embed ClipVal Share */,
+				C16B01000000000000000D /* Embed ClipVal Keyboard */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				F28C58B5093A57CD9744189C /* PBXTargetDependency */,
 				C15A01000000000000000B /* PBXTargetDependency */,
+				C16B01000000000000000B /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -370,6 +413,7 @@
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				8CF31E178B258F53CF7A5815 /* ClipValWidget */,
 				C15A010000000000000007 /* ClipValShare */,
+				C16B010000000000000007 /* ClipValKeyboard */,
 			);
 		};
 /* End PBXProject section */
@@ -377,6 +421,20 @@
 /* Begin PBXResourcesBuildPhase section */
 		C15A01000000000000000A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C16B01000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C16B010000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -470,6 +528,24 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\nAPPEX_SRC=\"${BUILT_PRODUCTS_DIR}/ClipValShare.appex\"\nAPPEX_DST=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/ClipValShare.appex\"\nif [ ! -d \"$APPEX_SRC\" ]; then\n  echo \"warning: ClipValShare.appex not found at $APPEX_SRC (skip embed)\"\n  exit 0\nfi\nmkdir -p \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns\"\nrsync -a --delete \"${APPEX_SRC}/\" \"${APPEX_DST}/\"\necho \"Embedded ClipValShare.appex\"\n";
 		};
+		C16B01000000000000000D /* Embed ClipVal Keyboard */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/ClipValKeyboard.appex",
+			);
+			name = "Embed ClipVal Keyboard";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/PlugIns/ClipValKeyboard.appex",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nAPPEX_SRC=\"${BUILT_PRODUCTS_DIR}/ClipValKeyboard.appex\"\nAPPEX_DST=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/ClipValKeyboard.appex\"\nif [ ! -d \"$APPEX_SRC\" ]; then\n  echo \"warning: ClipValKeyboard.appex not found at $APPEX_SRC (skip embed)\"\n  exit 0\nfi\nmkdir -p \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns\"\nrsync -a --delete \"${APPEX_SRC}/\" \"${APPEX_DST}/\"\necho \"Embedded ClipValKeyboard.appex\"\n";
+		};
+
 		2A8382B932C181E384AFD0C9 /* Embed ClipVal Widget */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -555,6 +631,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C16B010000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C16B010000000000000004 /* KeyboardViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -590,6 +674,11 @@
 			isa = PBXTargetDependency;
 			target = C15A010000000000000007 /* ClipValShare */;
 			targetProxy = C15A01000000000000000C /* PBXContainerItemProxy */;
+		};
+		C16B01000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C16B010000000000000007 /* ClipValKeyboard */;
+			targetProxy = C16B01000000000000000C /* PBXContainerItemProxy */;
 		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1109,6 +1198,100 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C16B01000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ClipValKeyboard/ClipValKeyboard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValKeyboard;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValKeyboard;
+				PRODUCT_MODULE_NAME = ClipValKeyboard;
+				PRODUCT_NAME = ClipValKeyboard;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C16B01000000000000000F /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ClipValKeyboard/ClipValKeyboard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValKeyboard;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValKeyboard;
+				PRODUCT_MODULE_NAME = ClipValKeyboard;
+				PRODUCT_NAME = ClipValKeyboard;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Profile;
+		};
+		C16B010000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ClipValKeyboard/ClipValKeyboard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 3G34999H3A;
+				EXECUTABLE_NAME = ClipValKeyboard;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClipValKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.clipval.ClipValKeyboard;
+				PRODUCT_MODULE_NAME = ClipValKeyboard;
+				PRODUCT_NAME = ClipValKeyboard;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C16B010000000000000011 /* Build configuration list for PBXNativeTarget "ClipValKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C16B01000000000000000E /* Debug */,
+				C16B010000000000000010 /* Release */,
+				C16B01000000000000000F /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C15A010000000000000011 /* Build configuration list for PBXNativeTarget "ClipValShare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
