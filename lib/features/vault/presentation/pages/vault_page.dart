@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../../../core/l10n/category_colors.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/clip_item.dart';
@@ -817,6 +818,7 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                                         child: _SegmentChip(
                                           label: l10n.filterAll,
                                           icon: CupertinoIcons.square_grid_2x2,
+                                          dotColor: CategoryColors.palette[5],
                                           selected:
                                               state.selectedCategoryId == null,
                                           onTap: () => context
@@ -841,6 +843,8 @@ class _VaultPageState extends State<VaultPage> with WidgetsBindingObserver {
                                               label:
                                                   categoryDisplayName(c, l10n),
                                               icon: categoryIcon(c),
+                                              dotColor:
+                                                  CategoryColors.forCategory(c),
                                               count: count,
                                               selected: selected,
                                               onTap: () => context
@@ -1243,6 +1247,7 @@ class _SegmentChip extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.count,
+    this.dotColor,
   });
 
   final String label;
@@ -1250,6 +1255,7 @@ class _SegmentChip extends StatelessWidget {
   final VoidCallback onTap;
   final IconData? icon;
   final int? count;
+  final Color? dotColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1275,7 +1281,13 @@ class _SegmentChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
+            if (dotColor != null) ...[
+              CategoryColorDot(
+                color: selected ? Colors.white : dotColor!,
+                size: 8,
+              ),
+              const SizedBox(width: 6),
+            ] else if (icon != null) ...[
               Icon(icon, size: 13, color: fg),
               const SizedBox(width: 5),
             ],

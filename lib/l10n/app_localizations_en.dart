@@ -147,7 +147,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryManageSubtitle =>
-      'Product defaults stay fixed. Add your own for custom labels.';
+      'Color tags + categories so hundreds of cards stay scannable.';
 
   @override
   String get categoryAdd => 'Add category';

@@ -5,6 +5,7 @@ import '../bootstrap/app_bootstrap.dart';
 import '../constants/default_categories.dart';
 import '../models/category.dart';
 import '../theme/app_colors.dart';
+import 'category_colors.dart';
 
 /// Simple SF-style icons for product categories.
 IconData categoryIcon(Category category) {
@@ -35,6 +36,18 @@ IconData categoryIconForId(String? categoryId) {
   return CupertinoIcons.tag_fill;
 }
 
+Color categoryColorForId(String? categoryId) {
+  if (categoryId == null) return CategoryColors.palette[5];
+  try {
+    return CategoryColors.forCategoryId(
+      categoryId,
+      (id) => AppBootstrap.categoryRepository.getById(id),
+    );
+  } catch (_) {
+    return CategoryColors.palette[5];
+  }
+}
+
 /// Leading tile used everywhere categories appear (vault, form, settings).
 class CategoryLeadingIcon extends StatelessWidget {
   const CategoryLeadingIcon({
@@ -51,33 +64,48 @@ class CategoryLeadingIcon extends StatelessWidget {
   final double size;
   final double iconSize;
 
-  /// Filled primary background (like Pin row).
+  /// Filled color background (tint from category).
   final bool filled;
 
   @override
   Widget build(BuildContext context) {
+    final Category? cat = category ??
+        (categoryId != null
+            ? () {
+                try {
+                  return AppBootstrap.categoryRepository.getById(categoryId!);
+                } catch (_) {
+                  return null;
+                }
+              }()
+            : null);
+
     final IconData icon;
-    if (category != null) {
-      icon = categoryIcon(category!);
+    if (cat != null) {
+      icon = categoryIcon(cat);
     } else if (categoryId != null) {
       icon = categoryIconForId(categoryId);
     } else {
       icon = CupertinoIcons.tag;
     }
 
+    final color = cat != null
+        ? CategoryColors.forCategory(cat)
+        : categoryId != null
+            ? categoryColorForId(categoryId)
+            : AppColors.primary;
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: filled
-            ? AppColors.primary
-            : AppColors.primary.withValues(alpha: 0.12),
+        color: filled ? color : color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(size * 0.23),
       ),
       child: Icon(
         icon,
         size: iconSize,
-        color: filled ? Colors.white : AppColors.primary,
+        color: filled ? Colors.white : color,
       ),
     );
   }

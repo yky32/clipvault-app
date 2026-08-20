@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/bootstrap/app_bootstrap.dart';
+import '../../../../core/l10n/category_colors.dart';
 import '../../../../core/l10n/category_icons.dart';
 import '../../../../core/l10n/category_labels.dart';
 import '../../../../core/models/category.dart';
@@ -61,6 +62,17 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
       category: category,
     );
     if (updated != null && mounted) _reload();
+  }
+
+  Future<void> _cycleColor(Category category) async {
+    if (category.isSystem) return;
+    HapticFeedback.selectionClick();
+    final next = CategoryColors.nextIndex(category.colorIndex);
+    await AppBootstrap.categoryRepository.updateCustom(
+      category.id,
+      colorIndex: next,
+    );
+    if (mounted) _reload();
   }
 
   Future<void> _delete(Category category) async {
@@ -126,6 +138,7 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                 _CategoryTile(
                   icon: categoryIcon(c),
                   label: categoryDisplayName(c, l10n),
+                  color: CategoryColors.forCategory(c),
                   // Single-line rows so Default badges share one column.
                   // Language tags are configured by tapping Addresses.
                   onTap: c.supportsLanguageTag ? _openAddressLanguages : null,
@@ -171,10 +184,20 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                   _CategoryTile(
                     icon: categoryIcon(c),
                     label: categoryDisplayName(c, l10n),
+                    color: CategoryColors.forCategory(c),
                     onTap: () => _edit(c),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: Size.zero,
+                          onPressed: () => _cycleColor(c),
+                          child: CategoryColorDot(
+                            color: CategoryColors.forCategory(c),
+                            size: 14,
+                          ),
+                        ),
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           minimumSize: Size.zero,
@@ -242,18 +265,21 @@ class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.icon,
     required this.label,
+    this.color,
     this.trailing,
     this.onTap,
   });
 
   final IconData icon;
   final String label;
+  final Color? color;
   final Widget? trailing;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final c = color ?? AppColors.primary;
 
     return Material(
       color: Colors.transparent,
@@ -268,12 +294,14 @@ class _CategoryTile extends StatelessWidget {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: c.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Icon(icon, size: 16, color: AppColors.primary),
+                child: Icon(icon, size: 16, color: c),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
+              CategoryColorDot(color: c, size: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
