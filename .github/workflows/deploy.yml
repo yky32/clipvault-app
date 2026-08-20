@@ -158,9 +158,14 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
           APP_STORE_CONNECT_API_KEY_IS_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_IS_BASE64 }}
+          # Portal App Group associate for ClipValKeyboard (API key cannot assign groups)
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
         run: |
           cd ios
-          unset SPACESHIP_2FA_SMS_DEFAULT_PHONE_NUMBER FASTLANE_SESSION FASTLANE_PASSWORD FASTLANE_USER FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD || true
+          # Keep API-key path for certs; do NOT strip FASTLANE_USER/password (needed for App Groups).
+          unset SPACESHIP_2FA_SMS_DEFAULT_PHONE_NUMBER FASTLANE_SESSION || true
           # Prune is best-effort (must not block if Spaceship/OpenSSL quirks)
           bundle exec fastlane ios prune_excess_certificates_for_ci || echo "::warning::prune skipped"
           bundle exec fastlane ios setup_appstore_signing
@@ -206,9 +211,12 @@ jobs:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
           IOS_DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
           IOS_DISTRIBUTION_CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
         run: |
           cd ios
-          unset SPACESHIP_2FA_SMS_DEFAULT_PHONE_NUMBER FASTLANE_SESSION FASTLANE_PASSWORD FASTLANE_USER FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD || true
+          unset SPACESHIP_2FA_SMS_DEFAULT_PHONE_NUMBER FASTLANE_SESSION || true
           bundle exec fastlane ios upload_testflight
 
       - name: Notify failure
