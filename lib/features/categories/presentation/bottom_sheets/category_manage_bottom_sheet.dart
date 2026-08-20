@@ -14,6 +14,7 @@ import '../../../../core/widgets/ios_group.dart';
 import '../../../../core/widgets/sheet_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../settings/presentation/bottom_sheets/address_language_settings_sheet.dart';
+import 'category_color_picker_sheet.dart';
 import 'category_editor_bottom_sheet.dart';
 
 /// Manage custom categories; product defaults are read-only.
@@ -64,15 +65,10 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
     if (updated != null && mounted) _reload();
   }
 
-  Future<void> _cycleColor(Category category) async {
-    if (category.isSystem) return;
+  Future<void> _pickColor(Category category) async {
     HapticFeedback.selectionClick();
-    final next = CategoryColors.nextIndex(category.colorIndex);
-    await AppBootstrap.categoryRepository.updateCustom(
-      category.id,
-      colorIndex: next,
-    );
-    if (mounted) _reload();
+    final changed = await CategoryColorPickerSheet.show(context, category);
+    if (changed && mounted) _reload();
   }
 
   Future<void> _delete(Category category) async {
@@ -139,12 +135,28 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                   icon: categoryIcon(c),
                   label: categoryDisplayName(c, l10n),
                   color: CategoryColors.forCategory(c),
-                  // Single-line rows so Default badges share one column.
-                  // Language tags are configured by tapping Addresses.
-                  onTap: c.supportsLanguageTag ? _openAddressLanguages : null,
-                  trailing: _DefaultTrailing(
-                    badgeLabel: l10n.categoryDefaultBadge,
-                    showChevron: c.supportsLanguageTag,
+                  // Row: Addresses → language tags; others → color picker.
+                  // Color dot always opens palette (system + custom).
+                  onTap: c.supportsLanguageTag
+                      ? _openAddressLanguages
+                      : () => _pickColor(c),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        minimumSize: Size.zero,
+                        onPressed: () => _pickColor(c),
+                        child: CategoryColorDot(
+                          color: CategoryColors.forCategory(c),
+                          size: 14,
+                        ),
+                      ),
+                      _DefaultTrailing(
+                        badgeLabel: l10n.categoryDefaultBadge,
+                        showChevron: c.supportsLanguageTag,
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -192,7 +204,7 @@ class _CategoryManageBottomSheetState extends State<CategoryManageBottomSheet> {
                         CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           minimumSize: Size.zero,
-                          onPressed: () => _cycleColor(c),
+                          onPressed: () => _pickColor(c),
                           child: CategoryColorDot(
                             color: CategoryColors.forCategory(c),
                             size: 14,

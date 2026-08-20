@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/default_categories.dart';
+import '../l10n/category_colors.dart';
 import '../models/category.dart';
 
 class CategoryRepository {
@@ -132,6 +133,27 @@ class CategoryRepository {
       name: trimmed,
       supportsLanguageTag: supportsLanguageTag ?? existing.supportsLanguageTag,
       colorIndex: colorIndex ?? existing.colorIndex,
+    );
+    await _box.put(updated.id, updated.toMap());
+    return updated;
+  }
+
+  /// Set (or clear) color tag for **any** category, including system defaults.
+  /// Name / systemKey stay fixed; only [Category.colorIndex] changes.
+  Future<Category> setColorIndex(String id, int? colorIndex) async {
+    final existing = getById(id);
+    if (existing == null) {
+      throw StateError('Category not found: $id');
+    }
+    if (colorIndex != null) {
+      final n = CategoryColors.palette.length;
+      var i = colorIndex % n;
+      if (i < 0) i += n;
+      colorIndex = i;
+    }
+    final updated = existing.copyWith(
+      colorIndex: colorIndex,
+      clearColorIndex: colorIndex == null,
     );
     await _box.put(updated.id, updated.toMap());
     return updated;
