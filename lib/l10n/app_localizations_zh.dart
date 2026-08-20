@@ -1147,7 +1147,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get keyboardHowBody =>
-      '1. iPhone 設定 → 一般 → 鍵盤 → 鍵盤 → 加入新鍵盤 → ClipVal\n2. 點 ClipVal → 開啟「允許完全取用」\n3. 打開一次 ClipVal App（更新置頂／最近快取）\n4. 任何 App 切換鍵盤到 ClipVal\n\n私隱：完全取用只用於本機 App Group。無鍵記、無上傳。敏感項目會隱藏。';
+      '1. 設定 → 一般 → 鍵盤 → 鍵盤 → 加入新鍵盤 → ClipVal\n2. 點 ClipVal → 開啟「允許完全取用」\n3. 打開一次 ClipVal（同步 vault 去鍵盤）\n4. 任何 App 長按 🌐 → 揀 ClipVal\n\n私隱：完全取用只讀本機 vault 快取。無鍵記、無網絡。敏感項目唔會出現喺鍵盤。';
 
   @override
   String get keyboardOpenSettings => '打開 iOS 設定';

@@ -2219,7 +2219,7 @@ abstract class AppLocalizations {
   /// No description provided for @keyboardHowBody.
   ///
   /// In en, this message translates to:
-  /// **'1. iPhone Settings → General → Keyboard → Keyboards → Add New Keyboard → ClipVal\n2. Tap ClipVal → turn on Allow Full Access\n3. Open ClipVal app once (refreshes pinned/recent cache)\n4. In any app, switch keyboards to ClipVal\n\nPrivacy: Full Access is only for the shared App Group on this device. No keylogging. No upload. Sensitive items are hidden.'**
+  /// **'1. Settings → General → Keyboard → Keyboards → Add New Keyboard → ClipVal\n2. Tap ClipVal → Allow Full Access ON\n3. Open ClipVal app once (syncs vault to keyboard)\n4. In any app, long-press globe → ClipVal\n\nPrivacy: Full Access only reads your on-device vault snapshot. No keylogging. No network. Sensitive items stay out of the keyboard.'**
   String get keyboardHowBody;
 
   /// No description provided for @keyboardOpenSettings.
