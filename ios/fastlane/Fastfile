@@ -322,9 +322,9 @@ def persist_ci_signing_env!
   end
 end
 
-# Register App ID on Developer Portal via ASC API (produce has no api_key on CI).
+# Register App ID + App Groups (needed for keyboard shared suite).
 def ensure_devcenter_app_id!(identifier, name:)
-  UI.message("🪪 Ensuring Developer Portal App ID #{identifier}…")
+  UI.message("Ensuring Developer Portal App ID #{identifier}...")
   unless connect_api_for_spaceship
     UI.user_error!(
       "ASC API key required to create App ID #{identifier}. " \
@@ -334,7 +334,7 @@ def ensure_devcenter_app_id!(identifier, name:)
 
   existing = Spaceship::ConnectAPI::BundleId.all(filter: { identifier: identifier }).first
   if existing
-    UI.important("ℹ️  App ID already exists: #{identifier} (#{existing.id})")
+    UI.important("App ID already exists: #{identifier} (#{existing.id})")
     bid = existing
   else
     bid = Spaceship::ConnectAPI::BundleId.create(
@@ -342,21 +342,75 @@ def ensure_devcenter_app_id!(identifier, name:)
       identifier: identifier,
       platform: Spaceship::ConnectAPI::BundleIdPlatform::IOS
     )
-    UI.success("✅ Created App ID: #{identifier}")
+    UI.success("Created App ID: #{identifier}")
   end
 
-  # create_capability expects positional capability_type (not keyword).
   begin
     caps = bid.get_capabilities
     has_groups = caps.any? { |c| c.is_type?(Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS) }
     unless has_groups
       bid.create_capability(Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS)
-      UI.success("✅ Enabled App Groups capability on #{identifier}")
+      UI.success("Enabled App Groups capability on #{identifier}")
     else
       UI.message("App Groups capability already on #{identifier}")
     end
   rescue => cap_ex
-    UI.important("⚠️  App Groups capability: #{cap_ex.message}")
+    UI.important("App Groups capability: #{cap_ex.message}")
+  end
+
+  # Portal can assign group.com.clipval (ASC API key cannot).
+  associate_app_group_via_portal!(identifier, group_id: "group.com.clipval")
+end
+
+# Assign App Group via Developer Portal session (Apple ID).
+def associate_app_group_via_portal!(bundle_id, group_id:)
+  UI.message("Associating #{group_id} -> #{bundle_id} (Portal)...")
+  begin
+    user = ENV["FASTLANE_USER"] || ENV["SPACESHIP_USER"] || APPLE_ID
+    pass = ENV["FASTLANE_PASSWORD"] || ENV["SPACESHIP_PASSWORD"] ||
+           ENV["FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD"]
+    if user.to_s.empty?
+      UI.important("No FASTLANE_USER — skip Portal App Group associate")
+      return false
+    end
+
+    if pass.to_s.empty?
+      Spaceship::Portal.login(user)
+    else
+      Spaceship::Portal.login(user, pass)
+    end
+    Spaceship::Portal.client.team_id = TEAM_ID if TEAM_ID.to_s != ""
+
+    app = Spaceship::Portal.app.find(bundle_id)
+    unless app
+      UI.important("Portal app not found yet: #{bundle_id}")
+      return false
+    end
+
+    begin
+      app = app.update_service(Spaceship::Portal.app_service.app_group.on)
+    rescue => svc_ex
+      UI.important("update_service app_group: #{svc_ex.message}")
+    end
+
+    groups = Spaceship::Portal.app_group.all
+    group = groups.find do |g|
+      gid = (g.respond_to?(:group_id) ? g.group_id : nil) ||
+            (g.respond_to?(:identifier) ? g.identifier : nil).to_s
+      gid == group_id || g.inspect.include?(group_id)
+    end
+    unless group
+      UI.message("Creating App Group #{group_id}...")
+      group = Spaceship::Portal.app_group.create!(name: "ClipVal", group_id: group_id)
+    end
+
+    app.associate_groups([group])
+    UI.success("Portal linked #{group_id} -> #{bundle_id}")
+    true
+  rescue => ex
+    UI.important("Portal App Group associate failed: #{ex.message}")
+    UI.important("One-time: Developer portal -> Identifiers -> #{bundle_id} -> App Groups -> #{group_id}")
+    false
   end
 end
 
@@ -988,6 +1042,15 @@ platform :ios do
         raise
       end
     end
+  end
+
+  desc "One-time: link group.com.clipval to ClipValKeyboard (Apple ID session)"
+  lane :associate_keyboard_app_group do
+    ensure_devcenter_app_id!(KEYBOARD_IDENTIFIER, name: "ClipVal Keyboard")
+    ok = associate_app_group_via_portal!(KEYBOARD_IDENTIFIER, group_id: "group.com.clipval")
+    UI.user_error!("Portal associate failed — set FASTLANE_USER/PASSWORD or Developer portal") unless ok
+    fetch_appstore_profile!(app_identifier: KEYBOARD_IDENTIFIER, force: true)
+    UI.success("Keyboard App Group ready — re-run Deploy")
   end
 
   desc "Create app in App Store Connect + Developer Portal"

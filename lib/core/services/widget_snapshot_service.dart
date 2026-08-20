@@ -66,6 +66,32 @@ class WidgetSnapshotService {
         AppConstants.widgetHideTitlesKey,
         hideTitles,
       );
+
+      // Keyboard: more slots, never mask titles (sensitive items omitted entirely).
+      final kbItems = _pickItems(
+        _items.getAll(),
+        pinnedOnly: false,
+        limit: AppConstants.keyboardItemLimit,
+      ).where((i) => !i.isSensitive).toList();
+      final kbPayload = jsonEncode({
+        'items': [
+          for (final item in kbItems)
+            {
+              'id': item.id,
+              'title': item.title,
+              'monogram': _monogram(item.title),
+              'value': item.value,
+              'pinned': item.isPinned,
+              'sensitive': false,
+            },
+        ],
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+      await HomeWidget.saveWidgetData<String>(
+        AppConstants.keyboardItemsKey,
+        kbPayload,
+      );
+
       await HomeWidget.updateWidget(
         iOSName: AppConstants.widgetIosName,
         name: AppConstants.widgetIosName,
@@ -93,12 +119,14 @@ class WidgetSnapshotService {
   static List<ClipItem> _pickItems(
     List<ClipItem> all, {
     required bool pinnedOnly,
+    int? limit,
   }) {
+    final max = limit ?? AppConstants.widgetItemLimit;
     final out = <ClipItem>[];
     final seen = <String>{};
 
     void take(ClipItem item) {
-      if (out.length >= AppConstants.widgetItemLimit) return;
+      if (out.length >= max) return;
       if (!seen.add(item.id)) return;
       out.add(item);
     }
