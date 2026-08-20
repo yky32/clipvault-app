@@ -522,7 +522,12 @@
   "keyboardSubtitle": "打字時插入置頂／最近項目",
   "keyboardFooter": "到「設定 → 一般 → 鍵盤 → 鍵盤」加入 ClipVal。Apple 要求開啟完全取用，鍵盤先可讀取本機 vault 快取（唔係互聯網）。ClipVal 唔會記錄你輸入，鍵盤亦無網絡。敏感項目唔會出現喺鍵盤。",
   "keyboardHowTitle": "設定 ClipVal 鍵盤",
-  "keyboardHowBody": "1. iPhone 設定 → 一般 → 鍵盤 → 鍵盤 → 加入新鍵盤 → ClipVal\n2. 點 ClipVal → 開啟「允許完全取用」\n3. 打開一次 ClipVal App（更新置頂／最近快取）\n4. 任何 App 切換鍵盤到 ClipVal\n\n私隱：完全取用只用於本機 App Group。無鍵記、無上傳。敏感項目會隱藏。",
+  "keyboardHowBody": "1. 設定 → 一般 → 鍵盤 → 鍵盤 → 加入新鍵盤 → ClipVal
+2. 點 ClipVal → 開啟「允許完全取用」
+3. 打開一次 ClipVal（同步 vault 去鍵盤）
+4. 任何 App 長按 🌐 → 揀 ClipVal
+
+私隱：完全取用只讀本機 vault 快取。無鍵記、無網絡。敏感項目唔會出現喺鍵盤。",
   "keyboardOpenSettings": "打開 iOS 設定",
   "categoryColorTitle": "分類顏色",
   "categoryColorSubtitle": "用於頂部 chips 同 vault icon。任何分類都可改色，包括預設分類。",
