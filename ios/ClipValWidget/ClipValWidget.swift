@@ -202,14 +202,18 @@ struct CopyValueIntent: AppIntent {
       )
     }
 
-    // Write pasteboard multiple ways — WhatsApp / some hosts ignore bare `.string` from intents.
-    let pb = UIPasteboard.general
-    pb.string = value
-    pb.setValue(value, forPasteboardType: "public.utf8-plain-text")
-    pb.setItems(
-      [["public.utf8-plain-text": value]],
-      options: [UIPasteboard.OptionsKey.localOnly: false]
-    )
+    // IMPORTANT: Do not call setItems AFTER .string with a bad payload — setItems
+    // replaces the whole pasteboard. A failed/empty setItems wiped the value →
+    // other apps show no Paste menu (user report).
+    Self.writePasteboardPlainText(value)
+
+    // Verify write (extension sandbox / type issues)
+    let wrote = UIPasteboard.general.hasStrings
+      || (UIPasteboard.general.string?.isEmpty == false)
+    if !wrote {
+      // Last resort: plain string only
+      UIPasteboard.general.string = value
+    }
 
     UINotificationFeedbackGenerator().notificationOccurred(.success)
     if let d = UserDefaults(suiteName: appGroupId) {
@@ -220,8 +224,7 @@ struct CopyValueIntent: AppIntent {
     }
     // Immediate UI: show green tick
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-    // Safety net: force clear after highlight (timeline entry 2 should already clear;
-    // some iOS versions are lazy with short .after policies).
+    // Safety net: force clear highlight after window (not the pasteboard!)
     Task {
       try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 200_000_000)
       if let d = UserDefaults(suiteName: appGroupId) {
@@ -235,7 +238,51 @@ struct CopyValueIntent: AppIntent {
         }
       }
     }
-    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
+
+    if !UIPasteboard.general.hasStrings && (UIPasteboard.general.string ?? "").isEmpty {
+      return .result(
+        dialog: IntentDialog(
+          stringLiteral: "Copy failed — open ClipVal and copy from the vault."
+        )
+      )
+    }
+
+    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)” — long-press to Paste"))
+  }
+
+  /// Reliable general-pasteboard write for widget App Intents.
+  private static func writePasteboardPlainText(_ value: String) {
+    let pb = UIPasteboard.general
+    let ns = value as NSString
+    let item: [String: Any] = [
+      "public.utf8-plain-text": ns,
+      "public.plain-text": ns,
+    ]
+
+    // Single coherent replace (setItems wipes prior contents — payload must be valid).
+    if #available(iOS 10.0, *) {
+      pb.setItems(
+        [item],
+        options: [
+          .localOnly: false,
+          // Keep long enough to switch apps and paste (was effectively empty before).
+          .expirationDate: Date().addingTimeInterval(60 * 60),
+        ]
+      )
+    } else {
+      pb.items = [item]
+    }
+
+    // Hosts that only read .string / hasStrings
+    pb.string = value
+
+    // iOS 14+ object path (after items so we don't get wiped by a later setItems)
+    if #available(iOS 14.0, *) {
+      if !pb.hasStrings {
+        pb.setObjects([value])
+        pb.string = value
+      }
+    }
   }
 
   /// Resolve plaintext: per-id key → shared file → JSON blob.
