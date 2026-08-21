@@ -9,7 +9,7 @@ private let appGroupId = "group.com.clipval"
 private let itemsKey = "widget_items_json"
 private let copiedIdKey = "widget_copied_id"
 private let copiedAtKey = "widget_copied_at"
-private let copiedHighlightSeconds: TimeInterval = 2.6
+private let copiedHighlightSeconds: TimeInterval = 2.0
 
 private let brand = Color(red: 0.76, green: 0.36, blue: 0.28)
 private let okGreen = Color(red: 0.15, green: 0.55, blue: 0.35)
@@ -78,15 +78,43 @@ struct ClipValProvider: TimelineProvider {
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<ClipValEntry>) -> Void) {
     let now = Date()
-    let e = entry(at: now)
-    var policy: TimelineReloadPolicy = .after(
-      Calendar.current.date(byAdding: .minute, value: 30, to: now) ?? now
-    )
-    if let ts = UserDefaults(suiteName: appGroupId)?.double(forKey: copiedAtKey), ts > 0 {
-      let exp = Date(timeIntervalSince1970: ts).addingTimeInterval(copiedHighlightSeconds)
-      if exp > now { policy = .after(exp) }
+    let loaded = loadPayload()
+    let activeCopy = loadCopied(at: now)
+
+    // Entry 1: current UI (green tick if copy is fresh)
+    var entries: [ClipValEntry] = [
+      ClipValEntry(
+        date: now,
+        items: loaded.items,
+        justCopiedId: activeCopy,
+        hideTitles: loaded.hideTitles,
+        pinnedOnly: loaded.pinnedOnly
+      ),
+    ]
+
+    // Entry 2: clear green tick after highlight window.
+    // WidgetKit does not run timers — without a second entry the checkmark
+    // sticks until the next 30‑min reload → feels laggy / broken.
+    if activeCopy != nil,
+       let exp = copyExpiryDate(),
+       exp > now
+    {
+      entries.append(
+        ClipValEntry(
+          date: exp,
+          items: loaded.items,
+          justCopiedId: nil,
+          hideTitles: loaded.hideTitles,
+          pinnedOnly: loaded.pinnedOnly
+        )
+      )
+      completion(Timeline(entries: entries, policy: .after(exp.addingTimeInterval(0.5))))
+      return
     }
-    completion(Timeline(entries: [e], policy: policy))
+
+    let later =
+      Calendar.current.date(byAdding: .minute, value: 30, to: now) ?? now.addingTimeInterval(1800)
+    completion(Timeline(entries: entries, policy: .after(later)))
   }
 
   private func entry(at date: Date) -> ClipValEntry {
@@ -103,7 +131,12 @@ struct ClipValProvider: TimelineProvider {
   private func loadPayload() -> (items: [WidgetItem], hideTitles: Bool, pinnedOnly: Bool) {
     let defaults = UserDefaults(suiteName: appGroupId)
     defaults?.synchronize()
-    guard let raw = defaults?.string(forKey: itemsKey),
+    guard let raw = defaults?.string(forKey: itemsKey) ?? {
+      if let data = defaults?.data(forKey: itemsKey) {
+        return String(data: data, encoding: .utf8)
+      }
+      return nil
+    }(),
           let data = raw.data(using: .utf8),
           let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
     else { return ([], false, false) }
@@ -114,13 +147,28 @@ struct ClipValProvider: TimelineProvider {
     )
   }
 
+  private func copyExpiryDate() -> Date? {
+    guard let d = UserDefaults(suiteName: appGroupId) else { return nil }
+    let ts = d.double(forKey: copiedAtKey)
+    guard ts > 0 else { return nil }
+    return Date(timeIntervalSince1970: ts).addingTimeInterval(copiedHighlightSeconds)
+  }
+
   private func loadCopied(at date: Date) -> String? {
     guard let d = UserDefaults(suiteName: appGroupId),
           let id = d.string(forKey: copiedIdKey), !id.isEmpty else { return nil }
     let ts = d.double(forKey: copiedAtKey)
     guard ts > 0 else { return nil }
     let age = date.timeIntervalSince1970 - ts
-    return (age >= 0 && age <= copiedHighlightSeconds) ? id : nil
+    if age > copiedHighlightSeconds {
+      // Stale highlight — drop so we never show forever-green after wake.
+      d.removeObject(forKey: copiedIdKey)
+      d.removeObject(forKey: copiedAtKey)
+      d.synchronize()
+      return nil
+    }
+    if age < 0 { return nil }
+    return id
   }
 }
 
@@ -167,10 +215,26 @@ struct CopyValueIntent: AppIntent {
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(id, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
-      d.set(value, forKey: "last_widget_copy_value") // debug / deep-link fallback
+      d.set(value, forKey: "last_widget_copy_value")
       d.synchronize()
     }
+    // Immediate UI: show green tick
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+    // Safety net: force clear after highlight (timeline entry 2 should already clear;
+    // some iOS versions are lazy with short .after policies).
+    Task {
+      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 200_000_000)
+      if let d = UserDefaults(suiteName: appGroupId) {
+        let ts = d.double(forKey: copiedAtKey)
+        let age = Date().timeIntervalSince1970 - ts
+        if age >= copiedHighlightSeconds - 0.05 {
+          d.removeObject(forKey: copiedIdKey)
+          d.removeObject(forKey: copiedAtKey)
+          d.synchronize()
+          WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+        }
+      }
+    }
     return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
   }
 
