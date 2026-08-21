@@ -9,7 +9,7 @@ private let appGroupId = "group.com.clipval"
 private let itemsKey = "widget_items_json"
 private let copiedIdKey = "widget_copied_id"
 private let copiedAtKey = "widget_copied_at"
-private let copiedHighlightSeconds: TimeInterval = 2.0
+private let copiedHighlightSeconds: TimeInterval = 3.5
 
 private let brand = Color(red: 0.76, green: 0.36, blue: 0.28)
 private let okGreen = Color(red: 0.15, green: 0.55, blue: 0.35)
@@ -203,59 +203,68 @@ struct CopyVaultItemIntent: AppIntent {
   }
 
   @MainActor
-  func perform() async throws -> some IntentResult {
+  func perform() async throws -> some IntentResult & ProvidesDialog {
     let id = itemID.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !id.isEmpty else {
       UINotificationFeedbackGenerator().notificationOccurred(.error)
-      return .result()
+      return .result(dialog: IntentDialog(stringLiteral: "Copy failed"))
     }
 
     guard let text = Self.loadValue(for: id), !text.isEmpty else {
       UINotificationFeedbackGenerator().notificationOccurred(.error)
-      return .result()
+      return .result(dialog: IntentDialog(stringLiteral: "Open ClipVal once to refresh widget"))
     }
+
+    // Instant feedback BEFORE pasteboard (timeline reload is slow otherwise)
+    if let d = UserDefaults(suiteName: appGroupId) {
+      d.set(id, forKey: copiedIdKey)
+      d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
+      d.set(text, forKey: pendingPasteValueKey)
+      d.set(Date().timeIntervalSince1970, forKey: pendingPasteAtKey)
+      d.set(text, forKey: "last_widget_copy_value")
+      d.set(id, forKey: "last_widget_copy_id")
+      d.synchronize()
+    }
+    WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+
+    // Strong haptic so user feels the tap landed
+    let impact = UIImpactFeedbackGenerator(style: .medium)
+    impact.prepare()
+    impact.impactOccurred(intensity: 1.0)
+    UINotificationFeedbackGenerator().notificationOccurred(.success)
 
     // System pasteboard
     let pb = UIPasteboard.general
     pb.strings = [text]
     pb.string = text
-
     let ok = (pb.string == text)
 
-    if let d = UserDefaults(suiteName: appGroupId) {
-      d.set(text, forKey: pendingPasteValueKey)
-      d.set(Date().timeIntervalSince1970, forKey: pendingPasteAtKey)
-      d.set(text, forKey: "last_widget_copy_value")
-      d.set(id, forKey: "last_widget_copy_id")
-      if ok {
-        d.set(id, forKey: copiedIdKey)
-        d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
-      } else {
+    if !ok {
+      if let d = UserDefaults(suiteName: appGroupId) {
         d.removeObject(forKey: copiedIdKey)
         d.removeObject(forKey: copiedAtKey)
+        d.synchronize()
       }
-      d.synchronize()
+      WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+      UINotificationFeedbackGenerator().notificationOccurred(.error)
+      return .result(dialog: IntentDialog(stringLiteral: "Copy failed — try again"))
     }
 
-    UINotificationFeedbackGenerator().notificationOccurred(ok ? .success : .error)
-    WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-
-    if ok {
-      Task {
-        try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
-        if let d = UserDefaults(suiteName: appGroupId) {
-          // Only clear highlight if it still refers to this id
-          if d.string(forKey: copiedIdKey) == id {
-            d.removeObject(forKey: copiedIdKey)
-            d.removeObject(forKey: copiedAtKey)
-            d.synchronize()
-            WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-          }
+    // Clear green state after highlight window
+    Task {
+      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
+      if let d = UserDefaults(suiteName: appGroupId) {
+        if d.string(forKey: copiedIdKey) == id {
+          d.removeObject(forKey: copiedIdKey)
+          d.removeObject(forKey: copiedAtKey)
+          d.synchronize()
+          WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
         }
       }
     }
 
-    return .result()
+    // System snippet at top of screen — unmistakable "I got your tap"
+    return .result(dialog: IntentDialog(stringLiteral: "Copied — ready to paste"))
   }
 
   /// Load value for exactly this id from App Group (map → wv_ → JSON).
@@ -373,10 +382,11 @@ struct ClipValWidgetEntryView: View {
       Spacer(minLength: 6)
       Text(entry.justCopiedId == nil
            ? (entry.pinnedOnly ? "Favorites" : "Recent · tap copy")
-           : "Copied ✓")
-        .font(.system(size: 11, weight: .semibold, design: .rounded))
+           : "✓ Copied — paste anywhere")
+        .font(.system(size: 11, weight: entry.justCopiedId == nil ? .medium : .bold, design: .rounded))
         .foregroundStyle(entry.justCopiedId == nil ? .secondary : okGreen)
         .lineLimit(1)
+        .minimumScaleFactor(0.7)
     }
   }
 
@@ -497,7 +507,7 @@ struct ClipValWidgetEntryView: View {
           .fill(hot ? okGreen : brand.opacity(colorScheme == .dark ? 0.30 : 0.13))
         if hot {
           Image(systemName: "checkmark")
-            .font(.system(size: metrics.checkSize, weight: .bold))
+            .font(.system(size: metrics.checkSize * 1.15, weight: .heavy))
             .foregroundStyle(.white)
         } else {
           Text(item.displayMonogram)
@@ -506,25 +516,43 @@ struct ClipValWidgetEntryView: View {
         }
       }
       .frame(width: metrics.monoFrame, height: metrics.monoFrame)
+      .scaleEffect(hot ? 1.08 : 1.0)
 
-      Text(shownTitle)
-        .font(.system(size: metrics.titleSize, weight: .semibold, design: .rounded))
-        .foregroundStyle(hot ? okGreen : .primary)
-        .lineLimit(metrics.titleLines)
-        .minimumScaleFactor(0.6)
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
+      if hot {
+        Text("Copied")
+          .font(.system(size: max(metrics.titleSize, 11), weight: .bold, design: .rounded))
+          .foregroundStyle(okGreen)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          .frame(maxWidth: .infinity)
+        if !hideTitle {
+          Text(shownTitle)
+            .font(.system(size: max(metrics.titleSize - 1, 9), weight: .medium, design: .rounded))
+            .foregroundStyle(okGreen.opacity(0.85))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(maxWidth: .infinity)
+        }
+      } else {
+        Text(shownTitle)
+          .font(.system(size: metrics.titleSize, weight: .semibold, design: .rounded))
+          .foregroundStyle(.primary)
+          .lineLimit(metrics.titleLines)
+          .minimumScaleFactor(0.6)
+          .multilineTextAlignment(.center)
+          .frame(maxWidth: .infinity)
+      }
     }
     .padding(.vertical, metrics.padV)
     .padding(.horizontal, metrics.padH)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(
       RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
-        .fill(hot ? okGreen.opacity(0.12) : cellFill)
+        .fill(hot ? okGreen.opacity(colorScheme == .dark ? 0.28 : 0.18) : cellFill)
     )
     .overlay(
       RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
-        .strokeBorder(hot ? okGreen.opacity(0.35) : Color.primary.opacity(0.05), lineWidth: 1)
+        .strokeBorder(hot ? okGreen : Color.primary.opacity(0.05), lineWidth: hot ? 2.5 : 1)
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
