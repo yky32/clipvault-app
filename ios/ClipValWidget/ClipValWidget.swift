@@ -172,56 +172,62 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (no app open on iOS 17+)
-// Pass plaintext `value` from the widget timeline cell. App Group is backup.
-// openAppWhenRun = false — must stay on Home Screen.
+// MARK: - Copy (iOS 17+, no app launch)
+// CRITICAL: Intent takes ONLY itemID. Value is always loaded from App Group by that id.
+// Passing `value` as an AppIntent parameter caused wrong-item copies (param mix-up).
 
 private let pendingPasteValueKey = "widget_pending_paste_value"
 private let pendingPasteAtKey = "widget_pending_paste_at"
+private let valuesMapKey = "widget_values_map"
 
 @available(iOS 17.0, *)
-struct CopyValueIntent: AppIntent {
-  static var title: LocalizedStringResource = "Copy"
-  /// Do not launch ClipVal.
+struct CopyVaultItemIntent: AppIntent {
+  static var title: LocalizedStringResource = "Copy ClipVal Item"
   static var openAppWhenRun: Bool = false
   static var isDiscoverable: Bool = false
 
-  @Parameter(title: "ID") var id: String
-  @Parameter(title: "Value") var value: String
-  @Parameter(title: "Title") var itemTitle: String
+  /// Stable vault item id — the only input.
+  @Parameter(title: "Item ID")
+  var itemID: String
 
   init() {
-    id = ""
-    value = ""
-    itemTitle = ""
+    itemID = ""
   }
 
-  init(id: String, value: String, title: String) {
-    self.id = id
-    self.value = value
-    self.itemTitle = title
+  init(itemID: String) {
+    self.itemID = itemID
+  }
+
+  static var parameterSummary: some ParameterSummary {
+    Summary("Copy \(\.$itemID)")
   }
 
   @MainActor
   func perform() async throws -> some IntentResult {
-    var text = value
-    if text.isEmpty {
-      text = Self.resolveValue(id: id).value
+    let id = itemID.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !id.isEmpty else {
+      UINotificationFeedbackGenerator().notificationOccurred(.error)
+      return .result()
     }
-    guard !text.isEmpty else { return .result() }
 
-    Self.writePasteboardPlainText(text)
-    if !Self.pasteboardContains(text) {
-      UIPasteboard.general.string = text
+    guard let text = Self.loadValue(for: id), !text.isEmpty else {
+      UINotificationFeedbackGenerator().notificationOccurred(.error)
+      return .result()
     }
-    let verified = Self.pasteboardContains(text)
+
+    // System pasteboard
+    let pb = UIPasteboard.general
+    pb.strings = [text]
+    pb.string = text
+
+    let ok = (pb.string == text)
 
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(text, forKey: pendingPasteValueKey)
       d.set(Date().timeIntervalSince1970, forKey: pendingPasteAtKey)
       d.set(text, forKey: "last_widget_copy_value")
-      // Green tick only when pasteboard really has the value
-      if verified {
+      d.set(id, forKey: "last_widget_copy_id")
+      if ok {
         d.set(id, forKey: copiedIdKey)
         d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
       } else {
@@ -231,17 +237,15 @@ struct CopyValueIntent: AppIntent {
       d.synchronize()
     }
 
-    UINotificationFeedbackGenerator().notificationOccurred(verified ? .success : .error)
+    UINotificationFeedbackGenerator().notificationOccurred(ok ? .success : .error)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
 
-    if verified {
+    if ok {
       Task {
-        try? await Task.sleep(
-          nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 150_000_000
-        )
+        try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
         if let d = UserDefaults(suiteName: appGroupId) {
-          let ts = d.double(forKey: copiedAtKey)
-          if Date().timeIntervalSince1970 - ts >= copiedHighlightSeconds - 0.05 {
+          // Only clear highlight if it still refers to this id
+          if d.string(forKey: copiedIdKey) == id {
             d.removeObject(forKey: copiedIdKey)
             d.removeObject(forKey: copiedAtKey)
             d.synchronize()
@@ -254,33 +258,48 @@ struct CopyValueIntent: AppIntent {
     return .result()
   }
 
-  private static func pasteboardContains(_ value: String) -> Bool {
-    if UIPasteboard.general.string == value { return true }
-    if let strings = UIPasteboard.general.strings, strings.contains(value) {
-      return true
-    }
-    return false
-  }
-
-  private static func writePasteboardPlainText(_ value: String) {
-    let pb = UIPasteboard.general
-    pb.strings = [value]
-    pb.string = value
-  }
-
-  /// Resolve plaintext: per-id key → shared file → JSON blob.
-  private static func resolveValue(id: String) -> (value: String, title: String) {
-    guard !id.isEmpty else { return ("", "ClipVal") }
+  /// Load value for exactly this id from App Group (map → wv_ → JSON).
+  private static func loadValue(for id: String) -> String? {
     let defaults = UserDefaults(suiteName: appGroupId)
     defaults?.synchronize()
 
-    // 1) Per-id key (written by native writeSnapshot)
-    if let v = defaults?.string(forKey: "wv_\(id)"), !v.isEmpty {
-      let title = Self.lookupItem(id: id)?.displayTitle ?? "ClipVal"
-      return (v, title)
+    // 1) Atomic JSON map id → value
+    if let mapData = defaults?.data(forKey: valuesMapKey),
+       let obj = try? JSONSerialization.jsonObject(with: mapData) as? [String: Any],
+       let v = obj[id] as? String,
+       !v.isEmpty
+    {
+      return v
+    }
+    // map might be stored as [String:String] encoded
+    if let mapData = defaults?.data(forKey: valuesMapKey),
+       let map = try? JSONDecoder().decode([String: String].self, from: mapData),
+       let v = map[id], !v.isEmpty
+    {
+      return v
     }
 
-    // 2) Shared container file
+    // 2) Per-id key
+    if let v = defaults?.string(forKey: "wv_\(id)"), !v.isEmpty {
+      return v
+    }
+
+    // 3) Full snapshot JSON — match id exactly
+    if let raw = defaults?.string(forKey: itemsKey) ?? {
+      if let data = defaults?.data(forKey: itemsKey) {
+        return String(data: data, encoding: .utf8)
+      }
+      return nil
+    }(),
+       let data = raw.data(using: .utf8),
+       let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data),
+       let item = payload.items.first(where: { $0.id == id }),
+       !item.value.isEmpty
+    {
+      return item.value
+    }
+
+    // 4) Shared container file
     if let container = FileManager.default.containerURL(
       forSecurityApplicationGroupIdentifier: appGroupId
     ) {
@@ -290,37 +309,17 @@ struct CopyValueIntent: AppIntent {
          let item = payload.items.first(where: { $0.id == id }),
          !item.value.isEmpty
       {
-        return (item.value, item.displayTitle)
+        return item.value
       }
     }
 
-    // 3) JSON in UserDefaults
-    if let item = lookupItem(id: id), !item.value.isEmpty {
-      return (item.value, item.displayTitle)
-    }
-
-    return ("", "ClipVal")
-  }
-
-  /// Load item from the App Group JSON snapshot written by the Flutter app.
-  private static func lookupItem(id: String) -> WidgetItem? {
-    guard !id.isEmpty,
-          let defaults = UserDefaults(suiteName: appGroupId)
-    else { return nil }
-    defaults.synchronize()
-    guard let raw = defaults.string(forKey: itemsKey) ?? {
-      // Some home_widget versions store as Data
-      if let data = defaults.data(forKey: itemsKey) {
-        return String(data: data, encoding: .utf8)
-      }
-      return nil
-    }(),
-          let data = raw.data(using: .utf8),
-          let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data)
-    else { return nil }
-    return payload.items.first { $0.id == id }
+    return nil
   }
 }
+
+// Keep old name as typealias so any leftover refs compile (none expected)
+@available(iOS 17.0, *)
+typealias CopyValueIntent = CopyVaultItemIntent
 
 // MARK: - UI: responsive grid — fills free space, scales by item count
 
@@ -529,21 +528,15 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // In-widget copy — app must NOT open (iOS 17+ AppIntent).
-    // Pass plaintext from timeline so pasteboard is never empty from bad App Group reads.
+    // In-widget copy — ONLY pass item id (value loaded from App Group by id).
+    // Never pass value in the intent — that caused wrong-item copies.
     if #available(iOS 17.0, *) {
-      return Button(
-        intent: CopyValueIntent(
-          id: item.id,
-          value: item.value,
-          title: item.displayTitle
-        )
-      ) {
+      return Button(intent: CopyVaultItemIntent(itemID: item.id)) {
         label
       }
       .buttonStyle(.plain)
     }
-    // iOS 15–16 only: OS cannot run App Intent from widget → deep link.
+    // iOS 15–16 only
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }

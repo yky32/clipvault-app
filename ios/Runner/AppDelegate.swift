@@ -172,16 +172,23 @@ import WidgetKit
     let defaults = UserDefaults(suiteName: Self.appGroupId)
     if let json {
       defaults?.set(json, forKey: "widget_items_json")
-      // Per-item keys — Intent reads these first (most reliable).
+      // Per-item values — Intent looks up by id only (never trust intent value params).
       if let data = json.data(using: .utf8),
          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
          let items = obj["items"] as? [[String: Any]]
       {
+        var valuesMap: [String: String] = [:]
         for item in items {
-          guard let id = item["id"] as? String else { continue }
+          guard let id = item["id"] as? String, !id.isEmpty else { continue }
           let value = (item["value"] as? String) ?? ""
+          valuesMap[id] = value
           defaults?.set(value, forKey: "wv_\(id)")
         }
+        // Atomic map for correct id→value (avoids stale per-key ghosts)
+        if let mapData = try? JSONSerialization.data(withJSONObject: valuesMap) {
+          defaults?.set(mapData, forKey: "widget_values_map")
+        }
+        defaults?.set(Array(valuesMap.keys), forKey: "widget_value_ids")
         // File backup in shared container
         if let container = FileManager.default.containerURL(
           forSecurityApplicationGroupIdentifier: Self.appGroupId
@@ -197,10 +204,19 @@ import WidgetKit
          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
          let items = obj["items"] as? [[String: Any]]
       {
+        var map: [String: String] = [:]
+        if let existing = defaults?.data(forKey: "widget_values_map"),
+           let obj = try? JSONSerialization.jsonObject(with: existing) as? [String: String] {
+          map = obj
+        }
         for item in items {
-          guard let id = item["id"] as? String else { continue }
+          guard let id = item["id"] as? String, !id.isEmpty else { continue }
           let value = (item["value"] as? String) ?? ""
+          map[id] = value
           defaults?.set(value, forKey: "wv_\(id)")
+        }
+        if let mapData = try? JSONSerialization.data(withJSONObject: map) {
+          defaults?.set(mapData, forKey: "widget_values_map")
         }
       }
     }
