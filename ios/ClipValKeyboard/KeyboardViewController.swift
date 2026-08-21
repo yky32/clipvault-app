@@ -151,6 +151,8 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
 
     // Header 28pt
     headerBar.translatesAutoresizingMaskIntoConstraints = false
+    headerBar.isUserInteractionEnabled = true
+    headerBar.clipsToBounds = false
     view.addSubview(headerBar)
 
     let mark = UIImageView(image: UIImage(named: "ClipValMark"))
@@ -174,8 +176,12 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
 
     // Header actions: App · Search (globe lives on system bar below)
     appBtn.setImage(UIImage(systemName: "arrow.up.forward.app"), for: .normal)
-    appBtn.tintColor = .secondaryLabel
+    appBtn.tintColor = brand
+    appBtn.backgroundColor = brandSoft
+    appBtn.layer.cornerRadius = 6
     appBtn.accessibilityLabel = "Open ClipVal"
+    appBtn.accessibilityHint = "Opens the ClipVal app"
+    appBtn.isUserInteractionEnabled = true
     appBtn.addTarget(self, action: #selector(tapOpenApp), for: .touchUpInside)
     appBtn.translatesAutoresizingMaskIntoConstraints = false
 
@@ -189,18 +195,31 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     searchBtn.addTarget(self, action: #selector(toggleSearch), for: .touchUpInside)
     searchBtn.translatesAutoresizingMaskIntoConstraints = false
 
+    // Backspace lives in top-right action cluster (not bottom — frees grid)
+    backspaceBtn.setImage(UIImage(systemName: "delete.left.fill"), for: .normal)
+    backspaceBtn.tintColor = .label
+    backspaceBtn.backgroundColor = .tertiarySystemFill
+    backspaceBtn.layer.cornerRadius = 6
+    backspaceBtn.accessibilityLabel = "Delete"
+    backspaceBtn.addTarget(self, action: #selector(tapDelete), for: .touchUpInside)
+    let longDel = UILongPressGestureRecognizer(target: self, action: #selector(backspaceLongPress(_:)))
+    longDel.minimumPressDuration = 0.35
+    backspaceBtn.addGestureRecognizer(longDel)
+    backspaceBtn.translatesAutoresizingMaskIntoConstraints = false
+
     headerBar.addSubview(mark)
     headerBar.addSubview(brandLabel)
     headerBar.addSubview(countLabel)
     headerBar.addSubview(appBtn)
     headerBar.addSubview(layoutBtn)
     headerBar.addSubview(searchBtn)
+    headerBar.addSubview(backspaceBtn)
 
     NSLayoutConstraint.activate([
       headerBar.topAnchor.constraint(equalTo: view.topAnchor),
       headerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       headerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      headerBar.heightAnchor.constraint(equalToConstant: 28),
+      headerBar.heightAnchor.constraint(equalToConstant: 34),
 
       mark.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 10),
       mark.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
@@ -213,22 +232,34 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       countLabel.leadingAnchor.constraint(equalTo: brandLabel.trailingAnchor, constant: 6),
       countLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
 
-      searchBtn.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -4),
-      searchBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-      searchBtn.widthAnchor.constraint(equalToConstant: 28),
-      searchBtn.heightAnchor.constraint(equalToConstant: 26),
+      // Top-right actions (L→R): App · Layout · Search · ⌫
+      // Rightmost = backspace (user request). Larger hit targets so App is tappable.
+      backspaceBtn.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -6),
+      backspaceBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      backspaceBtn.widthAnchor.constraint(equalToConstant: 36),
+      backspaceBtn.heightAnchor.constraint(equalToConstant: 28),
 
-      // Red-circle slot: layout toggle (between App and Search)
+      searchBtn.trailingAnchor.constraint(equalTo: backspaceBtn.leadingAnchor, constant: -4),
+      searchBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      searchBtn.widthAnchor.constraint(equalToConstant: 32),
+      searchBtn.heightAnchor.constraint(equalToConstant: 28),
+
       layoutBtn.trailingAnchor.constraint(equalTo: searchBtn.leadingAnchor, constant: -2),
       layoutBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-      layoutBtn.widthAnchor.constraint(equalToConstant: 28),
-      layoutBtn.heightAnchor.constraint(equalToConstant: 26),
+      layoutBtn.widthAnchor.constraint(equalToConstant: 32),
+      layoutBtn.heightAnchor.constraint(equalToConstant: 28),
 
       appBtn.trailingAnchor.constraint(equalTo: layoutBtn.leadingAnchor, constant: -2),
       appBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-      appBtn.widthAnchor.constraint(equalToConstant: 28),
-      appBtn.heightAnchor.constraint(equalToConstant: 26),
+      appBtn.widthAnchor.constraint(equalToConstant: 32),
+      appBtn.heightAnchor.constraint(equalToConstant: 28),
     ])
+
+    // Z-order: App must receive taps (not covered by siblings)
+    headerBar.bringSubviewToFront(appBtn)
+    headerBar.bringSubviewToFront(layoutBtn)
+    headerBar.bringSubviewToFront(searchBtn)
+    headerBar.bringSubviewToFront(backspaceBtn)
 
     // Search bar (collapsed height 0)
     searchBar.translatesAutoresizingMaskIntoConstraints = false
@@ -261,27 +292,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       searchField.heightAnchor.constraint(equalToConstant: 28),
     ])
 
-    // Bottom-right backspace only (system globe below; App in header)
-    backspaceBtn.setImage(UIImage(systemName: "delete.left.fill"), for: .normal)
-    backspaceBtn.tintColor = .label
-    backspaceBtn.backgroundColor = .tertiarySystemFill
-    backspaceBtn.layer.cornerRadius = 8
-    backspaceBtn.accessibilityLabel = "Delete"
-    backspaceBtn.addTarget(self, action: #selector(tapDelete), for: .touchUpInside)
-    // Long-press = repeat delete
-    let longDel = UILongPressGestureRecognizer(target: self, action: #selector(backspaceLongPress(_:)))
-    longDel.minimumPressDuration = 0.35
-    backspaceBtn.addGestureRecognizer(longDel)
-    backspaceBtn.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(backspaceBtn)
-    NSLayoutConstraint.activate([
-      backspaceBtn.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-      backspaceBtn.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
-      backspaceBtn.widthAnchor.constraint(equalToConstant: 72),
-      backspaceBtn.heightAnchor.constraint(equalToConstant: 34),
-    ])
-
-    // GRID fills everything between search and toolbar
+    // GRID fills to bottom (⌫ moved to header)
     let layout = UICollectionViewFlowLayout()
     layout.scrollDirection = .vertical
     layout.minimumInteritemSpacing = 5
@@ -295,8 +306,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     collection.alwaysBounceVertical = true
     collection.showsVerticalScrollIndicator = false
     collection.contentInsetAdjustmentBehavior = .never
-    // Keep last row clear of bottom-right backspace
-    collection.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 2, right: 0)
+    collection.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 4, right: 0)
     collection.register(TileCell.self, forCellWithReuseIdentifier: TileCell.reuseId)
     collection.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(collection)
@@ -342,12 +352,12 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       collection.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       collection.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       // Leave room for bottom-right backspace only
-      collection.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -42),
+      collection.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -6),
 
       setupCard.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 6),
       setupCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
       setupCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-      setupCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -42),
+      setupCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -6),
 
       setupIcon.topAnchor.constraint(equalTo: setupCard.topAnchor, constant: 12),
       setupIcon.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
@@ -385,7 +395,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     view.addSubview(toast)
     NSLayoutConstraint.activate([
       toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      toast.bottomAnchor.constraint(equalTo: backspaceBtn.topAnchor, constant: -8),
+      toast.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -12),
       toast.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40),
       toast.heightAnchor.constraint(greaterThanOrEqualToConstant: 26),
     ])
@@ -607,8 +617,9 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   }
 
   @objc private func tapOpenApp() {
-    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-    // Try open even without Full Access; iOS may still allow host open.
+    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    // Immediate feedback so tap never feels dead
+    flash("Opening ClipVal…")
     openHostApp()
   }
 
@@ -619,7 +630,6 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       URL(string: "clipval://vault")!,
       URL(string: "clipval://")!,
     ]
-    flash("Opening ClipVal…")
     openURL(urls[0]) { [weak self] ok in
       guard let self else { return }
       if ok { return }
