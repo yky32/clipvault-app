@@ -6,7 +6,6 @@ private let appGroupId = "group.com.clipval"
 private let keyboardItemsKey = "keyboard_items_json"
 private let widgetItemsKey = "widget_items_json"
 
-/// ClipVal brand coral
 private let brand = UIColor(red: 0.76, green: 0.36, blue: 0.28, alpha: 1)
 private let brandSoft = UIColor(red: 0.76, green: 0.36, blue: 0.28, alpha: 0.18)
 
@@ -50,14 +49,19 @@ private enum KeyboardMode {
 
 // MARK: - Controller
 
-/// ClipVal keyboard — **grid tiles** (one-tap insert), privacy-first.
-final class KeyboardViewController: UIInputViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+/// Dense grid keyboard — chrome minimal, tiles fill the rest.
+final class KeyboardViewController: UIInputViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate {
   private var allItems: [KeyboardItem] = []
   private var mode: KeyboardMode = .needsFullAccess
+  private var filter = ""
+  private var searchExpanded = false
 
-  private let rootStack = UIStackView()
+  private let headerBar = UIView()
   private let brandLabel = UILabel()
   private let countLabel = UILabel()
+  private let searchBtn = UIButton(type: .system)
+  private let searchField = UITextField()
+  private let searchBar = UIView()
   private var collection: UICollectionView!
   private let setupCard = UIView()
   private let setupIcon = UIImageView()
@@ -65,16 +69,14 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   private let setupBody = UILabel()
   private let primaryButton = UIButton(type: .system)
   private let secondaryButton = UIButton(type: .system)
+  private let toolbar = UIStackView()
   private let toast = UILabel()
-  private var gridHeight: NSLayoutConstraint!
-  private var setupHeight: NSLayoutConstraint!
-  private var searchExpanded = false
-  private let searchField = UITextField()
-  private var filter = ""
+
+  private var searchBarHeight: NSLayoutConstraint!
+  private var keyboardHeight: NSLayoutConstraint!
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Match system keyboard chrome (WhatsApp / dark or light)
     view.backgroundColor = .secondarySystemBackground
     buildUI()
     applyMode()
@@ -86,112 +88,134 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     reloadItems()
   }
 
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    collection?.collectionViewLayout.invalidateLayout()
+  }
+
   override func textWillChange(_ textInput: UITextInput?) {}
   override func textDidChange(_ textInput: UITextInput?) {}
 
-  // MARK: - Build
+  // MARK: - Build (header + fill-middle grid + slim toolbar)
 
   private func buildUI() {
-    rootStack.axis = .vertical
-    rootStack.spacing = 0
-    rootStack.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(rootStack)
-    NSLayoutConstraint.activate([
-      rootStack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      rootStack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      rootStack.topAnchor.constraint(equalTo: view.topAnchor),
-      rootStack.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      view.heightAnchor.constraint(equalToConstant: 260),
-    ])
+    // Overall keyboard taller so grid can show ~3 rows
+    keyboardHeight = view.heightAnchor.constraint(equalToConstant: 292)
+    keyboardHeight.isActive = true
 
-    // Compact header: brand · count · search toggle · no fat search bar
-    let header = UIStackView()
-    header.axis = .horizontal
-    header.alignment = .center
-    header.spacing = 8
-    header.isLayoutMarginsRelativeArrangement = true
-    header.layoutMargins = UIEdgeInsets(top: 8, left: 12, bottom: 4, right: 10)
-    header.heightAnchor.constraint(equalToConstant: 34).isActive = true
+    // Header 28pt
+    headerBar.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(headerBar)
 
     let mark = UIView()
     mark.backgroundColor = brand
-    mark.layer.cornerRadius = 5
+    mark.layer.cornerRadius = 4
     mark.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      mark.widthAnchor.constraint(equalToConstant: 16),
-      mark.heightAnchor.constraint(equalToConstant: 16),
-    ])
     let markIcon = UIImageView(image: UIImage(systemName: "doc.on.clipboard.fill"))
     markIcon.tintColor = .white
     markIcon.contentMode = .scaleAspectFit
     markIcon.translatesAutoresizingMaskIntoConstraints = false
     mark.addSubview(markIcon)
-    NSLayoutConstraint.activate([
-      markIcon.centerXAnchor.constraint(equalTo: mark.centerXAnchor),
-      markIcon.centerYAnchor.constraint(equalTo: mark.centerYAnchor),
-      markIcon.widthAnchor.constraint(equalToConstant: 9),
-      markIcon.heightAnchor.constraint(equalToConstant: 9),
-    ])
 
     brandLabel.text = "ClipVal"
-    brandLabel.font = .systemFont(ofSize: 14, weight: .bold)
+    brandLabel.font = .systemFont(ofSize: 13, weight: .bold)
     brandLabel.textColor = .label
+    brandLabel.translatesAutoresizingMaskIntoConstraints = false
 
     countLabel.font = .systemFont(ofSize: 11, weight: .semibold)
-    countLabel.textColor = .secondaryLabel
+    countLabel.textColor = .tertiaryLabel
+    countLabel.translatesAutoresizingMaskIntoConstraints = false
 
-    let searchBtn = UIButton(type: .system)
     searchBtn.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
     searchBtn.tintColor = .secondaryLabel
     searchBtn.addTarget(self, action: #selector(toggleSearch), for: .touchUpInside)
-    searchBtn.accessibilityLabel = "Search"
+    searchBtn.translatesAutoresizingMaskIntoConstraints = false
+
+    headerBar.addSubview(mark)
+    headerBar.addSubview(brandLabel)
+    headerBar.addSubview(countLabel)
+    headerBar.addSubview(searchBtn)
+
     NSLayoutConstraint.activate([
-      searchBtn.widthAnchor.constraint(equalToConstant: 32),
-      searchBtn.heightAnchor.constraint(equalToConstant: 28),
+      headerBar.topAnchor.constraint(equalTo: view.topAnchor),
+      headerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      headerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      headerBar.heightAnchor.constraint(equalToConstant: 28),
+
+      mark.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 10),
+      mark.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      mark.widthAnchor.constraint(equalToConstant: 14),
+      mark.heightAnchor.constraint(equalToConstant: 14),
+      markIcon.centerXAnchor.constraint(equalTo: mark.centerXAnchor),
+      markIcon.centerYAnchor.constraint(equalTo: mark.centerYAnchor),
+      markIcon.widthAnchor.constraint(equalToConstant: 8),
+      markIcon.heightAnchor.constraint(equalToConstant: 8),
+
+      brandLabel.leadingAnchor.constraint(equalTo: mark.trailingAnchor, constant: 6),
+      brandLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+
+      countLabel.leadingAnchor.constraint(equalTo: brandLabel.trailingAnchor, constant: 6),
+      countLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+
+      searchBtn.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -6),
+      searchBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      searchBtn.widthAnchor.constraint(equalToConstant: 30),
+      searchBtn.heightAnchor.constraint(equalToConstant: 26),
     ])
 
-    header.addArrangedSubview(mark)
-    header.addArrangedSubview(brandLabel)
-    header.addArrangedSubview(countLabel)
-    header.addArrangedSubview(UIView()) // spacer
-    header.addArrangedSubview(searchBtn)
-    rootStack.addArrangedSubview(header)
+    // Search bar (collapsed height 0)
+    searchBar.translatesAutoresizingMaskIntoConstraints = false
+    searchBar.clipsToBounds = true
+    view.addSubview(searchBar)
+    searchBarHeight = searchBar.heightAnchor.constraint(equalToConstant: 0)
+    searchBarHeight.isActive = true
 
-    // Collapsible slim search (hidden by default — no fat bar)
     searchField.placeholder = "Filter…"
-    searchField.font = .systemFont(ofSize: 14, weight: .regular)
-    searchField.borderStyle = .none
+    searchField.font = .systemFont(ofSize: 13)
     searchField.backgroundColor = .tertiarySystemFill
     searchField.layer.cornerRadius = 8
-    searchField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 10, height: 1))
+    searchField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 8, height: 1))
     searchField.leftViewMode = .always
     searchField.clearButtonMode = .whileEditing
     searchField.autocapitalizationType = .none
     searchField.autocorrectionType = .no
     searchField.returnKeyType = .done
-    searchField.addTarget(self, action: #selector(searchChanged), for: .editingChanged)
     searchField.delegate = self
+    searchField.addTarget(self, action: #selector(searchChanged), for: .editingChanged)
     searchField.translatesAutoresizingMaskIntoConstraints = false
-    searchField.heightAnchor.constraint(equalToConstant: 32).isActive = true
-    let searchWrap = UIView()
-    searchWrap.isHidden = true
-    searchWrap.addSubview(searchField)
+    searchBar.addSubview(searchField)
     NSLayoutConstraint.activate([
-      searchField.leadingAnchor.constraint(equalTo: searchWrap.leadingAnchor, constant: 12),
-      searchField.trailingAnchor.constraint(equalTo: searchWrap.trailingAnchor, constant: -12),
-      searchField.topAnchor.constraint(equalTo: searchWrap.topAnchor, constant: 2),
-      searchField.bottomAnchor.constraint(equalTo: searchWrap.bottomAnchor, constant: -4),
-      searchWrap.heightAnchor.constraint(equalToConstant: 38),
+      searchBar.topAnchor.constraint(equalTo: headerBar.bottomAnchor),
+      searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      searchField.leadingAnchor.constraint(equalTo: searchBar.leadingAnchor, constant: 10),
+      searchField.trailingAnchor.constraint(equalTo: searchBar.trailingAnchor, constant: -10),
+      searchField.topAnchor.constraint(equalTo: searchBar.topAnchor, constant: 2),
+      searchField.heightAnchor.constraint(equalToConstant: 28),
     ])
-    searchWrap.tag = 9001
-    rootStack.addArrangedSubview(searchWrap)
 
-    // —— GRID ——
+    // Toolbar bottom — 32pt
+    toolbar.axis = .horizontal
+    toolbar.spacing = 6
+    toolbar.distribution = .fillEqually
+    toolbar.translatesAutoresizingMaskIntoConstraints = false
+    toolbar.addArrangedSubview(toolBtn(systemName: "delete.left", action: #selector(tapDelete)))
+    toolbar.addArrangedSubview(toolBtn(title: "App", action: #selector(tapOpenApp)))
+    toolbar.addArrangedSubview(toolBtn(systemName: "globe", action: #selector(tapNextKeyboard)))
+    view.addSubview(toolbar)
+    NSLayoutConstraint.activate([
+      toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
+      toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+      toolbar.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
+      toolbar.heightAnchor.constraint(equalToConstant: 32),
+    ])
+
+    // GRID fills everything between search and toolbar
     let layout = UICollectionViewFlowLayout()
     layout.scrollDirection = .vertical
-    layout.minimumInteritemSpacing = 8
-    layout.minimumLineSpacing = 8
-    layout.sectionInset = UIEdgeInsets(top: 4, left: 12, bottom: 4, right: 12)
+    layout.minimumInteritemSpacing = 5
+    layout.minimumLineSpacing = 5
+    layout.sectionInset = UIEdgeInsets(top: 2, left: 8, bottom: 2, right: 8)
 
     collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
     collection.backgroundColor = .clear
@@ -199,100 +223,99 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     collection.delegate = self
     collection.alwaysBounceVertical = true
     collection.showsVerticalScrollIndicator = false
+    collection.contentInsetAdjustmentBehavior = .never
     collection.register(TileCell.self, forCellWithReuseIdentifier: TileCell.reuseId)
-    gridHeight = collection.heightAnchor.constraint(equalToConstant: 156)
-    gridHeight.isActive = true
-    rootStack.addArrangedSubview(collection)
+    collection.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(collection)
 
-    // Setup card
+    // Setup overlay (same region as grid)
+    setupCard.translatesAutoresizingMaskIntoConstraints = false
     setupCard.backgroundColor = .tertiarySystemBackground
     setupCard.layer.cornerRadius = 12
-    setupHeight = setupCard.heightAnchor.constraint(equalToConstant: 168)
-    setupHeight.isActive = true
+    setupCard.isHidden = true
+    view.addSubview(setupCard)
 
-    let setupStack = UIStackView()
-    setupStack.axis = .vertical
-    setupStack.spacing = 6
-    setupStack.translatesAutoresizingMaskIntoConstraints = false
-    setupCard.addSubview(setupStack)
-    NSLayoutConstraint.activate([
-      setupStack.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 14),
-      setupStack.trailingAnchor.constraint(equalTo: setupCard.trailingAnchor, constant: -14),
-      setupStack.topAnchor.constraint(equalTo: setupCard.topAnchor, constant: 12),
-      setupStack.bottomAnchor.constraint(equalTo: setupCard.bottomAnchor, constant: -12),
-    ])
-
-    let topRow = UIStackView()
-    topRow.axis = .horizontal
-    topRow.spacing = 10
-    topRow.alignment = .top
     setupIcon.tintColor = brand
     setupIcon.contentMode = .scaleAspectFit
     setupIcon.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      setupIcon.widthAnchor.constraint(equalToConstant: 24),
-      setupIcon.heightAnchor.constraint(equalToConstant: 24),
-    ])
-    setupTitle.font = .systemFont(ofSize: 14, weight: .semibold)
+    setupTitle.font = .systemFont(ofSize: 13, weight: .semibold)
     setupTitle.numberOfLines = 2
-    setupBody.font = .systemFont(ofSize: 11, weight: .regular)
+    setupTitle.translatesAutoresizingMaskIntoConstraints = false
+    setupBody.font = .systemFont(ofSize: 11)
     setupBody.textColor = .secondaryLabel
-    setupBody.numberOfLines = 4
-    let textCol = UIStackView(arrangedSubviews: [setupTitle, setupBody])
-    textCol.axis = .vertical
-    textCol.spacing = 3
-    topRow.addArrangedSubview(setupIcon)
-    topRow.addArrangedSubview(textCol)
-    setupStack.addArrangedSubview(topRow)
-
-    primaryButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+    setupBody.numberOfLines = 0
+    setupBody.translatesAutoresizingMaskIntoConstraints = false
+    primaryButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
     primaryButton.backgroundColor = brand
     primaryButton.setTitleColor(.white, for: .normal)
-    primaryButton.layer.cornerRadius = 9
-    primaryButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
+    primaryButton.layer.cornerRadius = 8
+    primaryButton.translatesAutoresizingMaskIntoConstraints = false
     primaryButton.addTarget(self, action: #selector(tapPrimary), for: .touchUpInside)
-
-    secondaryButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+    secondaryButton.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
     secondaryButton.setTitleColor(brand, for: .normal)
     secondaryButton.backgroundColor = brandSoft
-    secondaryButton.layer.cornerRadius = 9
-    secondaryButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+    secondaryButton.layer.cornerRadius = 8
+    secondaryButton.translatesAutoresizingMaskIntoConstraints = false
     secondaryButton.addTarget(self, action: #selector(tapSecondary), for: .touchUpInside)
 
-    setupStack.addArrangedSubview(primaryButton)
-    setupStack.addArrangedSubview(secondaryButton)
+    setupCard.addSubview(setupIcon)
+    setupCard.addSubview(setupTitle)
+    setupCard.addSubview(setupBody)
+    setupCard.addSubview(primaryButton)
+    setupCard.addSubview(secondaryButton)
 
-    let setupWrap = UIView()
-    setupWrap.addSubview(setupCard)
-    setupCard.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      setupCard.leadingAnchor.constraint(equalTo: setupWrap.leadingAnchor, constant: 12),
-      setupCard.trailingAnchor.constraint(equalTo: setupWrap.trailingAnchor, constant: -12),
-      setupCard.topAnchor.constraint(equalTo: setupWrap.topAnchor, constant: 2),
-      setupCard.bottomAnchor.constraint(equalTo: setupWrap.bottomAnchor, constant: -2),
+      collection.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 2),
+      collection.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      collection.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      collection.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -4),
+
+      setupCard.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 6),
+      setupCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+      setupCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+      setupCard.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -6),
+
+      setupIcon.topAnchor.constraint(equalTo: setupCard.topAnchor, constant: 12),
+      setupIcon.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
+      setupIcon.widthAnchor.constraint(equalToConstant: 22),
+      setupIcon.heightAnchor.constraint(equalToConstant: 22),
+
+      setupTitle.topAnchor.constraint(equalTo: setupCard.topAnchor, constant: 12),
+      setupTitle.leadingAnchor.constraint(equalTo: setupIcon.trailingAnchor, constant: 8),
+      setupTitle.trailingAnchor.constraint(equalTo: setupCard.trailingAnchor, constant: -12),
+
+      setupBody.topAnchor.constraint(equalTo: setupTitle.bottomAnchor, constant: 4),
+      setupBody.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
+      setupBody.trailingAnchor.constraint(equalTo: setupCard.trailingAnchor, constant: -12),
+
+      primaryButton.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
+      primaryButton.trailingAnchor.constraint(equalTo: setupCard.trailingAnchor, constant: -12),
+      primaryButton.heightAnchor.constraint(equalToConstant: 34),
+      primaryButton.bottomAnchor.constraint(equalTo: secondaryButton.topAnchor, constant: -6),
+
+      secondaryButton.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
+      secondaryButton.trailingAnchor.constraint(equalTo: setupCard.trailingAnchor, constant: -12),
+      secondaryButton.heightAnchor.constraint(equalToConstant: 30),
+      secondaryButton.bottomAnchor.constraint(equalTo: setupCard.bottomAnchor, constant: -12),
     ])
-    rootStack.addArrangedSubview(setupWrap)
 
-    // Slim toolbar: delete · open · globe
-    let toolbar = UIStackView()
-    toolbar.axis = .horizontal
-    toolbar.spacing = 8
-    toolbar.distribution = .fillEqually
-    toolbar.isLayoutMarginsRelativeArrangement = true
-    toolbar.layoutMargins = UIEdgeInsets(top: 4, left: 12, bottom: 2, right: 12)
-    toolbar.addArrangedSubview(toolBtn(systemName: "delete.left", action: #selector(tapDelete)))
-    toolbar.addArrangedSubview(toolBtn(title: "App", action: #selector(tapOpenApp)))
-    toolbar.addArrangedSubview(toolBtn(systemName: "globe", action: #selector(tapNextKeyboard)))
-    rootStack.addArrangedSubview(toolbar)
-
+    // Toast overlay on grid
     toast.font = .systemFont(ofSize: 11, weight: .semibold)
-    toast.textColor = brand
+    toast.textColor = .white
+    toast.backgroundColor = brand.withAlphaComponent(0.92)
     toast.textAlignment = .center
-    toast.numberOfLines = 2
+    toast.layer.cornerRadius = 8
+    toast.clipsToBounds = true
     toast.alpha = 0
-    toast.text = " "
-    toast.heightAnchor.constraint(equalToConstant: 14).isActive = true
-    rootStack.addArrangedSubview(toast)
+    toast.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(toast)
+    NSLayoutConstraint.activate([
+      toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      toast.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -8),
+      toast.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40),
+      toast.heightAnchor.constraint(greaterThanOrEqualToConstant: 26),
+    ])
+    toast.setContentHuggingPriority(.required, for: .vertical)
   }
 
   private func toolBtn(title: String? = nil, systemName: String? = nil, action: Selector) -> UIButton {
@@ -302,32 +325,26 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       b.tintColor = .label
     } else {
       b.setTitle(title, for: .normal)
-      b.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+      b.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
       b.setTitleColor(.label, for: .normal)
     }
     b.backgroundColor = .tertiarySystemFill
-    b.layer.cornerRadius = 9
-    b.heightAnchor.constraint(equalToConstant: 34).isActive = true
+    b.layer.cornerRadius = 8
     b.addTarget(self, action: action, for: .touchUpInside)
     return b
   }
 
   // MARK: - Mode
 
-  private var searchWrap: UIView? {
-    rootStack.arrangedSubviews.first { $0.tag == 9001 }
-  }
-
   private func applyMode() {
     let ready = mode == .ready
     collection.isHidden = !ready
-    setupCard.superview?.isHidden = ready
-    gridHeight.constant = ready ? 156 : 0
-    setupHeight.constant = ready ? 0 : 168
+    setupCard.isHidden = ready
+    searchBtn.isEnabled = ready
 
-    // Never show fat empty search — only when expanded + ready + enough items
     let showSearch = ready && searchExpanded && allItems.count >= 6
-    searchWrap?.isHidden = !showSearch
+    searchBarHeight.constant = showSearch ? 34 : 0
+    searchBar.isHidden = !showSearch
     if !showSearch {
       filter = ""
       searchField.text = nil
@@ -336,31 +353,31 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
 
     switch mode {
     case .needsFullAccess:
-      countLabel.text = "Setup"
+      countLabel.text = ""
       setupIcon.image = UIImage(systemName: "lock.open.fill")
       setupTitle.text = "Enable Full Access first"
       setupBody.text =
-        "iOS blocks keyboard buttons until Full Access is on.\n"
-        + "Settings → General → Keyboard → Keyboards → ClipVal → Allow Full Access\n"
-        + "Then open ClipVal once."
+        "Settings → General → Keyboard → Keyboards → ClipVal → Allow Full Access.\nThen open ClipVal once. (iOS blocks buttons here until then.)"
       primaryButton.setTitle("I’ve enabled it — Refresh", for: .normal)
       primaryButton.tag = 1
       secondaryButton.setTitle("Why Full Access?", for: .normal)
       secondaryButton.isHidden = false
     case .needsSync:
-      countLabel.text = "Sync"
+      countLabel.text = ""
       setupIcon.image = UIImage(systemName: "arrow.triangle.2.circlepath")
       setupTitle.text = "Open ClipVal once"
-      setupBody.text = "Full Access is on. Open the app so vault tiles appear here."
+      setupBody.text = "Full Access is on. Open the app so vault tiles fill this grid."
       primaryButton.setTitle("Open ClipVal", for: .normal)
       primaryButton.tag = 2
       secondaryButton.setTitle("Refresh", for: .normal)
       secondaryButton.isHidden = false
     case .ready:
-      let n = filteredItems.count
-      countLabel.text = "\(n)"
+      countLabel.text = "\(filteredItems.count)"
       secondaryButton.isHidden = true
     }
+
+    UIView.animate(withDuration: 0.15) { self.view.layoutIfNeeded() }
+    collection.collectionViewLayout.invalidateLayout()
   }
 
   private var filteredItems: [KeyboardItem] {
@@ -411,7 +428,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       if a.isPinned != b.isPinned { return a.isPinned && !b.isPinned }
       return a.displayTitle.localizedCaseInsensitiveCompare(b.displayTitle) == .orderedAscending
     }
-    if allItems.count > 40 { allItems = Array(allItems.prefix(40)) }
+    if allItems.count > 48 { allItems = Array(allItems.prefix(48)) }
 
     mode = allItems.isEmpty ? .needsSync : .ready
     applyMode()
@@ -431,20 +448,23 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   @objc private func toggleSearch() {
     guard mode == .ready else { return }
     if allItems.count < 6 {
-      flash("Search when you have 6+ items")
+      flash("Search when 6+ items")
       return
     }
     searchExpanded.toggle()
     applyMode()
-    if searchExpanded {
-      searchField.becomeFirstResponder()
-    }
+    if searchExpanded { searchField.becomeFirstResponder() }
   }
 
   @objc private func searchChanged() {
     filter = searchField.text ?? ""
-    collection.reloadData()
     countLabel.text = "\(filteredItems.count)"
+    collection.reloadData()
+  }
+
+  func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+    textField.resignFirstResponder()
+    return true
   }
 
   @objc private func tapPrimary() {
@@ -452,15 +472,15 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     if primaryButton.tag == 1 {
       reloadItems()
       if mode == .needsFullAccess {
-        flash("Still off — Settings → Keyboard → ClipVal → Full Access")
+        flash("Still off — Settings → Keyboard → ClipVal")
       } else if mode == .needsSync {
-        flash("Full Access OK · open ClipVal once")
+        flash("Open ClipVal once")
       } else {
-        flash("Ready — tap a tile")
+        flash("Ready")
       }
     } else {
       openURL(URL(string: "clipval://vault")!) { ok in
-        if !ok { self.flash("Open ClipVal from Home Screen") }
+        if !ok { self.flash("Open ClipVal from Home") }
       }
     }
   }
@@ -469,31 +489,26 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
     switch mode {
     case .needsFullAccess:
-      flash("Full Access = read on-device vault only. No keylogging. No network.")
+      flash("On-device vault only · no keylogging · no network")
     case .needsSync:
       reloadItems()
-      flash(mode == .ready ? "Vault loaded" : "Still empty — open ClipVal")
+      flash(mode == .ready ? "Loaded" : "Open ClipVal app")
     case .ready:
       break
     }
   }
 
-  @objc private func tapDelete() {
-    textDocumentProxy.deleteBackward()
-  }
-
-  @objc private func tapNextKeyboard() {
-    advanceToNextInputMode()
-  }
+  @objc private func tapDelete() { textDocumentProxy.deleteBackward() }
+  @objc private func tapNextKeyboard() { advanceToNextInputMode() }
 
   @objc private func tapOpenApp() {
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
     if mode == .needsFullAccess {
-      flash("Enable Full Access first — iOS blocks Open App")
+      flash("Enable Full Access first")
       return
     }
     openURL(URL(string: "clipval://vault")!) { ok in
-      if !ok { self.flash("Open ClipVal from Home Screen") }
+      if !ok { self.flash("Open ClipVal from Home") }
     }
   }
 
@@ -509,9 +524,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       responder = r.next
     }
     if let ctx = extensionContext {
-      ctx.open(url) { ok in
-        DispatchQueue.main.async { completion?(ok) }
-      }
+      ctx.open(url) { ok in DispatchQueue.main.async { completion?(ok) } }
       return
     }
     completion?(false)
@@ -528,14 +541,14 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   }
 
   private func flash(_ text: String) {
-    toast.text = text
+    toast.text = "  \(text)  "
     toast.alpha = 1
-    UIView.animate(withDuration: 0.25, delay: 1.4, options: .curveEaseOut) {
+    UIView.animate(withDuration: 0.2, delay: 1.2, options: .curveEaseOut) {
       self.toast.alpha = 0
     }
   }
 
-  // MARK: - Grid
+  // MARK: - Grid (4 cols, short tiles — fill height)
 
   func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
     filteredItems.count
@@ -561,25 +574,28 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     layout collectionViewLayout: UICollectionViewLayout,
     sizeForItemAt indexPath: IndexPath
   ) -> CGSize {
-    let inset: CGFloat = 12
-    let spacing: CGFloat = 8
-    let cols: CGFloat = 3
-    let w = collectionView.bounds.width - inset * 2 - spacing * (cols - 1)
-    let cellW = floor(w / cols)
-    return CGSize(width: max(cellW, 96), height: 64)
+    let cols: CGFloat = 4
+    let inset: CGFloat = 8
+    let spacing: CGFloat = 5
+    let usable = collectionView.bounds.width - inset * 2 - spacing * (cols - 1)
+    let w = floor(usable / cols)
+
+    // Fit as many rows as possible in available height
+    let rowsTarget: CGFloat = 3
+    let vSpacing: CGFloat = 5
+    let vInset: CGFloat = 4
+    let h = collectionView.bounds.height
+    let cellH: CGFloat
+    if h > 40 {
+      cellH = floor((h - vInset - vSpacing * (rowsTarget - 1)) / rowsTarget)
+    } else {
+      cellH = 52
+    }
+    return CGSize(width: max(w, 72), height: max(min(cellH, 72), 48))
   }
 }
 
-// MARK: - Search field delegate
-
-extension KeyboardViewController: UITextFieldDelegate {
-  func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-    textField.resignFirstResponder()
-    return true
-  }
-}
-
-// MARK: - Tile cell (grid)
+// MARK: - Compact tile
 
 private final class TileCell: UICollectionViewCell {
   static let reuseId = "tile"
@@ -590,19 +606,19 @@ private final class TileCell: UICollectionViewCell {
   override init(frame: CGRect) {
     super.init(frame: frame)
     contentView.backgroundColor = .tertiarySystemBackground
-    contentView.layer.cornerRadius = 12
+    contentView.layer.cornerRadius = 10
     contentView.layer.cornerCurve = .continuous
     contentView.clipsToBounds = true
 
-    monogram.font = .systemFont(ofSize: 13, weight: .bold)
+    monogram.font = .systemFont(ofSize: 11, weight: .bold)
     monogram.textColor = brand
     monogram.textAlignment = .center
     monogram.backgroundColor = brandSoft
-    monogram.layer.cornerRadius = 10
+    monogram.layer.cornerRadius = 8
     monogram.clipsToBounds = true
     monogram.translatesAutoresizingMaskIntoConstraints = false
 
-    titleLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+    titleLabel.font = .systemFont(ofSize: 11, weight: .semibold)
     titleLabel.textColor = .label
     titleLabel.textAlignment = .center
     titleLabel.numberOfLines = 2
@@ -620,18 +636,20 @@ private final class TileCell: UICollectionViewCell {
     contentView.addSubview(pin)
 
     NSLayoutConstraint.activate([
-      monogram.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+      monogram.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
       monogram.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-      monogram.widthAnchor.constraint(equalToConstant: 22),
-      monogram.heightAnchor.constraint(equalToConstant: 22),
-      titleLabel.topAnchor.constraint(equalTo: monogram.bottomAnchor, constant: 4),
-      titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 6),
-      titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
-      titleLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -6),
-      pin.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
-      pin.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -5),
-      pin.widthAnchor.constraint(equalToConstant: 9),
-      pin.heightAnchor.constraint(equalToConstant: 9),
+      monogram.widthAnchor.constraint(equalToConstant: 18),
+      monogram.heightAnchor.constraint(equalToConstant: 18),
+
+      titleLabel.topAnchor.constraint(equalTo: monogram.bottomAnchor, constant: 3),
+      titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
+      titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+      titleLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -4),
+
+      pin.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+      pin.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+      pin.widthAnchor.constraint(equalToConstant: 8),
+      pin.heightAnchor.constraint(equalToConstant: 8),
     ])
   }
 
@@ -645,10 +663,11 @@ private final class TileCell: UICollectionViewCell {
 
   override var isHighlighted: Bool {
     didSet {
-      contentView.alpha = isHighlighted ? 0.7 : 1
-      contentView.transform = isHighlighted
-        ? CGAffineTransform(scaleX: 0.96, y: 0.96)
-        : .identity
+      UIView.animate(withDuration: 0.08) {
+        self.contentView.alpha = self.isHighlighted ? 0.65 : 1
+        self.contentView.transform = self.isHighlighted
+          ? CGAffineTransform(scaleX: 0.96, y: 0.96) : .identity
+      }
     }
   }
 }
