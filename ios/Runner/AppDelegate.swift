@@ -125,6 +125,25 @@ import WidgetKit
       case "rehydratePaste":
         Self.rehydratePendingWidgetPaste()
         result(true)
+      case "forcePasteboard":
+        // Flutter deep-link copy — write system pasteboard from main app (reliable).
+        guard let args = call.arguments as? [String: Any],
+              let value = args["value"] as? String,
+              !value.isEmpty
+        else {
+          result(
+            FlutterError(code: "bad_args", message: "value required", details: nil)
+          )
+          return
+        }
+        let pb = UIPasteboard.general
+        pb.strings = [value]
+        pb.string = value
+        let d = UserDefaults(suiteName: Self.appGroupId)
+        d?.set(value, forKey: "widget_pending_paste_value")
+        d?.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
+        d?.synchronize()
+        result(true)
       case "writeSnapshot":
         // args: { json: String, keyboardJson: String? }
         guard let args = call.arguments as? [String: Any],

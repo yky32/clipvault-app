@@ -45,7 +45,17 @@ abstract final class WidgetDeepLink {
     final item = AppBootstrap.clipItemRepository.getById(id);
     if (item == null) return;
 
+    // 1) Flutter clipboard (in-app)
     await AppBootstrap.clipboardService.copy(item.value);
+    // 2) Native UIPasteboard from main app process (what other apps Paste from)
+    try {
+      await const MethodChannel('com.clipval/widget').invokeMethod<void>(
+        'forcePasteboard',
+        {'value': item.value},
+      );
+    } catch (_) {
+      // Best-effort — Flutter copy already ran.
+    }
     await AppBootstrap.clipItemRepository.markCopied(item.id);
     await AppBootstrap.widgetSnapshotService.sync();
 

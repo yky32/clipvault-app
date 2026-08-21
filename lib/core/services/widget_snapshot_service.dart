@@ -37,6 +37,7 @@ class WidgetSnapshotService {
     if (!_ready || kIsWeb) return;
     try {
       final settings = SettingsService.instance;
+      // Prefer settings; migration clears stale "on" so users see full vault.
       final pinnedOnly = settings.widgetPinnedOnly;
       final hideTitles = settings.biometricLockEnabled &&
           settings.widgetHideTitlesWhenLocked;
