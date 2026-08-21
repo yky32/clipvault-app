@@ -531,18 +531,11 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    return Group {
-      if #available(iOS 17.0, *) {
-        // Only pass id — value is loaded from App Group inside the intent.
-        Button(intent: CopyValueIntent(id: item.id)) {
-          label
-        }
-        .buttonStyle(.plain)
-      } else {
-        Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
-          label
-        }
-      }
+    // ALWAYS deep-link into the app to copy.
+    // AppIntent pasteboard writes from the widget extension are unreliable on
+    // real devices (green tick / no system Paste). Flutter ClipboardService works.
+    return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
+      label
     }
   }
 

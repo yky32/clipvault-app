@@ -122,6 +122,7 @@ class SettingsService {
   static const _addressLanguageTagsKey = 'address_language_tags';
   /// Home widget: only show pinned items (favorites).
   static const _widgetPinnedOnlyKey = 'widget_pinned_only';
+  static const _widgetRecentMigrateKey = 'widget_recent_migrate_v2';
   /// Home widget: mask titles when app lock is enabled.
   static const _widgetHideTitlesWhenLockedKey = 'widget_hide_titles_locked';
   /// Vault list sort (pin always first).
@@ -164,6 +165,11 @@ class SettingsService {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    // One-shot: turn off favorites-only so widget shows recent/all vault.
+    if (!(_prefs.getBool(_widgetRecentMigrateKey) ?? false)) {
+      await _prefs.setBool(_widgetPinnedOnlyKey, false);
+      await _prefs.setBool(_widgetRecentMigrateKey, true);
+    }
     // Drop legacy key that may have been set during forced onboarding prompt.
     if (_prefs.containsKey('biometric_lock')) {
       await _prefs.remove('biometric_lock');
