@@ -60,6 +60,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   private let brandLabel = UILabel()
   private let countLabel = UILabel()
   private let searchBtn = UIButton(type: .system)
+  private let appBtn = UIButton(type: .system)
   private let searchField = UITextField()
   private let searchBar = UIView()
   private var collection: UICollectionView!
@@ -69,7 +70,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   private let setupBody = UILabel()
   private let primaryButton = UIButton(type: .system)
   private let secondaryButton = UIButton(type: .system)
-  private let toolbar = UIStackView()
+  private let backspaceBtn = UIButton(type: .system)
   private let toast = UILabel()
 
   private var searchBarHeight: NSLayoutConstraint!
@@ -126,6 +127,13 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     countLabel.textColor = .tertiaryLabel
     countLabel.translatesAutoresizingMaskIntoConstraints = false
 
+    // Header actions: App · Search (globe lives on system bar below)
+    appBtn.setImage(UIImage(systemName: "arrow.up.forward.app"), for: .normal)
+    appBtn.tintColor = .secondaryLabel
+    appBtn.accessibilityLabel = "Open ClipVal"
+    appBtn.addTarget(self, action: #selector(tapOpenApp), for: .touchUpInside)
+    appBtn.translatesAutoresizingMaskIntoConstraints = false
+
     searchBtn.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
     searchBtn.tintColor = .secondaryLabel
     searchBtn.addTarget(self, action: #selector(toggleSearch), for: .touchUpInside)
@@ -134,6 +142,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     headerBar.addSubview(mark)
     headerBar.addSubview(brandLabel)
     headerBar.addSubview(countLabel)
+    headerBar.addSubview(appBtn)
     headerBar.addSubview(searchBtn)
 
     NSLayoutConstraint.activate([
@@ -157,10 +166,15 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       countLabel.leadingAnchor.constraint(equalTo: brandLabel.trailingAnchor, constant: 6),
       countLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
 
-      searchBtn.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -6),
+      searchBtn.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -4),
       searchBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-      searchBtn.widthAnchor.constraint(equalToConstant: 30),
+      searchBtn.widthAnchor.constraint(equalToConstant: 28),
       searchBtn.heightAnchor.constraint(equalToConstant: 26),
+
+      appBtn.trailingAnchor.constraint(equalTo: searchBtn.leadingAnchor, constant: -2),
+      appBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      appBtn.widthAnchor.constraint(equalToConstant: 28),
+      appBtn.heightAnchor.constraint(equalToConstant: 26),
     ])
 
     // Search bar (collapsed height 0)
@@ -194,20 +208,24 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       searchField.heightAnchor.constraint(equalToConstant: 28),
     ])
 
-    // Toolbar bottom — 32pt
-    toolbar.axis = .horizontal
-    toolbar.spacing = 6
-    toolbar.distribution = .fillEqually
-    toolbar.translatesAutoresizingMaskIntoConstraints = false
-    toolbar.addArrangedSubview(toolBtn(systemName: "delete.left", action: #selector(tapDelete)))
-    toolbar.addArrangedSubview(toolBtn(title: "App", action: #selector(tapOpenApp)))
-    toolbar.addArrangedSubview(toolBtn(systemName: "globe", action: #selector(tapNextKeyboard)))
-    view.addSubview(toolbar)
+    // Bottom-right backspace only (system globe below; App in header)
+    backspaceBtn.setImage(UIImage(systemName: "delete.left.fill"), for: .normal)
+    backspaceBtn.tintColor = .label
+    backspaceBtn.backgroundColor = .tertiarySystemFill
+    backspaceBtn.layer.cornerRadius = 8
+    backspaceBtn.accessibilityLabel = "Delete"
+    backspaceBtn.addTarget(self, action: #selector(tapDelete), for: .touchUpInside)
+    // Long-press = repeat delete
+    let longDel = UILongPressGestureRecognizer(target: self, action: #selector(backspaceLongPress(_:)))
+    longDel.minimumPressDuration = 0.35
+    backspaceBtn.addGestureRecognizer(longDel)
+    backspaceBtn.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(backspaceBtn)
     NSLayoutConstraint.activate([
-      toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-      toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-      toolbar.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
-      toolbar.heightAnchor.constraint(equalToConstant: 32),
+      backspaceBtn.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+      backspaceBtn.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
+      backspaceBtn.widthAnchor.constraint(equalToConstant: 72),
+      backspaceBtn.heightAnchor.constraint(equalToConstant: 34),
     ])
 
     // GRID fills everything between search and toolbar
@@ -224,6 +242,8 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     collection.alwaysBounceVertical = true
     collection.showsVerticalScrollIndicator = false
     collection.contentInsetAdjustmentBehavior = .never
+    // Keep last row clear of bottom-right backspace
+    collection.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 2, right: 0)
     collection.register(TileCell.self, forCellWithReuseIdentifier: TileCell.reuseId)
     collection.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(collection)
@@ -268,12 +288,13 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       collection.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 2),
       collection.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       collection.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      collection.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -4),
+      // Leave room for bottom-right backspace only
+      collection.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -42),
 
       setupCard.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 6),
       setupCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
       setupCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-      setupCard.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -6),
+      setupCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -42),
 
       setupIcon.topAnchor.constraint(equalTo: setupCard.topAnchor, constant: 12),
       setupIcon.leadingAnchor.constraint(equalTo: setupCard.leadingAnchor, constant: 12),
@@ -311,28 +332,13 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     view.addSubview(toast)
     NSLayoutConstraint.activate([
       toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      toast.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -8),
+      toast.bottomAnchor.constraint(equalTo: backspaceBtn.topAnchor, constant: -8),
       toast.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40),
       toast.heightAnchor.constraint(greaterThanOrEqualToConstant: 26),
     ])
     toast.setContentHuggingPriority(.required, for: .vertical)
   }
 
-  private func toolBtn(title: String? = nil, systemName: String? = nil, action: Selector) -> UIButton {
-    let b = UIButton(type: .system)
-    if let systemName {
-      b.setImage(UIImage(systemName: systemName), for: .normal)
-      b.tintColor = .label
-    } else {
-      b.setTitle(title, for: .normal)
-      b.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
-      b.setTitleColor(.label, for: .normal)
-    }
-    b.backgroundColor = .tertiarySystemFill
-    b.layer.cornerRadius = 8
-    b.addTarget(self, action: action, for: .touchUpInside)
-    return b
-  }
 
   // MARK: - Mode
 
@@ -499,7 +505,24 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   }
 
   @objc private func tapDelete() { textDocumentProxy.deleteBackward() }
-  @objc private func tapNextKeyboard() { advanceToNextInputMode() }
+
+  private var deleteTimer: Timer?
+
+  @objc private func backspaceLongPress(_ g: UILongPressGestureRecognizer) {
+    switch g.state {
+    case .began:
+      deleteTimer?.invalidate()
+      deleteTimer = Timer.scheduledTimer(withTimeInterval: 0.07, repeats: true) { [weak self] _ in
+        self?.textDocumentProxy.deleteBackward()
+      }
+      if let t = deleteTimer { RunLoop.main.add(t, forMode: .common) }
+    case .ended, .cancelled, .failed:
+      deleteTimer?.invalidate()
+      deleteTimer = nil
+    default:
+      break
+    }
+  }
 
   @objc private func tapOpenApp() {
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
