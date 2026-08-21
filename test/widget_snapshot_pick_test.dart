@@ -24,7 +24,7 @@ ClipItem _item({
 
 void main() {
   group('WidgetSnapshotService.pickItemsForWidget', () {
-    test('prefers pinned, then recently copied, then remaining', () {
+    test('prefers recently copied, then pinned, then remaining', () {
       final a = _item(id: 'a', title: 'A');
       final b = _item(
         id: 'b',
@@ -44,7 +44,8 @@ void main() {
         pinnedOnly: false,
       );
 
-      expect(picked.map((i) => i.id).toList(), ['c', 'e', 'd', 'b', 'a']);
+      // recent: d (Jan4), b (Jan3) → pinned c,e → plain a
+      expect(picked.map((i) => i.id).toList(), ['d', 'b', 'c', 'e', 'a']);
     });
 
     test('pinnedOnly returns only pinned items', () {
@@ -81,8 +82,8 @@ void main() {
       );
 
       expect(picked, hasLength(AppConstants.widgetItemLimit));
-      // First three are pinned (ids 0,1,2)
-      expect(picked.take(3).map((i) => i.id).toList(), ['0', '1', '2']);
+      // Most recent lastCopied first (highest day index first among generated)
+      expect(picked.first.id, '${AppConstants.widgetItemLimit + 4}');
     });
 
     test('dedupes when item is both pinned and recent', () {
