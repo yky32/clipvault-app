@@ -332,14 +332,11 @@ struct ClipValWidgetEntryView: View {
 
   private var header: some View {
     HStack(spacing: 6) {
-      RoundedRectangle(cornerRadius: 4, style: .continuous)
-        .fill(brand)
-        .frame(width: 14, height: 14)
-        .overlay(
-          Image(systemName: "doc.on.clipboard")
-            .font(.system(size: 7, weight: .bold))
-            .foregroundStyle(.white)
-        )
+      Image("ClipValMark")
+        .resizable()
+        .scaledToFill()
+        .frame(width: 18, height: 18)
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
       Text(entry.pinnedOnly ? "Favorites" : "ClipVal")
         .font(.system(size: 13, weight: .bold, design: .rounded))
         .foregroundStyle(.primary)
@@ -356,9 +353,11 @@ struct ClipValWidgetEntryView: View {
     // Teach: pin favorites → widget shows them. Link opens app.
     Link(destination: URL(string: "clipval://vault")!) {
       VStack(spacing: 8) {
-        Image(systemName: entry.pinnedOnly ? "pin.fill" : "plus.app.fill")
-          .font(.system(size: 22, weight: .semibold))
-          .foregroundStyle(Color.accentColor.opacity(0.9))
+        Image("ClipValMark")
+          .resizable()
+          .scaledToFill()
+          .frame(width: 36, height: 36)
+          .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         Text(entry.pinnedOnly
               ? "Pin favorites in ClipVal"
               : "Add values in ClipVal")

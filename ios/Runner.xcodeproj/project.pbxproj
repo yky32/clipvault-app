@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1CC906AC79D7E4A33E40200 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1CC906AC79D7E4A33E40100 /* Assets.xcassets */; };
+		A1CC906ACBE9B2DA33E40200 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1CC906ACBE9B2DA33E40100 /* Assets.xcassets */; };
 		C16B010000000000000004 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C16B010000000000000001 /* KeyboardViewController.swift */; };
 		C15A010000000000000004 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C15A010000000000000001 /* ShareViewController.swift */; };
 		09F6F6A57828CDEDC21056A9 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A9E88CEB441BB2A3B3E52DA /* Pods_RunnerTests.framework */; };
@@ -70,6 +72,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1CC906AC79D7E4A33E40100 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1CC906ACBE9B2DA33E40100 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C15A010000000000000001 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		C15A010000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C15A010000000000000003 /* ClipValShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipValShare.entitlements; sourceTree = "<group>"; };
@@ -164,6 +168,7 @@
 				E505CF228894DBD2EAEDBD5E /* ClipValWidgetBundle.swift */,
 				DDE2D0C3266D08E4B9F32A32 /* Info.plist */,
 				B544A930830F06B6B8BB4B3F /* ClipValWidget.entitlements */,
+				A1CC906AC79D7E4A33E40100 /* Assets.xcassets */,
 			);
 			name = ClipValWidget;
 			path = ClipValWidget;
@@ -271,6 +276,7 @@
 				C16B010000000000000001 /* KeyboardViewController.swift */,
 				C16B010000000000000002 /* Info.plist */,
 				C16B010000000000000003 /* ClipValKeyboard.entitlements */,
+				A1CC906ACBE9B2DA33E40100 /* Assets.xcassets */,
 			);
 			path = ClipValKeyboard;
 			sourceTree = "<group>";
@@ -321,7 +327,7 @@
 				C16B010000000000000008 /* Sources */,
 				C16B010000000000000009 /* Frameworks */,
 				C16B01000000000000000A /* Resources */,
-			);
+				A1CC906ACBE9B2D2E3080100 /* Resources */,);
 			buildRules = (
 			);
 			dependencies = (
@@ -338,7 +344,7 @@
 				CE39F1B68D9D67BAA4834500 /* Sources */,
 				3160199220C2499D6EBDB234 /* Frameworks */,
 				E4278EF0378BBA78ADFBF4F1 /* Resources */,
-			);
+				A1CC906AC79D7E42E3080100 /* Resources */,);
 			buildRules = (
 			);
 			dependencies = (
@@ -419,6 +425,22 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A1CC906AC79D7E42E3080100 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1CC906AC79D7E4A33E40200 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1CC906ACBE9B2D2E3080100 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1CC906ACBE9B2DA33E40200 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C15A01000000000000000A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;

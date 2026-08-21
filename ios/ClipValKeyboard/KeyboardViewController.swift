@@ -153,15 +153,15 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     headerBar.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(headerBar)
 
-    let mark = UIView()
-    mark.backgroundColor = brand
+    let mark = UIImageView(image: UIImage(named: "ClipValMark"))
+    mark.contentMode = .scaleAspectFill
+    mark.clipsToBounds = true
     mark.layer.cornerRadius = 4
     mark.translatesAutoresizingMaskIntoConstraints = false
-    let markIcon = UIImageView(image: UIImage(systemName: "doc.on.clipboard.fill"))
-    markIcon.tintColor = .white
-    markIcon.contentMode = .scaleAspectFit
-    markIcon.translatesAutoresizingMaskIntoConstraints = false
-    mark.addSubview(markIcon)
+    // Fallback if asset missing (dev)
+    if mark.image == nil {
+      mark.backgroundColor = brand
+    }
 
     brandLabel.text = "ClipVal"
     brandLabel.font = .systemFont(ofSize: 13, weight: .bold)
@@ -204,12 +204,8 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
 
       mark.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 10),
       mark.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-      mark.widthAnchor.constraint(equalToConstant: 14),
-      mark.heightAnchor.constraint(equalToConstant: 14),
-      markIcon.centerXAnchor.constraint(equalTo: mark.centerXAnchor),
-      markIcon.centerYAnchor.constraint(equalTo: mark.centerYAnchor),
-      markIcon.widthAnchor.constraint(equalToConstant: 8),
-      markIcon.heightAnchor.constraint(equalToConstant: 8),
+      mark.widthAnchor.constraint(equalToConstant: 18),
+      mark.heightAnchor.constraint(equalToConstant: 18),
 
       brandLabel.leadingAnchor.constraint(equalTo: mark.trailingAnchor, constant: 6),
       brandLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
@@ -573,9 +569,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
         flash("Ready")
       }
     } else {
-      openURL(URL(string: "clipval://vault")!) { ok in
-        if !ok { self.flash("Open ClipVal from Home") }
-      }
+      self.openHostApp()
     }
   }
 
@@ -614,30 +608,87 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
 
   @objc private func tapOpenApp() {
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-    if mode == .needsFullAccess {
-      flash("Enable Full Access first")
-      return
-    }
-    openURL(URL(string: "clipval://vault")!) { ok in
-      if !ok { self.flash("Open ClipVal from Home") }
+    // Try open even without Full Access; iOS may still allow host open.
+    openHostApp()
+  }
+
+  /// Open main ClipVal app. Prefer extensionContext; never fake success.
+  private func openHostApp() {
+    // clipval://vault → scheme clipval, host vault (handled by GoRouter → /vault)
+    let urls = [
+      URL(string: "clipval://vault")!,
+      URL(string: "clipval://")!,
+    ]
+    flash("Opening ClipVal…")
+    openURL(urls[0]) { [weak self] ok in
+      guard let self else { return }
+      if ok { return }
+      // Second candidate
+      self.openURL(urls[1]) { ok2 in
+        if !ok2 {
+          if !self.hasFullAccess {
+            self.flash("Enable Full Access, or open ClipVal from Home")
+          } else {
+            self.flash("Couldn’t open — tap ClipVal on Home Screen")
+          }
+        }
+      }
     }
   }
 
   private func openURL(_ url: URL, completion: ((Bool) -> Void)? = nil) {
-    var responder: UIResponder? = self
-    let selOpen = sel_registerName("openURL:")
+    // 1) Official path for app extensions (keyboard needs RequestsOpenAccess / Full Access)
+    if let ctx = self.extensionContext {
+      ctx.open(url) { ok in
+        DispatchQueue.main.async {
+          if ok {
+            completion?(true)
+            return
+          }
+          // 2) Responder-chain fallback (do NOT assume success)
+          self.openURLViaResponderChain(url, completion: completion)
+        }
+      }
+      return
+    }
+    openURLViaResponderChain(url, completion: completion)
+  }
+
+  private func openURLViaResponderChain(_ url: URL, completion: ((Bool) -> Void)?) {
+    var responder: UIResponder? = self as UIResponder
+    // Prefer modern openURL:options:completionHandler: if exposed on a responder
+    let modern = sel_registerName("openURL:options:completionHandler:")
+    let legacy = sel_registerName("openURL:")
+
     while let r = responder {
-      if r.responds(to: selOpen) {
-        r.perform(selOpen, with: url)
-        completion?(true)
+      if r.responds(to: modern) {
+        // application.open(url, options:completionHandler:)
+        typealias OpenModern = @convention(c) (AnyObject, Selector, URL, NSDictionary, ((Bool) -> Void)?) -> Void
+        let imp = r.method(for: modern)
+        let fn = unsafeBitCast(imp, to: OpenModern.self)
+        fn(r, modern, url, [:], { ok in
+          DispatchQueue.main.async { completion?(ok) }
+        })
         return
       }
       responder = r.next
     }
-    if let ctx = extensionContext {
-      ctx.open(url) { ok in DispatchQueue.main.async { completion?(ok) } }
-      return
+
+    responder = self as UIResponder
+    while let r = responder {
+      if r.responds(to: legacy) {
+        r.perform(legacy, with: url)
+        // Legacy has no completion — unknown outcome. Report false so UI can guide user
+        // if app didn't come forward (better than silent fake success).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+          // If we're still visible as keyboard, open likely failed.
+          completion?(false)
+        }
+        return
+      }
+      responder = r.next
     }
+
     completion?(false)
   }
 
