@@ -245,14 +245,14 @@ struct CopyValueIntent: AppIntent {
       // Last resort: open app deep-link copy (Flutter Clipboard is reliable)
       return .result(
         dialog: IntentDialog(
-          stringLiteral: "Open ClipVal to finish copy, then paste."
+          stringLiteral: "Copy may have failed — try again, or copy inside ClipVal."
         )
       )
     }
 
     return .result(
       dialog: IntentDialog(
-        stringLiteral: "Copied “\(title)” — switch app and Paste"
+        stringLiteral: "Copied “\(title)”"
       )
     )
   }
@@ -263,9 +263,12 @@ struct CopyValueIntent: AppIntent {
     return UIPasteboard.general.hasStrings && !(UIPasteboard.general.string ?? "").isEmpty
   }
 
-  /// Minimal pasteboard write — `.string` only (setItems has wiped values in prod).
+  /// Pasteboard write for widget intent (host app must stay closed).
   private static func writePasteboardPlainText(_ value: String) {
     let pb = UIPasteboard.general
+    // Order matters: typed value first, then string fields.
+    pb.setValue(value, forPasteboardType: "public.utf8-plain-text")
+    pb.setValue(value, forPasteboardType: "public.plain-text")
     pb.strings = [value]
     pb.string = value
   }
@@ -531,9 +534,15 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // ALWAYS deep-link into the app to copy.
-    // AppIntent pasteboard writes from the widget extension are unreliable on
-    // real devices (green tick / no system Paste). Flutter ClipboardService works.
+    // In-widget copy — must NOT open the host app (product requirement).
+    // Value is resolved from App Group by id inside CopyValueIntent.
+    if #available(iOS 17.0, *) {
+      return Button(intent: CopyValueIntent(id: item.id)) {
+        label
+      }
+      .buttonStyle(.plain)
+    }
+    // iOS 15–16: system has no App Intent buttons — deep link is the only option.
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
