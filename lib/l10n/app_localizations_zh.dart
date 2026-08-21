@@ -227,7 +227,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetPinnedOnly => '僅顯示我的最愛';
 
   @override
-  String get widgetPinnedOnlySubtitle => '小工具只顯示已置頂項目';
+  String get widgetPinnedOnlySubtitle => '只顯示置頂（關閉 = 優先最近複製）';
 
   @override
   String get widgetHideTitlesWhenLocked => '鎖定時隱藏標題';

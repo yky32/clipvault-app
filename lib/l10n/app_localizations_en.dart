@@ -231,7 +231,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetPinnedOnly => 'Favorites only';
 
   @override
-  String get widgetPinnedOnlySubtitle => 'Show only pinned items on the widget';
+  String get widgetPinnedOnlySubtitle => 'Show only pinned items (off = recent copies first)';
 
   @override
   String get widgetHideTitlesWhenLocked => 'Hide titles when locked';

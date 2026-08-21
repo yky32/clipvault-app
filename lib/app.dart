@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:home_widget/home_widget.dart';
 
@@ -76,6 +77,11 @@ class _ClipVaultAppState extends State<ClipVaultApp>
     if (state == AppLifecycleState.resumed) {
       // Share Extension opens host while we were backgrounded.
       ShareIntakeService.consumePending();
+      // Widget may have copied while we were suspended — re-push to pasteboard.
+      try {
+        // ignore: unawaited_futures
+        const MethodChannel('com.clipval/widget').invokeMethod<void>('rehydratePaste');
+      } catch (_) {}
       if (_needsRelock) {
         _needsRelock = false;
         final started = _backgroundedAt;

@@ -98,7 +98,7 @@
   "recentHoldToPin": "Hold to pin",
   "widgetSection": "Home Screen widget",
   "widgetPinnedOnly": "Favorites only",
-  "widgetPinnedOnlySubtitle": "Show only pinned items on the widget",
+  "widgetPinnedOnlySubtitle": "Show only pinned items (off = recent copies first)",
   "widgetHideTitlesWhenLocked": "Hide titles when locked",
   "widgetHideTitlesWhenLockedSubtitle": "Show monogram only while app lock is on",
   "vaultSort": "Sort vault",
