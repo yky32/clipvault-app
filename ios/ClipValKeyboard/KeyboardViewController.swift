@@ -9,6 +9,47 @@ private let widgetItemsKey = "widget_items_json"
 private let brand = UIColor(red: 0.76, green: 0.36, blue: 0.28, alpha: 1)
 private let brandSoft = UIColor(red: 0.76, green: 0.36, blue: 0.28, alpha: 0.18)
 
+private let keyboardGridColsKey = "keyboard_grid_cols"
+
+/// Grid density — user-toggled from header (persisted in App Group).
+private enum GridLayout: Int, CaseIterable {
+  case compact4 = 4   // dense
+  case comfort3 = 3   // default-friendly
+  case large2 = 2     // big tiles
+
+  var next: GridLayout {
+    switch self {
+    case .compact4: return .comfort3
+    case .comfort3: return .large2
+    case .large2: return .compact4
+    }
+  }
+
+  var symbolName: String {
+    switch self {
+    case .compact4: return "square.grid.3x3.fill"
+    case .comfort3: return "square.grid.2x2.fill"
+    case .large2: return "rectangle.grid.1x2.fill"
+    }
+  }
+
+  var label: String {
+    switch self {
+    case .compact4: return "Dense · 4 columns"
+    case .comfort3: return "Comfort · 3 columns"
+    case .large2: return "Large · 2 columns"
+    }
+  }
+
+  var rowsTarget: CGFloat {
+    switch self {
+    case .compact4: return 3
+    case .comfort3: return 2.5
+    case .large2: return 2
+    }
+  }
+}
+
 // MARK: - Model
 
 private struct KeyboardItem: Codable, Hashable {
@@ -60,7 +101,9 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   private let brandLabel = UILabel()
   private let countLabel = UILabel()
   private let searchBtn = UIButton(type: .system)
+  private let layoutBtn = UIButton(type: .system)
   private let appBtn = UIButton(type: .system)
+  private var gridLayout: GridLayout = .comfort3
   private let searchField = UITextField()
   private let searchBar = UIView()
   private var collection: UICollectionView!
@@ -79,7 +122,9 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .secondarySystemBackground
+    gridLayout = Self.loadGridLayout()
     buildUI()
+    refreshLayoutButton()
     applyMode()
     reloadItems()
   }
@@ -134,6 +179,11 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     appBtn.addTarget(self, action: #selector(tapOpenApp), for: .touchUpInside)
     appBtn.translatesAutoresizingMaskIntoConstraints = false
 
+    layoutBtn.tintColor = .secondaryLabel
+    layoutBtn.accessibilityLabel = "Grid layout"
+    layoutBtn.addTarget(self, action: #selector(cycleGridLayout), for: .touchUpInside)
+    layoutBtn.translatesAutoresizingMaskIntoConstraints = false
+
     searchBtn.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
     searchBtn.tintColor = .secondaryLabel
     searchBtn.addTarget(self, action: #selector(toggleSearch), for: .touchUpInside)
@@ -143,6 +193,7 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     headerBar.addSubview(brandLabel)
     headerBar.addSubview(countLabel)
     headerBar.addSubview(appBtn)
+    headerBar.addSubview(layoutBtn)
     headerBar.addSubview(searchBtn)
 
     NSLayoutConstraint.activate([
@@ -171,7 +222,13 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
       searchBtn.widthAnchor.constraint(equalToConstant: 28),
       searchBtn.heightAnchor.constraint(equalToConstant: 26),
 
-      appBtn.trailingAnchor.constraint(equalTo: searchBtn.leadingAnchor, constant: -2),
+      // Red-circle slot: layout toggle (between App and Search)
+      layoutBtn.trailingAnchor.constraint(equalTo: searchBtn.leadingAnchor, constant: -2),
+      layoutBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+      layoutBtn.widthAnchor.constraint(equalToConstant: 28),
+      layoutBtn.heightAnchor.constraint(equalToConstant: 26),
+
+      appBtn.trailingAnchor.constraint(equalTo: layoutBtn.leadingAnchor, constant: -2),
       appBtn.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
       appBtn.widthAnchor.constraint(equalToConstant: 28),
       appBtn.heightAnchor.constraint(equalToConstant: 26),
@@ -347,6 +404,8 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     collection.isHidden = !ready
     setupCard.isHidden = ready
     searchBtn.isEnabled = ready
+    layoutBtn.isEnabled = ready
+    layoutBtn.alpha = ready ? 1 : 0.35
 
     let showSearch = ready && searchExpanded && allItems.count >= 6
     searchBarHeight.constant = showSearch ? 34 : 0
@@ -450,6 +509,35 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
   }
 
   // MARK: - Actions
+
+  // MARK: - Grid layout
+
+  private static func loadGridLayout() -> GridLayout {
+    let defaults = UserDefaults(suiteName: appGroupId)
+    let raw = defaults?.integer(forKey: keyboardGridColsKey) ?? 0
+    return GridLayout(rawValue: raw) ?? .comfort3
+  }
+
+  private func saveGridLayout() {
+    let defaults = UserDefaults(suiteName: appGroupId)
+    defaults?.set(gridLayout.rawValue, forKey: keyboardGridColsKey)
+    defaults?.synchronize()
+  }
+
+  private func refreshLayoutButton() {
+    layoutBtn.setImage(UIImage(systemName: gridLayout.symbolName), for: .normal)
+  }
+
+  @objc private func cycleGridLayout() {
+    guard mode == .ready else { return }
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    gridLayout = gridLayout.next
+    saveGridLayout()
+    refreshLayoutButton()
+    collection.collectionViewLayout.invalidateLayout()
+    collection.reloadData()
+    flash(gridLayout.label)
+  }
 
   @objc private func toggleSearch() {
     guard mode == .ready else { return }
@@ -597,24 +685,26 @@ final class KeyboardViewController: UIInputViewController, UICollectionViewDataS
     layout collectionViewLayout: UICollectionViewLayout,
     sizeForItemAt indexPath: IndexPath
   ) -> CGSize {
-    let cols: CGFloat = 4
+    let cols = CGFloat(gridLayout.rawValue)
     let inset: CGFloat = 8
-    let spacing: CGFloat = 5
+    let spacing: CGFloat = gridLayout == .large2 ? 6 : 5
     let usable = collectionView.bounds.width - inset * 2 - spacing * (cols - 1)
     let w = floor(usable / cols)
 
-    // Fit as many rows as possible in available height
-    let rowsTarget: CGFloat = 3
-    let vSpacing: CGFloat = 5
+    let rowsTarget = gridLayout.rowsTarget
+    let vSpacing: CGFloat = spacing
     let vInset: CGFloat = 4
     let h = collectionView.bounds.height
     let cellH: CGFloat
     if h > 40 {
-      cellH = floor((h - vInset - vSpacing * (rowsTarget - 1)) / rowsTarget)
+      cellH = floor((h - vInset - vSpacing * max(rowsTarget - 1, 1)) / rowsTarget)
     } else {
       cellH = 52
     }
-    return CGSize(width: max(w, 72), height: max(min(cellH, 72), 48))
+    let minH: CGFloat = gridLayout == .large2 ? 56 : 48
+    let maxH: CGFloat = gridLayout == .large2 ? 88 : 72
+    let minW: CGFloat = gridLayout == .compact4 ? 68 : 80
+    return CGSize(width: max(w, minW), height: max(min(cellH, maxH), minH))
   }
 }
 
