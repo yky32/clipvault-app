@@ -173,9 +173,8 @@ struct ClipValProvider: TimelineProvider {
 }
 
 // MARK: - Copy (no app open on iOS 17+)
-// IMPORTANT: Do NOT pass the vault value as an AppIntent parameter.
-// iOS silently truncates / empties large or special intent params → clipboard
-// ends up empty in production. Always resolve value from App Group by id.
+// Pass plaintext `value` from the widget timeline cell. App Group is backup.
+// openAppWhenRun = false — must stay on Home Screen.
 
 private let pendingPasteValueKey = "widget_pending_paste_value"
 private let pendingPasteAtKey = "widget_pending_paste_at"
@@ -183,92 +182,88 @@ private let pendingPasteAtKey = "widget_pending_paste_at"
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
+  /// Do not launch ClipVal.
   static var openAppWhenRun: Bool = false
   static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
+  @Parameter(title: "Value") var value: String
+  @Parameter(title: "Title") var itemTitle: String
 
-  init() { id = "" }
-  init(id: String) { self.id = id }
+  init() {
+    id = ""
+    value = ""
+    itemTitle = ""
+  }
+
+  init(id: String, value: String, title: String) {
+    self.id = id
+    self.value = value
+    self.itemTitle = title
+  }
 
   @MainActor
-  func perform() async throws -> some IntentResult & ProvidesDialog {
-    let resolved = Self.resolveValue(id: id)
-    var value = resolved.value
-    let title = resolved.title
-
-    guard !value.isEmpty else {
-      return .result(
-        dialog: IntentDialog(
-          stringLiteral: "Nothing to copy. Open ClipVal once to refresh the widget, then try again."
-        )
-      )
+  func perform() async throws -> some IntentResult {
+    var text = value
+    if text.isEmpty {
+      text = Self.resolveValue(id: id).value
     }
+    guard !text.isEmpty else { return .result() }
 
-    // Stash for main-app rehydrate (extension pasteboard is flaky across hosts)
+    Self.writePasteboardPlainText(text)
+    if !Self.pasteboardContains(text) {
+      UIPasteboard.general.string = text
+    }
+    let verified = Self.pasteboardContains(text)
+
     if let d = UserDefaults(suiteName: appGroupId) {
-      d.set(value, forKey: pendingPasteValueKey)
+      d.set(text, forKey: pendingPasteValueKey)
       d.set(Date().timeIntervalSince1970, forKey: pendingPasteAtKey)
-      d.set(value, forKey: "last_widget_copy_value")
-      d.set(id, forKey: copiedIdKey)
-      d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
+      d.set(text, forKey: "last_widget_copy_value")
+      // Green tick only when pasteboard really has the value
+      if verified {
+        d.set(id, forKey: copiedIdKey)
+        d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
+      } else {
+        d.removeObject(forKey: copiedIdKey)
+        d.removeObject(forKey: copiedAtKey)
+      }
       d.synchronize()
     }
 
-    Self.writePasteboardPlainText(value)
-
-    var ok = Self.pasteboardContains(value)
-    if !ok {
-      // Retry simplest API only
-      UIPasteboard.general.string = value
-      ok = Self.pasteboardContains(value)
-    }
-
-    UINotificationFeedbackGenerator().notificationOccurred(ok ? .success : .error)
+    UINotificationFeedbackGenerator().notificationOccurred(verified ? .success : .error)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
 
-    // Clear green tick only (never clear pasteboard / pending paste)
-    Task {
-      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 200_000_000)
-      if let d = UserDefaults(suiteName: appGroupId) {
-        let ts = d.double(forKey: copiedAtKey)
-        if Date().timeIntervalSince1970 - ts >= copiedHighlightSeconds - 0.05 {
-          d.removeObject(forKey: copiedIdKey)
-          d.removeObject(forKey: copiedAtKey)
-          d.synchronize()
-          WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+    if verified {
+      Task {
+        try? await Task.sleep(
+          nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 150_000_000
+        )
+        if let d = UserDefaults(suiteName: appGroupId) {
+          let ts = d.double(forKey: copiedAtKey)
+          if Date().timeIntervalSince1970 - ts >= copiedHighlightSeconds - 0.05 {
+            d.removeObject(forKey: copiedIdKey)
+            d.removeObject(forKey: copiedAtKey)
+            d.synchronize()
+            WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+          }
         }
       }
     }
 
-    if !ok {
-      // Last resort: open app deep-link copy (Flutter Clipboard is reliable)
-      return .result(
-        dialog: IntentDialog(
-          stringLiteral: "Copy may have failed — try again, or copy inside ClipVal."
-        )
-      )
-    }
-
-    return .result(
-      dialog: IntentDialog(
-        stringLiteral: "Copied “\(title)”"
-      )
-    )
+    return .result()
   }
 
   private static func pasteboardContains(_ value: String) -> Bool {
     if UIPasteboard.general.string == value { return true }
-    if let strings = UIPasteboard.general.strings, strings.contains(value) { return true }
-    return UIPasteboard.general.hasStrings && !(UIPasteboard.general.string ?? "").isEmpty
+    if let strings = UIPasteboard.general.strings, strings.contains(value) {
+      return true
+    }
+    return false
   }
 
-  /// Pasteboard write for widget intent (host app must stay closed).
   private static func writePasteboardPlainText(_ value: String) {
     let pb = UIPasteboard.general
-    // Order matters: typed value first, then string fields.
-    pb.setValue(value, forPasteboardType: "public.utf8-plain-text")
-    pb.setValue(value, forPasteboardType: "public.plain-text")
     pb.strings = [value]
     pb.string = value
   }
@@ -534,15 +529,21 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // In-widget copy — must NOT open the host app (product requirement).
-    // Value is resolved from App Group by id inside CopyValueIntent.
+    // In-widget copy — app must NOT open (iOS 17+ AppIntent).
+    // Pass plaintext from timeline so pasteboard is never empty from bad App Group reads.
     if #available(iOS 17.0, *) {
-      return Button(intent: CopyValueIntent(id: item.id)) {
+      return Button(
+        intent: CopyValueIntent(
+          id: item.id,
+          value: item.value,
+          title: item.displayTitle
+        )
+      ) {
         label
       }
       .buttonStyle(.plain)
     }
-    // iOS 15–16: system has no App Intent buttons — deep link is the only option.
+    // iOS 15–16 only: OS cannot run App Intent from widget → deep link.
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
