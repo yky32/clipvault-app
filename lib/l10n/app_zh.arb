@@ -70,7 +70,7 @@
   "recentHoldToPin": "長按置頂",
   "widgetSection": "主畫面小工具",
   "widgetPinnedOnly": "僅顯示我的最愛",
-  "widgetPinnedOnlySubtitle": "小工具只顯示已置頂項目",
+  "widgetPinnedOnlySubtitle": "只顯示置頂（關閉 = 優先最近複製）",
   "widgetHideTitlesWhenLocked": "鎖定時隱藏標題",
   "widgetHideTitlesWhenLockedSubtitle": "開啟應用程式鎖定時只顯示字首",
   "vaultSort": "排序",

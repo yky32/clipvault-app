@@ -23,6 +23,7 @@ import WidgetKit
     // Scene-based embedding often has nil `window` at launch. Retry until
     // FlutterViewController is available so method channels attach.
     registerNativeChannelsWhenReady(attemptsLeft: 20)
+    Self.rehydratePendingWidgetPaste()
     return ok
   }
 
@@ -30,6 +31,28 @@ import WidgetKit
   override func applicationDidBecomeActive(_ application: UIApplication) {
     super.applicationDidBecomeActive(application)
     registerNativeChannelsWhenReady(attemptsLeft: 5)
+    // Re-apply widget copy onto system pasteboard (extension writes are flaky).
+    Self.rehydratePendingWidgetPaste()
+  }
+
+  /// If widget App Intent stashed a recent value, ensure UIPasteboard.general has it.
+  private static func rehydratePendingWidgetPaste() {
+    let defaults = UserDefaults(suiteName: appGroupId)
+    guard let value = defaults?.string(forKey: "widget_pending_paste_value"),
+          !value.isEmpty
+    else { return }
+    let at = defaults?.double(forKey: "widget_pending_paste_at") ?? 0
+    // Only within 15 minutes
+    guard at > 0, Date().timeIntervalSince1970 - at < 15 * 60 else {
+      defaults?.removeObject(forKey: "widget_pending_paste_value")
+      defaults?.removeObject(forKey: "widget_pending_paste_at")
+      return
+    }
+    let pb = UIPasteboard.general
+    if pb.string == value { return }
+    pb.strings = [value]
+    pb.string = value
+    NSLog("[ClipVal] Rehydrated widget paste (%d chars)", value.count)
   }
 
   private func registerNativeChannelsWhenReady(attemptsLeft: Int) {
@@ -97,6 +120,10 @@ import WidgetKit
       switch call.method {
       case "flushAndReload":
         Self.persistAndReloadWidget(json: nil, keyboardJson: nil)
+        Self.rehydratePendingWidgetPaste()
+        result(true)
+      case "rehydratePaste":
+        Self.rehydratePendingWidgetPaste()
         result(true)
       case "writeSnapshot":
         // args: { json: String, keyboardJson: String? }

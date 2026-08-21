@@ -177,6 +177,9 @@ struct ClipValProvider: TimelineProvider {
 // iOS silently truncates / empties large or special intent params → clipboard
 // ends up empty in production. Always resolve value from App Group by id.
 
+private let pendingPasteValueKey = "widget_pending_paste_value"
+private let pendingPasteAtKey = "widget_pending_paste_at"
+
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
@@ -191,7 +194,7 @@ struct CopyValueIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let resolved = Self.resolveValue(id: id)
-    let value = resolved.value
+    var value = resolved.value
     let title = resolved.title
 
     guard !value.isEmpty else {
@@ -202,35 +205,34 @@ struct CopyValueIntent: AppIntent {
       )
     }
 
-    // IMPORTANT: Do not call setItems AFTER .string with a bad payload — setItems
-    // replaces the whole pasteboard. A failed/empty setItems wiped the value →
-    // other apps show no Paste menu (user report).
-    Self.writePasteboardPlainText(value)
-
-    // Verify write (extension sandbox / type issues)
-    let wrote = UIPasteboard.general.hasStrings
-      || (UIPasteboard.general.string?.isEmpty == false)
-    if !wrote {
-      // Last resort: plain string only
-      UIPasteboard.general.string = value
-    }
-
-    UINotificationFeedbackGenerator().notificationOccurred(.success)
+    // Stash for main-app rehydrate (extension pasteboard is flaky across hosts)
     if let d = UserDefaults(suiteName: appGroupId) {
+      d.set(value, forKey: pendingPasteValueKey)
+      d.set(Date().timeIntervalSince1970, forKey: pendingPasteAtKey)
+      d.set(value, forKey: "last_widget_copy_value")
       d.set(id, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
-      d.set(value, forKey: "last_widget_copy_value")
       d.synchronize()
     }
-    // Immediate UI: show green tick
+
+    Self.writePasteboardPlainText(value)
+
+    var ok = Self.pasteboardContains(value)
+    if !ok {
+      // Retry simplest API only
+      UIPasteboard.general.string = value
+      ok = Self.pasteboardContains(value)
+    }
+
+    UINotificationFeedbackGenerator().notificationOccurred(ok ? .success : .error)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-    // Safety net: force clear highlight after window (not the pasteboard!)
+
+    // Clear green tick only (never clear pasteboard / pending paste)
     Task {
       try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 200_000_000)
       if let d = UserDefaults(suiteName: appGroupId) {
         let ts = d.double(forKey: copiedAtKey)
-        let age = Date().timeIntervalSince1970 - ts
-        if age >= copiedHighlightSeconds - 0.05 {
+        if Date().timeIntervalSince1970 - ts >= copiedHighlightSeconds - 0.05 {
           d.removeObject(forKey: copiedIdKey)
           d.removeObject(forKey: copiedAtKey)
           d.synchronize()
@@ -239,50 +241,33 @@ struct CopyValueIntent: AppIntent {
       }
     }
 
-    if !UIPasteboard.general.hasStrings && (UIPasteboard.general.string ?? "").isEmpty {
+    if !ok {
+      // Last resort: open app deep-link copy (Flutter Clipboard is reliable)
       return .result(
         dialog: IntentDialog(
-          stringLiteral: "Copy failed — open ClipVal and copy from the vault."
+          stringLiteral: "Open ClipVal to finish copy, then paste."
         )
       )
     }
 
-    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)” — long-press to Paste"))
+    return .result(
+      dialog: IntentDialog(
+        stringLiteral: "Copied “\(title)” — switch app and Paste"
+      )
+    )
   }
 
-  /// Reliable general-pasteboard write for widget App Intents.
+  private static func pasteboardContains(_ value: String) -> Bool {
+    if UIPasteboard.general.string == value { return true }
+    if let strings = UIPasteboard.general.strings, strings.contains(value) { return true }
+    return UIPasteboard.general.hasStrings && !(UIPasteboard.general.string ?? "").isEmpty
+  }
+
+  /// Minimal pasteboard write — `.string` only (setItems has wiped values in prod).
   private static func writePasteboardPlainText(_ value: String) {
     let pb = UIPasteboard.general
-    let ns = value as NSString
-    let item: [String: Any] = [
-      "public.utf8-plain-text": ns,
-      "public.plain-text": ns,
-    ]
-
-    // Single coherent replace (setItems wipes prior contents — payload must be valid).
-    if #available(iOS 10.0, *) {
-      pb.setItems(
-        [item],
-        options: [
-          .localOnly: false,
-          // Keep long enough to switch apps and paste (was effectively empty before).
-          .expirationDate: Date().addingTimeInterval(60 * 60),
-        ]
-      )
-    } else {
-      pb.items = [item]
-    }
-
-    // Hosts that only read .string / hasStrings
+    pb.strings = [value]
     pb.string = value
-
-    // iOS 14+ object path (after items so we don't get wiped by a later setItems)
-    if #available(iOS 14.0, *) {
-      if !pb.hasStrings {
-        pb.setObjects([value])
-        pb.string = value
-      }
-    }
   }
 
   /// Resolve plaintext: per-id key → shared file → JSON blob.
@@ -389,7 +374,9 @@ struct ClipValWidgetEntryView: View {
         .foregroundStyle(.primary)
         .lineLimit(1)
       Spacer(minLength: 6)
-      Text(entry.justCopiedId == nil ? "Tap to copy" : "Copied ✓")
+      Text(entry.justCopiedId == nil
+           ? (entry.pinnedOnly ? "Favorites" : "Recent · tap copy")
+           : "Copied ✓")
         .font(.system(size: 11, weight: .semibold, design: .rounded))
         .foregroundStyle(entry.justCopiedId == nil ? .secondary : okGreen)
         .lineLimit(1)

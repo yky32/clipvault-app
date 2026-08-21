@@ -128,7 +128,8 @@ class WidgetSnapshotService {
     return String.fromCharCode(t.runes.first).toUpperCase();
   }
 
-  /// Prefer pinned, then recently used, then remaining — unless [pinnedOnly].
+  /// Widget ranking (default): **most recently copied first**, then pinned,
+  /// then remaining by updatedAt. [pinnedOnly] still forces favorites-only.
   /// Public for unit tests.
   static List<ClipItem> pickItemsForWidget(
     List<ClipItem> all, {
@@ -152,20 +153,38 @@ class WidgetSnapshotService {
       out.add(item);
     }
 
-    final pinned = all.where((i) => i.isPinned).toList();
-    for (final item in pinned) {
-      take(item);
+    if (pinnedOnly) {
+      final pinned = all.where((i) => i.isPinned).toList()
+        ..sort((a, b) {
+          final ac = a.lastCopiedAt;
+          final bc = b.lastCopiedAt;
+          if (ac != null && bc != null) return bc.compareTo(ac);
+          if (ac != null) return -1;
+          if (bc != null) return 1;
+          return b.updatedAt.compareTo(a.updatedAt);
+        });
+      for (final item in pinned) {
+        take(item);
+      }
+      return out;
     }
 
-    if (pinnedOnly) return out;
-
+    // 1) Most recently copied (primary — user request)
     final recent = all.where((i) => i.lastCopiedAt != null).toList()
       ..sort((a, b) => b.lastCopiedAt!.compareTo(a.lastCopiedAt!));
     for (final item in recent) {
       take(item);
     }
 
-    for (final item in all) {
+    // 2) Pinned not already included
+    final pinned = all.where((i) => i.isPinned).toList();
+    for (final item in pinned) {
+      take(item);
+    }
+
+    // 3) Rest by recent update
+    final rest = [...all]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    for (final item in rest) {
       take(item);
     }
 
