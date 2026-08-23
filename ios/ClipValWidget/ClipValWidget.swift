@@ -495,20 +495,9 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // 1.0.4 path: pass id + value + title on the intent (proven on device).
-    if #available(iOS 17.0, *) {
-      return Button(
-        intent: CopyValueIntent(
-          id: item.id,
-          value: item.value,
-          title: item.displayTitle
-        )
-      ) {
-        label
-      }
-      .buttonStyle(.plain)
-    }
-    // iOS 15–16 only
+    // ALWAYS open host app via deep link — App Intent pasteboard is NOT visible
+    // to WhatsApp/Safari on current iOS (only 自動填寫, no 貼上).
+    // Native AppDelegate + Flutter both write the real system pasteboard.
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
