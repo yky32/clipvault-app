@@ -23,8 +23,23 @@ import WidgetKit
     // Scene-based embedding often has nil `window` at launch. Retry until
     // FlutterViewController is available so method channels attach.
     registerNativeChannelsWhenReady(attemptsLeft: 20)
+    // Cold start from widget Link: copy ASAP before Flutter is ready.
+    if let url = launchOptions?[.url] as? URL {
+      Self.handleClipValCopyURL(url)
+    }
     Self.rehydratePendingWidgetPaste()
     return ok
+  }
+
+  /// Widget `clipval://copy?id=` — write pasteboard in main app immediately.
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    let handled = Self.handleClipValCopyURL(url)
+    let superOk = super.application(app, open: url, options: options)
+    return handled || superOk
   }
 
   /// Also catch late window attach (iOS 13+ scenes).
@@ -48,11 +63,101 @@ import WidgetKit
       defaults?.removeObject(forKey: "widget_pending_paste_at")
       return
     }
+    writeSystemPasteboard(value)
+    NSLog("[ClipVal] Rehydrated widget paste (%d chars)", value.count)
+  }
+
+  /// Handle `clipval://copy?id=` from Home Screen widget Link.
+  @discardableResult
+  private static func handleClipValCopyURL(_ url: URL) -> Bool {
+    guard url.scheme == "clipval" else { return false }
+    let host = (url.host ?? "").lowercased()
+    let path = url.path.lowercased()
+    let isCopy = host == "copy" || path == "/copy" || path.hasPrefix("/copy/")
+    guard isCopy else { return false }
+
+    let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+      .queryItems?
+      .first(where: { $0.name == "id" })?
+      .value?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let id, !id.isEmpty else {
+      NSLog("[ClipVal] copy URL missing id: %@", url.absoluteString)
+      return true
+    }
+
+    guard let value = loadWidgetValue(for: id), !value.isEmpty else {
+      NSLog("[ClipVal] copy URL: no value in App Group for id %@", id)
+      return true
+    }
+
+    writeSystemPasteboard(value)
+    if let d = UserDefaults(suiteName: appGroupId) {
+      d.set(value, forKey: "widget_pending_paste_value")
+      d.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
+      d.set(id, forKey: "widget_copied_id")
+      d.set(Date().timeIntervalSince1970, forKey: "widget_copied_at")
+      d.synchronize()
+    }
+    if #available(iOS 14.0, *) {
+      WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+    }
+    NSLog("[ClipVal] Native copy from widget URL (%d chars, id=%@)", value.count, id)
+    return true
+  }
+
+  private static func writeSystemPasteboard(_ value: String) {
     let pb = UIPasteboard.general
-    // Always rewrite — widget intent may have opened us for this purpose.
+    let ns = value as NSString
+    pb.setItems(
+      [[
+        "public.utf8-plain-text": ns,
+        "public.plain-text": ns,
+      ]],
+      options: [
+        .localOnly: false,
+        .expirationDate: Date().addingTimeInterval(60 * 60),
+      ]
+    )
     pb.strings = [value]
     pb.string = value
-    NSLog("[ClipVal] Rehydrated widget paste (%d chars)", value.count)
+  }
+
+  private static func loadWidgetValue(for id: String) -> String? {
+    let d = UserDefaults(suiteName: appGroupId)
+    d?.synchronize()
+    if let v = d?.string(forKey: "wv_\(id)"), !v.isEmpty { return v }
+    if let mapData = d?.data(forKey: "widget_values_map"),
+       let map = try? JSONSerialization.jsonObject(with: mapData) as? [String: Any],
+       let v = map[id] as? String, !v.isEmpty
+    {
+      return v
+    }
+    if let raw = d?.string(forKey: "widget_items_json"),
+       let data = raw.data(using: .utf8),
+       let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+       let items = obj["items"] as? [[String: Any]],
+       let item = items.first(where: { ($0["id"] as? String) == id }),
+       let v = item["value"] as? String,
+       !v.isEmpty
+    {
+      return v
+    }
+    if let container = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: appGroupId
+    ) {
+      let file = container.appendingPathComponent("widget_items.json")
+      if let data = try? Data(contentsOf: file),
+         let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+         let items = obj["items"] as? [[String: Any]],
+         let item = items.first(where: { ($0["id"] as? String) == id }),
+         let v = item["value"] as? String,
+         !v.isEmpty
+      {
+        return v
+      }
+    }
+    return nil
   }
 
   private func registerNativeChannelsWhenReady(attemptsLeft: Int) {
@@ -136,9 +241,7 @@ import WidgetKit
           )
           return
         }
-        let pb = UIPasteboard.general
-        pb.strings = [value]
-        pb.string = value
+        Self.writeSystemPasteboard(value)
         let d = UserDefaults(suiteName: Self.appGroupId)
         d?.set(value, forKey: "widget_pending_paste_value")
         d?.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
