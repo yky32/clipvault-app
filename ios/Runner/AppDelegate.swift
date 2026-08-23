@@ -107,20 +107,13 @@ import WidgetKit
   }
 
   private static func writeSystemPasteboard(_ value: String) {
+    // Plain string only — setItems has caused WhatsApp "Paste" with empty insert.
     let pb = UIPasteboard.general
-    let ns = value as NSString
-    pb.setItems(
-      [[
-        "public.utf8-plain-text": ns,
-        "public.plain-text": ns,
-      ]],
-      options: [
-        .localOnly: false,
-        .expirationDate: Date().addingTimeInterval(60 * 60),
-      ]
-    )
-    pb.strings = [value]
     pb.string = value
+    if pb.string != value {
+      pb.strings = [value]
+      pb.string = value
+    }
   }
 
   private static func loadWidgetValue(for id: String) -> String? {

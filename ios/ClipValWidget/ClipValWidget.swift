@@ -172,14 +172,16 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (no app open)
-// Prefer App Group value by id (authoritative after writeSnapshot).
-// Never write empty string. openAppWhenRun = false → stay on Home Screen.
+// MARK: - Copy
+// WhatsApp shows Paste but inserts blank when clipboard is written only from the
+// widget extension. openAppWhenRun=true runs perform in the HOST app process.
+// Write ONLY UIPasteboard.general.string (setItems has produced empty pastes).
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
-  static var openAppWhenRun: Bool = false
+  /// Required so WhatsApp actually receives text (not empty paste).
+  static var openAppWhenRun: Bool = true
   static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
@@ -194,14 +196,15 @@ struct CopyValueIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let itemId = id.trimmingCharacters(in: .whitespacesAndNewlines)
-    // App Group first (full plaintext from last app sync), then intent param.
+    // App Group first (full plaintext), then intent param.
     var text = ""
     if !itemId.isEmpty {
       text = Self.loadValue(for: itemId) ?? ""
     }
-    if text.isEmpty {
+    if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       text = value
     }
+    text = text.trimmingCharacters(in: .whitespacesAndNewlines)
     let label = title.isEmpty ? "ClipVal" : title
 
     guard !text.isEmpty else {
@@ -213,21 +216,13 @@ struct CopyValueIntent: AppIntent {
       )
     }
 
-    // System pasteboard — stay on Home Screen (openAppWhenRun = false)
-    let pb = UIPasteboard.general
-    let ns = text as NSString
-    pb.setItems(
-      [[
-        "public.utf8-plain-text": ns,
-        "public.plain-text": ns,
-      ]],
-      options: [
-        .localOnly: false,
-        .expirationDate: Date().addingTimeInterval(60 * 60),
-      ]
-    )
-    pb.strings = [text]
-    pb.string = text
+    // ONE reliable write path — plain string only (WhatsApp-compatible)
+    UIPasteboard.general.string = text
+    // Reinforce
+    if UIPasteboard.general.string != text {
+      UIPasteboard.general.strings = [text]
+      UIPasteboard.general.string = text
+    }
 
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(text, forKey: "widget_pending_paste_value")
@@ -238,24 +233,13 @@ struct CopyValueIntent: AppIntent {
     }
 
     UINotificationFeedbackGenerator().notificationOccurred(.success)
-    let impact = UIImpactFeedbackGenerator(style: .medium)
-    impact.impactOccurred(intensity: 0.9)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
 
-    // Clear green tick after highlight window
-    Task {
-      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
-      if let d = UserDefaults(suiteName: appGroupId),
-         d.string(forKey: copiedIdKey) == itemId
-      {
-        d.removeObject(forKey: copiedIdKey)
-        d.removeObject(forKey: copiedAtKey)
-        d.synchronize()
-        WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-      }
-    }
-
-    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(label)”"))
+    return .result(
+      dialog: IntentDialog(
+        stringLiteral: "Copied “\(label)” (\(text.count) chars) — go back & Paste"
+      )
+    )
   }
 
   private static func loadValue(for id: String) -> String? {
@@ -518,8 +502,8 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // In-widget copy — do NOT open ClipVal (Home Screen stay).
-    // Deep-link path remains in AppDelegate if something still opens clipval://copy.
+    // Host-app copy so paste inserts real text (not empty).
+    // openAppWhenRun=true → brief ClipVal open is required on current iOS.
     if #available(iOS 17.0, *) {
       return Button(
         intent: CopyValueIntent(
@@ -532,7 +516,6 @@ struct ClipValWidgetEntryView: View {
       }
       .buttonStyle(.plain)
     }
-    // iOS 15–16: no App Intent buttons → must open app
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
