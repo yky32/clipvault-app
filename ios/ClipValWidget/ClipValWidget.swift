@@ -172,13 +172,18 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (restored from 1.0.4+55 — proven on device)
-// Do not "improve" pasteboard writes. Simple path only.
+// MARK: - Copy
+// 1) Never write empty string (clears pasteboard but still showed "Copied").
+// 2) Resolve value: intent param → App Group wv_id / JSON (by id).
+// 3) openAppWhenRun = true so pasteboard is host-visible (WhatsApp/Safari Paste).
+//    Extension-only writes → only 自動填寫, no 貼上 on modern iOS.
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
-  static var openAppWhenRun: Bool = false
+  /// Host app process — required for other apps to see Paste.
+  static var openAppWhenRun: Bool = true
+  static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
   @Parameter(title: "Value") var value: String
@@ -191,16 +196,76 @@ struct CopyValueIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    // === 1.0.4 exact path — do not change ===
-    UIPasteboard.general.string = value
-    UINotificationFeedbackGenerator().notificationOccurred(.success)
+    let itemId = id.trimmingCharacters(in: .whitespacesAndNewlines)
+    var text = value
+    // Intent value can arrive empty/truncated — load from App Group by id.
+    if text.isEmpty, !itemId.isEmpty {
+      text = Self.loadValue(for: itemId) ?? ""
+    }
+    let label = title.isEmpty ? "ClipVal" : title
+
+    guard !text.isEmpty else {
+      UINotificationFeedbackGenerator().notificationOccurred(.error)
+      return .result(
+        dialog: IntentDialog(
+          stringLiteral: "Nothing to copy. Open ClipVal once, then try again."
+        )
+      )
+    }
+
+    // Stash first — AppDelegate rehydrates on becomeActive (belt + suspenders)
     if let d = UserDefaults(suiteName: appGroupId) {
-      d.set(id, forKey: copiedIdKey)
+      d.set(text, forKey: "widget_pending_paste_value")
+      d.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
+      d.set(itemId, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
       d.synchronize()
     }
+
+    // Real system pasteboard (app process)
+    let pb = UIPasteboard.general
+    pb.string = text
+    pb.strings = [text]
+
+    UINotificationFeedbackGenerator().notificationOccurred(.success)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
+
+    return .result(
+      dialog: IntentDialog(stringLiteral: "Copied “\(label)” — switch app & Paste")
+    )
+  }
+
+  private static func loadValue(for id: String) -> String? {
+    let d = UserDefaults(suiteName: appGroupId)
+    d?.synchronize()
+    if let v = d?.string(forKey: "wv_\(id)"), !v.isEmpty { return v }
+    if let mapData = d?.data(forKey: "widget_values_map"),
+       let map = try? JSONSerialization.jsonObject(with: mapData) as? [String: Any],
+       let v = map[id] as? String, !v.isEmpty
+    {
+      return v
+    }
+    if let raw = d?.string(forKey: itemsKey),
+       let data = raw.data(using: .utf8),
+       let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data),
+       let item = payload.items.first(where: { $0.id == id }),
+       !item.value.isEmpty
+    {
+      return item.value
+    }
+    if let container = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: appGroupId
+    ) {
+      let file = container.appendingPathComponent("widget_items.json")
+      if let data = try? Data(contentsOf: file),
+         let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data),
+         let item = payload.items.first(where: { $0.id == id }),
+         !item.value.isEmpty
+      {
+        return item.value
+      }
+    }
+    return nil
   }
 }
 
