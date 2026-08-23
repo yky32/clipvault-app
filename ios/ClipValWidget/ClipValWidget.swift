@@ -172,9 +172,12 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (iOS 17+, no app launch)
-// CRITICAL: Intent takes ONLY itemID. Value is always loaded from App Group by that id.
-// Passing `value` as an AppIntent parameter caused wrong-item copies (param mix-up).
+// MARK: - Copy (iOS 17+)
+// CRITICAL: Intent takes ONLY itemID. Value loaded from App Group by that id.
+// openAppWhenRun MUST be true: UIPasteboard writes from the widget extension
+// process are NOT visible to Safari/WhatsApp (empty Paste / only 自動填寫).
+// System briefly opens ClipVal, perform() runs in the app process, then user
+// can switch back — pasteboard is real.
 
 private let pendingPasteValueKey = "widget_pending_paste_value"
 private let pendingPasteAtKey = "widget_pending_paste_at"
@@ -183,10 +186,10 @@ private let valuesMapKey = "widget_values_map"
 @available(iOS 17.0, *)
 struct CopyVaultItemIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy ClipVal Item"
-  static var openAppWhenRun: Bool = false
+  /// Required for system pasteboard to be readable by other apps.
+  static var openAppWhenRun: Bool = true
   static var isDiscoverable: Bool = false
 
-  /// Stable vault item id — the only input.
   @Parameter(title: "Item ID")
   var itemID: String
 
@@ -215,7 +218,7 @@ struct CopyVaultItemIntent: AppIntent {
       return .result(dialog: IntentDialog(stringLiteral: "Open ClipVal once to refresh widget"))
     }
 
-    // Instant feedback BEFORE pasteboard (timeline reload is slow otherwise)
+    // App Group + green tick
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(id, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
@@ -227,30 +230,15 @@ struct CopyVaultItemIntent: AppIntent {
     }
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
 
-    // Strong haptic so user feels the tap landed
     let impact = UIImpactFeedbackGenerator(style: .medium)
     impact.prepare()
     impact.impactOccurred(intensity: 1.0)
     UINotificationFeedbackGenerator().notificationOccurred(.success)
 
-    // System pasteboard
-    let pb = UIPasteboard.general
-    pb.strings = [text]
-    pb.string = text
-    let ok = (pb.string == text)
+    // Write general pasteboard in APP process (openAppWhenRun = true)
+    Self.writeSystemPasteboard(text)
 
-    if !ok {
-      if let d = UserDefaults(suiteName: appGroupId) {
-        d.removeObject(forKey: copiedIdKey)
-        d.removeObject(forKey: copiedAtKey)
-        d.synchronize()
-      }
-      WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-      UINotificationFeedbackGenerator().notificationOccurred(.error)
-      return .result(dialog: IntentDialog(stringLiteral: "Copy failed — try again"))
-    }
-
-    // Clear green state after highlight window
+    // Clear green state later
     Task {
       try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
       if let d = UserDefaults(suiteName: appGroupId) {
@@ -263,8 +251,27 @@ struct CopyVaultItemIntent: AppIntent {
       }
     }
 
-    // System snippet at top of screen — unmistakable "I got your tap"
-    return .result(dialog: IntentDialog(stringLiteral: "Copied — ready to paste"))
+    return .result(
+      dialog: IntentDialog(stringLiteral: "Copied — go back & long-press to Paste")
+    )
+  }
+
+  /// Host-app-visible pasteboard write.
+  private static func writeSystemPasteboard(_ value: String) {
+    let pb = UIPasteboard.general
+    let ns = value as NSString
+    pb.setItems(
+      [[
+        "public.utf8-plain-text": ns,
+        "public.plain-text": ns,
+      ]],
+      options: [
+        .localOnly: false,
+        .expirationDate: Date().addingTimeInterval(60 * 30),
+      ]
+    )
+    pb.strings = [value]
+    pb.string = value
   }
 
   /// Load value for exactly this id from App Group (map → wv_ → JSON).
