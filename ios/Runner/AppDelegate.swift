@@ -35,7 +35,7 @@ import WidgetKit
     Self.rehydratePendingWidgetPaste()
   }
 
-  /// If widget App Intent stashed a recent value, ensure UIPasteboard.general has it.
+  /// If widget App Intent stashed a recent value, force system pasteboard.
   private static func rehydratePendingWidgetPaste() {
     let defaults = UserDefaults(suiteName: appGroupId)
     guard let value = defaults?.string(forKey: "widget_pending_paste_value"),
@@ -49,7 +49,7 @@ import WidgetKit
       return
     }
     let pb = UIPasteboard.general
-    if pb.string == value { return }
+    // Always rewrite — widget intent may have opened us for this purpose.
     pb.strings = [value]
     pb.string = value
     NSLog("[ClipVal] Rehydrated widget paste (%d chars)", value.count)
