@@ -172,101 +172,37 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (1.0.4 proven path — keep it simple)
-// 1.0.4 worked: pass value on the Button intent, write UIPasteboard.general.string,
-// openAppWhenRun = false (stay on Home Screen). Later 1.1.1 rewrites broke paste.
+// MARK: - Copy (restored from 1.0.4+55 — proven on device)
+// Do not "improve" pasteboard writes. Simple path only.
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
   static var openAppWhenRun: Bool = false
-  static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
   @Parameter(title: "Value") var value: String
   @Parameter(title: "Title") var title: String
 
-  init() {
-    id = ""
-    value = ""
-    title = ""
-  }
-
+  init() { id = ""; value = ""; title = "" }
   init(id: String, value: String, title: String) {
-    self.id = id
-    self.value = value
-    self.title = title
+    self.id = id; self.value = value; self.title = title
   }
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    // Prefer intent value (1.0.4). Fallback App Group if empty.
-    var text = value
-    if text.isEmpty, !id.isEmpty {
-      text = Self.fallbackValue(for: id) ?? ""
-    }
-    guard !text.isEmpty else {
-      UINotificationFeedbackGenerator().notificationOccurred(.error)
-      return .result(dialog: IntentDialog(stringLiteral: "Nothing to copy — open ClipVal once"))
-    }
-
-    // Exactly 1.0.4: one-line pasteboard write
-    UIPasteboard.general.string = text
-
+    // === 1.0.4 exact path — do not change ===
+    UIPasteboard.general.string = value
     UINotificationFeedbackGenerator().notificationOccurred(.success)
-    let impact = UIImpactFeedbackGenerator(style: .medium)
-    impact.impactOccurred(intensity: 1.0)
-
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(id, forKey: copiedIdKey)
       d.set(Date().timeIntervalSince1970, forKey: copiedAtKey)
-      d.set(text, forKey: "widget_pending_paste_value")
-      d.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
       d.synchronize()
     }
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-
-    // Auto-clear green tick (timeline entry + safety net)
-    Task {
-      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
-      if let d = UserDefaults(suiteName: appGroupId),
-         d.string(forKey: copiedIdKey) == id
-      {
-        d.removeObject(forKey: copiedIdKey)
-        d.removeObject(forKey: copiedAtKey)
-        d.synchronize()
-        WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
-      }
-    }
-
-    let label = title.isEmpty ? "ClipVal" : title
-    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(label)”"))
-  }
-
-  private static func fallbackValue(for id: String) -> String? {
-    let d = UserDefaults(suiteName: appGroupId)
-    d?.synchronize()
-    if let v = d?.string(forKey: "wv_\(id)"), !v.isEmpty { return v }
-    if let mapData = d?.data(forKey: "widget_values_map"),
-       let map = try? JSONSerialization.jsonObject(with: mapData) as? [String: Any],
-       let v = map[id] as? String, !v.isEmpty
-    {
-      return v
-    }
-    if let raw = d?.string(forKey: itemsKey),
-       let data = raw.data(using: .utf8),
-       let payload = try? JSONDecoder().decode(WidgetPayload.self, from: data),
-       let item = payload.items.first(where: { $0.id == id }),
-       !item.value.isEmpty
-    {
-      return item.value
-    }
-    return nil
+    return .result(dialog: IntentDialog(stringLiteral: "Copied “\(title)”"))
   }
 }
-
-@available(iOS 17.0, *)
-typealias CopyVaultItemIntent = CopyValueIntent
 
 // MARK: - UI: responsive grid — fills free space, scales by item count
 
