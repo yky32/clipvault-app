@@ -172,15 +172,15 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy (default: stay on Home Screen)
-// openAppWhenRun=false — no jump into ClipVal.
-// Pasteboard write matches the proven AppDelegate plain-string path.
-// Settings → "Open app when copying" forces deep link if paste is flaky.
+// MARK: - Copy
+// WhatsApp pastes blank when clipboard is written only in the widget extension.
+// openAppWhenRun=true writes in the HOST app process (real paste text).
+// App auto-returns Home via moveToBackground so user is not stuck in ClipVal.
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
-  static var openAppWhenRun: Bool = false
+  static var openAppWhenRun: Bool = true
   static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
@@ -511,15 +511,8 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // Default: in-widget AppIntent (no open app). Optional Settings flag opens app.
-    let opensApp =
-      UserDefaults(suiteName: appGroupId)?.bool(forKey: "widget_copy_opens_app")
-      ?? false
-    if opensApp {
-      return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
-        label
-      }
-    }
+    // iOS 17+: open host briefly (required for WhatsApp paste text), then bounce Home.
+    // iOS 15–16: deep link + bounce after copy.
     if #available(iOS 17.0, *) {
       return Button(
         intent: CopyValueIntent(
