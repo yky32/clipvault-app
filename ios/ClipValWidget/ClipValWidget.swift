@@ -511,8 +511,11 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // ALWAYS deep-link — single reliable path.
-    // AppDelegate writes pasteboard on open; Flutter reinforces; then auto Home.
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🔒 LOCKED functional path (1.1.1+116 / PR#74) — docs/HOME_WIDGET.md
+    // ALWAYS deep-link. AppIntent-only clipboard breaks WhatsApp (empty paste).
+    // Do not switch back to openAppWhenRun=false without device+WhatsApp QA.
+    // ═══════════════════════════════════════════════════════════════════════════
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }

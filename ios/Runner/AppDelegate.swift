@@ -153,6 +153,7 @@ import WidgetKit
     )
   }
 
+  // 🔒 LOCKED: plain string only — see docs/HOME_WIDGET.md
   private static func writeSystemPasteboard(_ value: String) {
     let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else {
