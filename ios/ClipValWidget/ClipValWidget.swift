@@ -502,20 +502,9 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // Host-app copy so paste inserts real text (not empty).
-    // openAppWhenRun=true → brief ClipVal open is required on current iOS.
-    if #available(iOS 17.0, *) {
-      return Button(
-        intent: CopyValueIntent(
-          id: item.id,
-          value: item.value,
-          title: item.displayTitle
-        )
-      ) {
-        label
-      }
-      .buttonStyle(.plain)
-    }
+    // ALWAYS deep-link into ClipVal. App Intent (even openAppWhenRun) still
+    // produced WhatsApp "Paste" with blank insert on device. Native
+    // AppDelegate + Flutter write UIPasteboard.general.string on open.
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }

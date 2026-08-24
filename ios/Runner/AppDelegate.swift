@@ -46,8 +46,14 @@ import WidgetKit
   override func applicationDidBecomeActive(_ application: UIApplication) {
     super.applicationDidBecomeActive(application)
     registerNativeChannelsWhenReady(attemptsLeft: 5)
-    // Re-apply widget copy onto system pasteboard (extension writes are flaky).
+    // Re-apply widget copy multiple times — Flutter startup can race pasteboard.
     Self.rehydratePendingWidgetPaste()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+      Self.rehydratePendingWidgetPaste()
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+      Self.rehydratePendingWidgetPaste()
+    }
   }
 
   /// If widget App Intent stashed a recent value, force system pasteboard.
@@ -107,13 +113,24 @@ import WidgetKit
   }
 
   private static func writeSystemPasteboard(_ value: String) {
-    // Plain string only — setItems has caused WhatsApp "Paste" with empty insert.
-    let pb = UIPasteboard.general
-    pb.string = value
-    if pb.string != value {
-      pb.strings = [value]
-      pb.string = value
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+      NSLog("[ClipVal] refuse empty pasteboard write")
+      return
     }
+    // Plain string only — never setItems (WhatsApp empty paste).
+    let pb = UIPasteboard.general
+    pb.string = nil
+    pb.string = trimmed
+    pb.strings = [trimmed]
+    pb.string = trimmed
+    let ok = pb.string == trimmed
+    NSLog(
+      "[ClipVal] pasteboard write chars=%d ok=%@ preview=%@",
+      trimmed.count,
+      ok ? "YES" : "NO",
+      String(trimmed.prefix(24))
+    )
   }
 
   private static func loadWidgetValue(for id: String) -> String? {
@@ -240,6 +257,28 @@ import WidgetKit
         d?.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
         d?.synchronize()
         result(true)
+      case "forcePasteboardById":
+        guard let args = call.arguments as? [String: Any],
+              let id = args["id"] as? String,
+              !id.isEmpty
+        else {
+          result(
+            FlutterError(code: "bad_args", message: "id required", details: nil)
+          )
+          return
+        }
+        guard let value = Self.loadWidgetValue(for: id), !value.isEmpty else {
+          result(
+            FlutterError(code: "not_found", message: "no value for id", details: id)
+          )
+          return
+        }
+        Self.writeSystemPasteboard(value)
+        let d2 = UserDefaults(suiteName: Self.appGroupId)
+        d2?.set(value, forKey: "widget_pending_paste_value")
+        d2?.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
+        d2?.synchronize()
+        result(["chars": value.count, "preview": String(value.prefix(40))])
       case "writeSnapshot":
         // args: { json: String, keyboardJson: String? }
         guard let args = call.arguments as? [String: Any],
