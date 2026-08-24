@@ -59,12 +59,11 @@ Goal: keep **paste correctness**, reduce jump flash.
 
 | Idea | Notes | Risk |
 |------|--------|------|
-| A. Shorter bounce (0.5s) | Faster return Home | May paste empty again if too fast |
-| B. openAppWhenRun + silent bounce | No URL round-trip | Intent empty-value regressions |
+| **A. Minimal full-screen “Copied” (shipped)** | `/widget-copy` flash · no vault chrome · bounce | Low if paste path unchanged |
+| B. Shorter bounce (0.5s) | Faster return Home | May paste empty again if too fast |
 | C. ClipVal Keyboard insert path | Widget only “selects”; keyboard inserts | Different mental model |
-| D. Minimal full-screen “Copied” route | No vault UI flash | Still opens app process |
-| E. Stay in previous app via better suspend | Timing / App Review | Private-ish suspend API |
-| F. Accept flash; polish HUD only | Lowest risk | UX still “weird” |
+| D. Stay in previous app via better suspend | Timing / App Review | Private-ish suspend API |
+| E. Zero open app (AppIntent-only) | Ideal | **High — failed multiple times** |
 
 **Rule:** Any UX experiment needs side-by-side QA: widget → WhatsApp 貼上 **non-empty**. If empty → revert to locked path.
 

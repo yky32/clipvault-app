@@ -7,6 +7,7 @@ import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/vault/bloc/vault_bloc.dart';
 import '../../features/vault/presentation/pages/vault_page.dart';
+import '../../features/widget_copy/presentation/pages/widget_copy_flash_page.dart';
 import '../bootstrap/app_bootstrap.dart';
 import '../constants/app_constants.dart';
 import '../services/share_intake_service.dart';
@@ -27,18 +28,18 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: rootKey,
     initialLocation: initialLocation,
-    // Widget opens clipval://copy?id=… — treat as action, not a page route.
+    // Widget opens clipval://copy?id=… — flash page, not vault.
     redirect: (context, state) {
       final uri = state.uri;
       if (ShareIntakeService.isShareUri(uri)) {
         ShareIntakeService.consumePending();
-        return WidgetDeepLink.landingLocation;
+        return WidgetDeepLink.vaultLandingLocation;
       }
       if (uri.scheme == AppConstants.urlScheme ||
           WidgetDeepLink.isWidgetCopyUri(uri)) {
         // Fire-and-forget copy; do not await inside redirect.
         WidgetDeepLink.handle(uri);
-        return WidgetDeepLink.landingLocation;
+        return WidgetDeepLink.copyFlashLocation;
       }
       // go_router sometimes passes full custom-scheme URI as the location.
       final loc = state.matchedLocation;
@@ -47,14 +48,14 @@ class AppRouter {
         if (parsed != null) {
           if (ShareIntakeService.isShareUri(parsed)) {
             ShareIntakeService.consumePending();
-            return WidgetDeepLink.landingLocation;
+            return WidgetDeepLink.vaultLandingLocation;
           }
           if (WidgetDeepLink.isWidgetCopyUri(parsed)) {
             WidgetDeepLink.handle(parsed);
-            return WidgetDeepLink.landingLocation;
+            return WidgetDeepLink.copyFlashLocation;
           }
         }
-        return WidgetDeepLink.landingLocation;
+        return WidgetDeepLink.copyFlashLocation;
       }
       return null;
     },
@@ -62,13 +63,13 @@ class AppRouter {
       final uri = state.uri;
       if (ShareIntakeService.isShareUri(uri)) {
         ShareIntakeService.consumePending();
-        router.go(WidgetDeepLink.landingLocation);
+        router.go(WidgetDeepLink.vaultLandingLocation);
         return;
       }
       if (WidgetDeepLink.isWidgetCopyUri(uri) ||
           uri.scheme == AppConstants.urlScheme) {
         WidgetDeepLink.handle(uri);
-        router.go(WidgetDeepLink.landingLocation);
+        router.go(WidgetDeepLink.copyFlashLocation);
         return;
       }
       // Fallback: unknown routes → vault
@@ -84,6 +85,12 @@ class AppRouter {
         path: '/lock',
         name: 'lock',
         builder: (_, __) => const LockPage(),
+      ),
+      // Widget copy flash — outside vault shell (no list chrome).
+      GoRoute(
+        path: WidgetDeepLink.copyFlashLocation,
+        name: 'widget-copy-flash',
+        builder: (_, __) => const WidgetCopyFlashPage(),
       ),
       ShellRoute(
         builder: (context, state, child) {

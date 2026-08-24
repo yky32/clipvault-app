@@ -226,6 +226,21 @@ import WidgetKit
     return nil
   }
 
+  private static func loadWidgetTitle(for id: String) -> String? {
+    let d = UserDefaults(suiteName: appGroupId)
+    d?.synchronize()
+    if let raw = d?.string(forKey: "widget_items_json"),
+       let data = raw.data(using: .utf8),
+       let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+       let items = obj["items"] as? [[String: Any]],
+       let item = items.first(where: { ($0["id"] as? String) == id })
+    {
+      if let t = item["title"] as? String, !t.isEmpty { return t }
+      if let t = item["displayTitle"] as? String, !t.isEmpty { return t }
+    }
+    return nil
+  }
+
   private func registerNativeChannelsWhenReady(attemptsLeft: Int) {
     if nativeChannelsRegistered { return }
 
@@ -354,7 +369,12 @@ import WidgetKit
         d2?.set(value, forKey: "widget_pending_paste_value")
         d2?.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
         d2?.synchronize()
-        result(["chars": value.count, "preview": String(value.prefix(40))])
+        let title = Self.loadWidgetTitle(for: id) ?? ""
+        result([
+          "chars": value.count,
+          "preview": String(value.prefix(40)),
+          "title": title,
+        ])
       case "writeSnapshot":
         // args: { json: String, keyboardJson: String? }
         guard let args = call.arguments as? [String: Any],
