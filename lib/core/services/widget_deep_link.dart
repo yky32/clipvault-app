@@ -1,21 +1,25 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../bootstrap/app_bootstrap.dart';
 import '../constants/app_constants.dart';
-import '../navigation/app_router.dart';
-import '../widgets/copied_hud.dart';
-import '../../l10n/app_localizations.dart';
 
 /// Handles `clipval://copy?id=<uuid>` from the Home Screen widget.
 ///
 /// Must not be treated as a GoRouter path — see [AppRouter] redirect.
+/// UX (option A): land on `/widget-copy` full-screen flash — not vault.
 abstract final class WidgetDeepLink {
   static String? _lastHandledId;
   static DateTime? _lastHandledAt;
   static const _channel = MethodChannel('com.clipval/widget');
+
+  /// Shown on [WidgetCopyFlashPage] after a widget copy.
+  static String? lastFlashTitle;
+  static int? lastFlashChars;
+
+  /// Full-screen flash (not vault). Pasteboard already written natively.
+  static const copyFlashLocation = '/widget-copy';
 
   /// Returns true if [uri] is a ClipVal widget deep link we recognize.
   static bool isWidgetCopyUri(Uri uri) {
@@ -28,7 +32,8 @@ abstract final class WidgetDeepLink {
     return false;
   }
 
-  /// Copy the item and show HUD. Safe to call from redirect / HomeWidget / onException.
+  /// Copy the item. Safe to call from redirect / HomeWidget / onException.
+  /// Does **not** show vault HUD — flash page is the UX surface.
   static Future<void> handle(Uri? uri) async {
     if (uri == null || !isWidgetCopyUri(uri)) return;
 
@@ -47,30 +52,28 @@ abstract final class WidgetDeepLink {
 
     String? value;
     String title = 'ClipVal';
+    int? chars;
 
     final item = AppBootstrap.clipItemRepository.getById(id);
     if (item != null && item.value.trim().isNotEmpty) {
       value = item.value;
       title = item.title.trim().isEmpty ? title : item.title;
+      chars = value.length;
       await AppBootstrap.clipboardService.copy(value);
       await _forceNativePasteboard(value);
       unawaited(AppBootstrap.clipItemRepository.markCopied(item.id));
       unawaited(AppBootstrap.widgetSnapshotService.sync());
     } else {
       // Vault locked / not ready — AppDelegate should have written from App Group.
-      // Reinforce via native id lookup.
       try {
         final res = await _channel.invokeMethod<dynamic>(
           'forcePasteboardById',
           {'id': id},
         );
-        if (res is Map && res['chars'] is int) {
-          final chars = res['chars'] as int;
-          if (chars <= 0) {
-            _showHud('Copy failed — open vault once');
-            return;
-          }
-          title = 'Copied ($chars chars)';
+        if (res is Map) {
+          if (res['chars'] is int) chars = res['chars'] as int;
+          final t = res['title'];
+          if (t is String && t.trim().isNotEmpty) title = t.trim();
         }
       } catch (_) {
         try {
@@ -79,24 +82,23 @@ abstract final class WidgetDeepLink {
       }
     }
 
+    lastFlashTitle = title;
+    lastFlashChars = chars ?? value?.length;
+
     // Re-write after Flutter settle, then request bounce (native times it).
     if (value != null && value.trim().isNotEmpty) {
       final v = value;
       await _forceNativePasteboard(v);
-      _showHud(
-        '${title.length > 28 ? '${title.substring(0, 28)}…' : title} · ${value.length} chars',
-      );
       unawaited(Future<void>.delayed(const Duration(milliseconds: 300), () async {
         await _forceNativePasteboard(v);
       }));
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 800), () async {
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 900), () async {
         await _forceNativePasteboard(v);
         try {
           await _channel.invokeMethod<void>('bounceIfWidgetCopy');
         } catch (_) {}
       }));
     } else {
-      // Native should still have written from App Group — reinforce + bounce
       try {
         await _channel.invokeMethod<void>(
           'forcePasteboardById',
@@ -107,8 +109,7 @@ abstract final class WidgetDeepLink {
           await _channel.invokeMethod<void>('rehydratePaste');
         } catch (_) {}
       }
-      _showHud(title.startsWith('Copied') ? title : 'Copied');
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 800), () async {
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 900), () async {
         try {
           await _channel.invokeMethod<void>('bounceIfWidgetCopy');
         } catch (_) {}
@@ -124,35 +125,12 @@ abstract final class WidgetDeepLink {
     } catch (_) {}
   }
 
-  static void _showHud(String message) {
-    void show() {
-      final ctx = AppRouter.rootKey.currentContext;
-      if (ctx == null || !ctx.mounted) return;
-      HapticFeedback.mediumImpact();
-      // Prefer l10n when simple copied; otherwise show diagnostic message.
-      try {
-        final l10n = AppLocalizations.of(ctx);
-        if (message.startsWith('Copied') || message.contains('chars')) {
-          CopiedHud.show(ctx, message: message);
-        } else {
-          CopiedHud.show(ctx, message: l10n.copied(message));
-        }
-      } catch (_) {
-        CopiedHud.show(ctx, message: message);
-      }
-    }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      show();
-      if (AppRouter.rootKey.currentContext == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => show());
-      }
-    });
-  }
-
-  /// Where to land after handling a widget deep link.
-  static String get landingLocation {
+  /// Share / non-copy deep links still land on vault (or lock).
+  static String get vaultLandingLocation {
     if (AppBootstrap.authService.requiresUnlock) return '/lock';
     return '/vault';
   }
+
+  /// Widget copy → flash page (option A UX). Never vault chrome.
+  static String get landingLocation => copyFlashLocation;
 }
