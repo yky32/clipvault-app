@@ -511,20 +511,8 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // iOS 17+: open host briefly (required for WhatsApp paste text), then bounce Home.
-    // iOS 15–16: deep link + bounce after copy.
-    if #available(iOS 17.0, *) {
-      return Button(
-        intent: CopyValueIntent(
-          id: item.id,
-          value: item.value,
-          title: item.displayTitle
-        )
-      ) {
-        label
-      }
-      .buttonStyle(.plain)
-    }
+    // ALWAYS deep-link — single reliable path.
+    // AppDelegate writes pasteboard on open; Flutter reinforces; then auto Home.
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
