@@ -231,7 +231,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get widgetPinnedOnly => 'Favorites only';
 
   @override
-  String get widgetPinnedOnlySubtitle => 'Show only pinned items (off = recent copies first)';
+  String get widgetPinnedOnlySubtitle =>
+      'Show only pinned items (off = recent copies first)';
+
+  @override
+  String get widgetCopyOpensApp => 'Open app when copying';
+
+  @override
+  String get widgetCopyOpensAppSubtitle =>
+      'More reliable Paste in WhatsApp. Off = stay on Home Screen.';
 
   @override
   String get widgetHideTitlesWhenLocked => 'Hide titles when locked';

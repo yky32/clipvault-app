@@ -39,6 +39,7 @@ class WidgetSnapshotService {
       final settings = SettingsService.instance;
       // Prefer settings; migration clears stale "on" so users see full vault.
       final pinnedOnly = settings.widgetPinnedOnly;
+      final copyOpensApp = settings.widgetCopyOpensApp;
       final hideTitles = settings.biometricLockEnabled &&
           settings.widgetHideTitlesWhenLocked;
       final selected = _pickItems(_items.getAll(), pinnedOnly: pinnedOnly);
@@ -58,6 +59,7 @@ class WidgetSnapshotService {
         ],
         'hideTitles': hideTitles,
         'pinnedOnly': pinnedOnly,
+        'copyOpensApp': copyOpensApp,
         'updatedAt': DateTime.now().toIso8601String(),
       });
       await HomeWidget.saveWidgetData<String>(
@@ -67,6 +69,10 @@ class WidgetSnapshotService {
       await HomeWidget.saveWidgetData<bool>(
         AppConstants.widgetHideTitlesKey,
         hideTitles,
+      );
+      await HomeWidget.saveWidgetData<bool>(
+        AppConstants.widgetCopyOpensAppKey,
+        copyOpensApp,
       );
 
       // Keyboard: more slots, never mask titles (sensitive items omitted entirely).

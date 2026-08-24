@@ -49,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool _clipboardSuggest;
   late bool _widgetPinnedOnly;
   late bool _widgetHideTitlesWhenLocked;
+  late bool _widgetCopyOpensApp;
   late VaultSortMode _vaultSort;
   late bool _iCloudSync;
   DateTime? _iCloudLastSync;
@@ -75,6 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _clipboardSuggest = s.clipboardSuggestEnabled;
     _widgetPinnedOnly = s.widgetPinnedOnly;
     _widgetHideTitlesWhenLocked = s.widgetHideTitlesWhenLocked;
+    _widgetCopyOpensApp = s.widgetCopyOpensApp;
     _vaultSort = s.vaultSortMode;
     _iCloudSync = s.iCloudSyncEnabled;
     _iCloudLastSync = s.iCloudLastSyncAt;
@@ -1444,6 +1446,26 @@ class _SettingsPageState extends State<SettingsPage> {
                               .setWidgetHideTitlesWhenLocked(v);
                           if (!mounted) return;
                           setState(() => _widgetHideTitlesWhenLocked = v);
+                          await _syncWidgetPrefs();
+                        },
+                      ),
+                    ),
+                    IosGroupTile(
+                      title: l10n.widgetCopyOpensApp,
+                      subtitle: l10n.widgetCopyOpensAppSubtitle,
+                      leading: _LeadingIcon(
+                        icon: CupertinoIcons.arrow_up_right_square_fill,
+                        color: AppColors.iconView,
+                      ),
+                      trailing: CupertinoSwitch(
+                        value: _widgetCopyOpensApp,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (v) async {
+                          HapticFeedback.selectionClick();
+                          await SettingsService.instance
+                              .setWidgetCopyOpensApp(v);
+                          if (!mounted) return;
+                          setState(() => _widgetCopyOpensApp = v);
                           await _syncWidgetPrefs();
                         },
                       ),

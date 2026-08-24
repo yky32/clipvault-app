@@ -521,8 +521,20 @@ abstract class AppLocalizations {
   /// No description provided for @widgetPinnedOnlySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Show only pinned items on the widget'**
+  /// **'Show only pinned items (off = recent copies first)'**
   String get widgetPinnedOnlySubtitle;
+
+  /// No description provided for @widgetCopyOpensApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app when copying'**
+  String get widgetCopyOpensApp;
+
+  /// No description provided for @widgetCopyOpensAppSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More reliable Paste in WhatsApp. Off = stay on Home Screen.'**
+  String get widgetCopyOpensAppSubtitle;
 
   /// No description provided for @widgetHideTitlesWhenLocked.
   ///

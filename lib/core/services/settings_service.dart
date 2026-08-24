@@ -122,6 +122,7 @@ class SettingsService {
   static const _addressLanguageTagsKey = 'address_language_tags';
   /// Home widget: only show pinned items (favorites).
   static const _widgetPinnedOnlyKey = 'widget_pinned_only';
+  static const _widgetCopyOpensAppKey = 'widget_copy_opens_app';
   static const _widgetRecentMigrateKey = 'widget_recent_migrate_v2';
   /// Home widget: mask titles when app lock is enabled.
   static const _widgetHideTitlesWhenLockedKey = 'widget_hide_titles_locked';
@@ -358,6 +359,14 @@ DateTime? get lastSecureBackupAt {
 
   Future<void> setWidgetPinnedOnly(bool value) =>
       _prefs.setBool(_widgetPinnedOnlyKey, value);
+
+  /// When true, widget copy opens ClipVal (most reliable paste on some iOS).
+  /// Default false = in-widget copy, stay on Home Screen.
+  bool get widgetCopyOpensApp =>
+      _prefs.getBool(_widgetCopyOpensAppKey) ?? false;
+
+  Future<void> setWidgetCopyOpensApp(bool value) =>
+      _prefs.setBool(_widgetCopyOpensAppKey, value);
 
   /// When app lock is on, widget shows monogram only (not full titles).
   bool get widgetHideTitlesWhenLocked =>

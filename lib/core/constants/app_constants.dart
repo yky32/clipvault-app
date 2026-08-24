@@ -29,6 +29,7 @@ class AppConstants {
   static const keyboardItemLimit = 24;
 
   /// App Group flag: widget should mask titles (app lock / privacy).
+  static const widgetCopyOpensAppKey = 'widget_copy_opens_app';
   static const widgetHideTitlesKey = 'widget_hide_titles';
 
   /// Deep link scheme: `clipval://copy?id=<itemId>` (iOS 15–16 fallback).

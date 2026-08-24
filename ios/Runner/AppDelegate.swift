@@ -312,6 +312,9 @@ import WidgetKit
          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
          let items = obj["items"] as? [[String: Any]]
       {
+        if let copyOpens = obj["copyOpensApp"] as? Bool {
+          defaults?.set(copyOpens, forKey: "widget_copy_opens_app")
+        }
         var valuesMap: [String: String] = [:]
         for item in items {
           guard let id = item["id"] as? String, !id.isEmpty else { continue }

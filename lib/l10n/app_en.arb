@@ -99,6 +99,8 @@
   "widgetSection": "Home Screen widget",
   "widgetPinnedOnly": "Favorites only",
   "widgetPinnedOnlySubtitle": "Show only pinned items (off = recent copies first)",
+  "widgetCopyOpensApp": "Open app when copying",
+  "widgetCopyOpensAppSubtitle": "More reliable Paste in WhatsApp. Off = stay on Home Screen.",
   "widgetHideTitlesWhenLocked": "Hide titles when locked",
   "widgetHideTitlesWhenLockedSubtitle": "Show monogram only while app lock is on",
   "vaultSort": "Sort vault",
