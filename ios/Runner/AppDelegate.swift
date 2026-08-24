@@ -27,6 +27,22 @@ import WidgetKit
     if let url = launchOptions?[.url] as? URL {
       Self.handleClipValCopyURL(url)
     }
+    // Simulator / automation: -sim-copy-id <id> writes pasteboard without URL dialog.
+    let args = ProcessInfo.processInfo.arguments
+    if let idx = args.firstIndex(of: "-sim-copy-id"), args.index(after: idx) < args.endIndex {
+      let id = args[args.index(after: idx)]
+      if let value = Self.loadWidgetValue(for: id), !value.isEmpty {
+        Self.writeSystemPasteboard(value)
+        if let d = UserDefaults(suiteName: Self.appGroupId) {
+          d.set(value, forKey: "widget_pending_paste_value")
+          d.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
+          d.synchronize()
+        }
+        NSLog("[ClipVal] sim-copy-id wrote %d chars", value.count)
+      } else {
+        NSLog("[ClipVal] sim-copy-id missing value for %@", id)
+      }
+    }
     Self.rehydratePendingWidgetPaste()
     return ok
   }
