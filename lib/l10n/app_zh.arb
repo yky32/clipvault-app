@@ -71,6 +71,8 @@
   "widgetSection": "主畫面小工具",
   "widgetPinnedOnly": "僅顯示我的最愛",
   "widgetPinnedOnlySubtitle": "只顯示置頂（關閉 = 優先最近複製）",
+  "widgetCopyOpensApp": "複製時開啟 App",
+  "widgetCopyOpensAppSubtitle": "WhatsApp 貼上更穩。關閉 = 留在主畫面直接複製。",
   "widgetHideTitlesWhenLocked": "鎖定時隱藏標題",
   "widgetHideTitlesWhenLockedSubtitle": "開啟應用程式鎖定時只顯示字首",
   "vaultSort": "排序",

@@ -230,6 +230,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetPinnedOnlySubtitle => '只顯示置頂（關閉 = 優先最近複製）';
 
   @override
+  String get widgetCopyOpensApp => '複製時開啟 App';
+
+  @override
+  String get widgetCopyOpensAppSubtitle => 'WhatsApp 貼上更穩。關閉 = 留在主畫面直接複製。';
+
+  @override
   String get widgetHideTitlesWhenLocked => '鎖定時隱藏標題';
 
   @override

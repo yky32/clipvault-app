@@ -172,16 +172,15 @@ struct ClipValProvider: TimelineProvider {
   }
 }
 
-// MARK: - Copy
-// WhatsApp shows Paste but inserts blank when clipboard is written only from the
-// widget extension. openAppWhenRun=true runs perform in the HOST app process.
-// Write ONLY UIPasteboard.general.string (setItems has produced empty pastes).
+// MARK: - Copy (default: stay on Home Screen)
+// openAppWhenRun=false — no jump into ClipVal.
+// Pasteboard write matches the proven AppDelegate plain-string path.
+// Settings → "Open app when copying" forces deep link if paste is flaky.
 
 @available(iOS 17.0, *)
 struct CopyValueIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy"
-  /// Required so WhatsApp actually receives text (not empty paste).
-  static var openAppWhenRun: Bool = true
+  static var openAppWhenRun: Bool = false
   static var isDiscoverable: Bool = false
 
   @Parameter(title: "ID") var id: String
@@ -196,7 +195,6 @@ struct CopyValueIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let itemId = id.trimmingCharacters(in: .whitespacesAndNewlines)
-    // App Group first (full plaintext), then intent param.
     var text = ""
     if !itemId.isEmpty {
       text = Self.loadValue(for: itemId) ?? ""
@@ -216,13 +214,12 @@ struct CopyValueIntent: AppIntent {
       )
     }
 
-    // ONE reliable write path — plain string only (WhatsApp-compatible)
-    UIPasteboard.general.string = text
-    // Reinforce
-    if UIPasteboard.general.string != text {
-      UIPasteboard.general.strings = [text]
-      UIPasteboard.general.string = text
-    }
+    // Same plain-string write as AppDelegate (no setItems)
+    let pb = UIPasteboard.general
+    pb.string = nil
+    pb.string = text
+    pb.strings = [text]
+    pb.string = text
 
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(text, forKey: "widget_pending_paste_value")
@@ -233,12 +230,24 @@ struct CopyValueIntent: AppIntent {
     }
 
     UINotificationFeedbackGenerator().notificationOccurred(.success)
+    let impact = UIImpactFeedbackGenerator(style: .medium)
+    impact.impactOccurred(intensity: 0.9)
     WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
 
+    Task {
+      try? await Task.sleep(nanoseconds: UInt64(copiedHighlightSeconds * 1_000_000_000) + 100_000_000)
+      if let d = UserDefaults(suiteName: appGroupId),
+         d.string(forKey: copiedIdKey) == itemId
+      {
+        d.removeObject(forKey: copiedIdKey)
+        d.removeObject(forKey: copiedAtKey)
+        d.synchronize()
+        WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
+      }
+    }
+
     return .result(
-      dialog: IntentDialog(
-        stringLiteral: "Copied “\(label)” (\(text.count) chars) — go back & Paste"
-      )
+      dialog: IntentDialog(stringLiteral: "Copied “\(label)”")
     )
   }
 
@@ -502,9 +511,27 @@ struct ClipValWidgetEntryView: View {
     )
     .contentShape(RoundedRectangle(cornerRadius: metrics.corner, style: .continuous))
 
-    // ALWAYS deep-link into ClipVal. App Intent (even openAppWhenRun) still
-    // produced WhatsApp "Paste" with blank insert on device. Native
-    // AppDelegate + Flutter write UIPasteboard.general.string on open.
+    // Default: in-widget AppIntent (no open app). Optional Settings flag opens app.
+    let opensApp =
+      UserDefaults(suiteName: appGroupId)?.bool(forKey: "widget_copy_opens_app")
+      ?? false
+    if opensApp {
+      return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
+        label
+      }
+    }
+    if #available(iOS 17.0, *) {
+      return Button(
+        intent: CopyValueIntent(
+          id: item.id,
+          value: item.value,
+          title: item.displayTitle
+        )
+      ) {
+        label
+      }
+      .buttonStyle(.plain)
+    }
     return Link(destination: URL(string: "clipval://copy?id=\(item.id)")!) {
       label
     }
