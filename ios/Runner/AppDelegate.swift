@@ -46,14 +46,11 @@ import WidgetKit
   override func applicationDidBecomeActive(_ application: UIApplication) {
     super.applicationDidBecomeActive(application)
     registerNativeChannelsWhenReady(attemptsLeft: 5)
-    // Re-apply widget copy multiple times — Flutter startup can race pasteboard.
+    // Re-apply widget copy. Do NOT bounce here — only bounce from copy URL handler
+    // after multi-write (avoid racing empty pasteboard).
     Self.rehydratePendingWidgetPaste()
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
       Self.rehydratePendingWidgetPaste()
-      // If this activation was for widget AppIntent copy, bounce Home.
-      if Self.shouldBounceAfterWidgetCopy() {
-        Self.moveToBackground()
-      }
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
       Self.rehydratePendingWidgetPaste()
@@ -107,24 +104,43 @@ import WidgetKit
 
     guard let value = loadWidgetValue(for: id), !value.isEmpty else {
       NSLog("[ClipVal] copy URL: no value in App Group for id %@", id)
+      // Still mark bounce so we don't leave user stuck if Flutter also fails
+      if let d = UserDefaults(suiteName: appGroupId) {
+        d.set(true, forKey: "widget_bounce_pending")
+        d.synchronize()
+      }
       return true
     }
 
+    // Write pasteboard FIRST and hard (main app process)
     writeSystemPasteboard(value)
     if let d = UserDefaults(suiteName: appGroupId) {
       d.set(value, forKey: "widget_pending_paste_value")
       d.set(Date().timeIntervalSince1970, forKey: "widget_pending_paste_at")
       d.set(id, forKey: "widget_copied_id")
       d.set(Date().timeIntervalSince1970, forKey: "widget_copied_at")
+      d.set(true, forKey: "widget_bounce_pending")
       d.synchronize()
+    }
+    // Second write after short delay (some iOS builds drop first write on open)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+      Self.writeSystemPasteboard(value)
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      Self.writeSystemPasteboard(value)
+    }
+    // Bounce Home only after pasteboard has been written multiple times
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
+      Self.writeSystemPasteboard(value)
+      if UserDefaults(suiteName: Self.appGroupId)?.bool(forKey: "widget_bounce_pending") == true {
+        UserDefaults(suiteName: Self.appGroupId)?.set(false, forKey: "widget_bounce_pending")
+        Self.moveToBackground()
+      }
     }
     if #available(iOS 14.0, *) {
       WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
     }
     NSLog("[ClipVal] Native copy from widget URL (%d chars, id=%@)", value.count, id)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-      Self.moveToBackground()
-    }
     return true
   }
 
@@ -143,18 +159,16 @@ import WidgetKit
       NSLog("[ClipVal] refuse empty pasteboard write")
       return
     }
-    // Plain string only — never setItems (WhatsApp empty paste).
     let pb = UIPasteboard.general
-    pb.string = nil
+    // Do not clear first (nil write races with other apps reading empty).
     pb.string = trimmed
     pb.strings = [trimmed]
-    pb.string = trimmed
-    let ok = pb.string == trimmed
+    let ok = (pb.string == trimmed)
     NSLog(
       "[ClipVal] pasteboard write chars=%d ok=%@ preview=%@",
       trimmed.count,
       ok ? "YES" : "NO",
-      String(trimmed.prefix(24))
+      String(trimmed.prefix(32))
     )
   }
 
@@ -272,7 +286,14 @@ import WidgetKit
         result(true)
       case "bounceIfWidgetCopy":
         DispatchQueue.main.async {
-          if Self.shouldBounceAfterWidgetCopy() {
+          let d = UserDefaults(suiteName: Self.appGroupId)
+          guard d?.bool(forKey: "widget_bounce_pending") == true else {
+            return
+          }
+          Self.rehydratePendingWidgetPaste()
+          d?.set(false, forKey: "widget_bounce_pending")
+          // Delay bounce so pasteboard is stable
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             Self.rehydratePendingWidgetPaste()
             Self.moveToBackground()
           }

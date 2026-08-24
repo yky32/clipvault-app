@@ -79,23 +79,38 @@ abstract final class WidgetDeepLink {
       }
     }
 
-    // Re-write after Flutter settle, then bounce Home (do not leave user in vault).
+    // Re-write after Flutter settle, then request bounce (native times it).
     if (value != null && value.trim().isNotEmpty) {
       final v = value;
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 350), () async {
-        await _forceNativePasteboard(v);
-        try {
-          await _channel.invokeMethod<void>('moveToBackground');
-        } catch (_) {}
-      }));
+      await _forceNativePasteboard(v);
       _showHud(
         '${title.length > 28 ? '${title.substring(0, 28)}…' : title} · ${value.length} chars',
       );
-    } else {
-      _showHud(title.startsWith('Copied') ? title : 'Copied');
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 350), () async {
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 300), () async {
+        await _forceNativePasteboard(v);
+      }));
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 800), () async {
+        await _forceNativePasteboard(v);
         try {
-          await _channel.invokeMethod<void>('moveToBackground');
+          await _channel.invokeMethod<void>('bounceIfWidgetCopy');
+        } catch (_) {}
+      }));
+    } else {
+      // Native should still have written from App Group — reinforce + bounce
+      try {
+        await _channel.invokeMethod<void>(
+          'forcePasteboardById',
+          {'id': id},
+        );
+      } catch (_) {
+        try {
+          await _channel.invokeMethod<void>('rehydratePaste');
+        } catch (_) {}
+      }
+      _showHud(title.startsWith('Copied') ? title : 'Copied');
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 800), () async {
+        try {
+          await _channel.invokeMethod<void>('bounceIfWidgetCopy');
         } catch (_) {}
       }));
     }
