@@ -48,12 +48,25 @@ import WidgetKit
     registerNativeChannelsWhenReady(attemptsLeft: 5)
     // Re-apply widget copy multiple times — Flutter startup can race pasteboard.
     Self.rehydratePendingWidgetPaste()
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+      Self.rehydratePendingWidgetPaste()
+      // If this activation was for widget AppIntent copy, bounce Home.
+      if Self.shouldBounceAfterWidgetCopy() {
+        Self.moveToBackground()
+      }
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
       Self.rehydratePendingWidgetPaste()
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-      Self.rehydratePendingWidgetPaste()
-    }
+  }
+
+  /// Fresh widget copy (< 2.5s) → auto return Home after pasteboard write.
+  private static func shouldBounceAfterWidgetCopy() -> Bool {
+    let d = UserDefaults(suiteName: appGroupId)
+    let at = d?.double(forKey: "widget_pending_paste_at") ?? 0
+    guard at > 0 else { return false }
+    let age = Date().timeIntervalSince1970 - at
+    return age >= 0 && age < 2.5
   }
 
   /// If widget App Intent stashed a recent value, force system pasteboard.
@@ -109,7 +122,19 @@ import WidgetKit
       WidgetCenter.shared.reloadTimelines(ofKind: "ClipValWidget")
     }
     NSLog("[ClipVal] Native copy from widget URL (%d chars, id=%@)", value.count, id)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+      Self.moveToBackground()
+    }
     return true
+  }
+
+  /// Return to Home / previous app after widget copy (best-effort).
+  private static func moveToBackground() {
+    UIControl().sendAction(
+      Selector(("suspend")),
+      to: UIApplication.shared,
+      for: nil
+    )
   }
 
   private static func writeSystemPasteboard(_ value: String) {
@@ -239,6 +264,19 @@ import WidgetKit
         result(true)
       case "rehydratePaste":
         Self.rehydratePendingWidgetPaste()
+        result(true)
+      case "moveToBackground":
+        DispatchQueue.main.async {
+          Self.moveToBackground()
+        }
+        result(true)
+      case "bounceIfWidgetCopy":
+        DispatchQueue.main.async {
+          if Self.shouldBounceAfterWidgetCopy() {
+            Self.rehydratePendingWidgetPaste()
+            Self.moveToBackground()
+          }
+        }
         result(true)
       case "forcePasteboard":
         // Flutter deep-link copy — write system pasteboard from main app (reliable).

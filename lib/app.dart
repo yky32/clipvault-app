@@ -82,6 +82,14 @@ class _ClipVaultAppState extends State<ClipVaultApp>
         // ignore: unawaited_futures
         const MethodChannel('com.clipval/widget').invokeMethod<void>('rehydratePaste');
       } catch (_) {}
+      // Bounce Home ONLY when opened by a fresh widget copy (native decides).
+      // ignore: unawaited_futures
+      Future<void>.delayed(const Duration(milliseconds: 400), () async {
+        try {
+          await const MethodChannel('com.clipval/widget')
+              .invokeMethod<void>('bounceIfWidgetCopy');
+        } catch (_) {}
+      });
       if (_needsRelock) {
         _needsRelock = false;
         final started = _backgroundedAt;

@@ -79,20 +79,25 @@ abstract final class WidgetDeepLink {
       }
     }
 
-    // Re-write after Flutter settle (startup races wipe pasteboard on some iOS).
+    // Re-write after Flutter settle, then bounce Home (do not leave user in vault).
     if (value != null && value.trim().isNotEmpty) {
       final v = value;
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 400), () async {
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 350), () async {
         await _forceNativePasteboard(v);
-      }));
-      unawaited(Future<void>.delayed(const Duration(milliseconds: 1200), () async {
-        await _forceNativePasteboard(v);
+        try {
+          await _channel.invokeMethod<void>('moveToBackground');
+        } catch (_) {}
       }));
       _showHud(
         '${title.length > 28 ? '${title.substring(0, 28)}…' : title} · ${value.length} chars',
       );
     } else {
-      _showHud(title.startsWith('Copied') ? title : 'Copied — switch app & Paste');
+      _showHud(title.startsWith('Copied') ? title : 'Copied');
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 350), () async {
+        try {
+          await _channel.invokeMethod<void>('moveToBackground');
+        } catch (_) {}
+      }));
     }
   }
 
