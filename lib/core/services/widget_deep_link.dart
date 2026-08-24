@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +15,7 @@ import '../../l10n/app_localizations.dart';
 abstract final class WidgetDeepLink {
   static String? _lastHandledId;
   static DateTime? _lastHandledAt;
+  static const _channel = MethodChannel('com.clipval/widget');
 
   /// Returns true if [uri] is a ClipVal widget deep link we recognize.
   static bool isWidgetCopyUri(Uri uri) {
@@ -42,37 +45,87 @@ abstract final class WidgetDeepLink {
     _lastHandledId = id;
     _lastHandledAt = now;
 
+    String? value;
+    String title = 'ClipVal';
+
     final item = AppBootstrap.clipItemRepository.getById(id);
-    if (item == null) return;
-
-    // 1) Flutter clipboard (in-app)
-    await AppBootstrap.clipboardService.copy(item.value);
-    // 2) Native UIPasteboard from main app process (what other apps Paste from)
-    try {
-      await const MethodChannel('com.clipval/widget').invokeMethod<void>(
-        'forcePasteboard',
-        {'value': item.value},
-      );
-    } catch (_) {
-      // Best-effort — Flutter copy already ran.
+    if (item != null && item.value.trim().isNotEmpty) {
+      value = item.value;
+      title = item.title.trim().isEmpty ? title : item.title;
+      await AppBootstrap.clipboardService.copy(value);
+      await _forceNativePasteboard(value);
+      unawaited(AppBootstrap.clipItemRepository.markCopied(item.id));
+      unawaited(AppBootstrap.widgetSnapshotService.sync());
+    } else {
+      // Vault locked / not ready — AppDelegate should have written from App Group.
+      // Reinforce via native id lookup.
+      try {
+        final res = await _channel.invokeMethod<dynamic>(
+          'forcePasteboardById',
+          {'id': id},
+        );
+        if (res is Map && res['chars'] is int) {
+          final chars = res['chars'] as int;
+          if (chars <= 0) {
+            _showHud('Copy failed — open vault once');
+            return;
+          }
+          title = 'Copied ($chars chars)';
+        }
+      } catch (_) {
+        try {
+          await _channel.invokeMethod<void>('rehydratePaste');
+        } catch (_) {}
+      }
     }
-    await AppBootstrap.clipItemRepository.markCopied(item.id);
-    await AppBootstrap.widgetSnapshotService.sync();
 
-    void showHud() {
+    // Re-write after Flutter settle (startup races wipe pasteboard on some iOS).
+    if (value != null && value.trim().isNotEmpty) {
+      final v = value;
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 400), () async {
+        await _forceNativePasteboard(v);
+      }));
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 1200), () async {
+        await _forceNativePasteboard(v);
+      }));
+      _showHud(
+        '${title.length > 28 ? '${title.substring(0, 28)}…' : title} · ${value.length} chars',
+      );
+    } else {
+      _showHud(title.startsWith('Copied') ? title : 'Copied — switch app & Paste');
+    }
+  }
+
+  static Future<void> _forceNativePasteboard(String value) async {
+    final t = value.trim();
+    if (t.isEmpty) return;
+    try {
+      await _channel.invokeMethod<void>('forcePasteboard', {'value': t});
+    } catch (_) {}
+  }
+
+  static void _showHud(String message) {
+    void show() {
       final ctx = AppRouter.rootKey.currentContext;
       if (ctx == null || !ctx.mounted) return;
-      HapticFeedback.lightImpact();
-      final l10n = AppLocalizations.of(ctx);
-      CopiedHud.show(ctx, message: l10n.copied(item.title));
+      HapticFeedback.mediumImpact();
+      // Prefer l10n when simple copied; otherwise show diagnostic message.
+      try {
+        final l10n = AppLocalizations.of(ctx);
+        if (message.startsWith('Copied') || message.contains('chars')) {
+          CopiedHud.show(ctx, message: message);
+        } else {
+          CopiedHud.show(ctx, message: l10n.copied(message));
+        }
+      } catch (_) {
+        CopiedHud.show(ctx, message: message);
+      }
     }
 
-    // Navigator may not be ready on cold start.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      showHud();
-      // One more frame if first context was null (common on cold open).
+      show();
       if (AppRouter.rootKey.currentContext == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => showHud());
+        WidgetsBinding.instance.addPostFrameCallback((_) => show());
       }
     });
   }
