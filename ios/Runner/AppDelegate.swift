@@ -316,6 +316,9 @@ import WidgetKit
           Self.moveToBackground()
         }
         result(true)
+      case "cancelBounce":
+        UserDefaults(suiteName: Self.appGroupId)?.set(false, forKey: "widget_bounce_pending")
+        result(true)
       case "bounceIfWidgetCopy":
         DispatchQueue.main.async {
           let d = UserDefaults(suiteName: Self.appGroupId)
