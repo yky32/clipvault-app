@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../bootstrap/app_bootstrap.dart';
 import '../constants/app_constants.dart';
@@ -18,20 +19,29 @@ abstract final class WidgetDeepLink {
   static String? lastFlashTitle;
   static int? lastFlashChars;
 
+  /// Increments on every widget copy so flash page can refresh (2nd tap).
+  static final ValueNotifier<int> flashTick = ValueNotifier<int>(0);
+
   /// Full-screen flash (not vault). Pasteboard already written natively.
   static const copyFlashLocation = '/widget-copy';
 
-  /// True only during the brief window after a widget copy (so resume later
-  /// does not leave the user stuck on Copied).
+  /// True only during the brief window after a widget copy.
   static bool get isFreshFlash {
     final at = _lastHandledAt;
     if (at == null) return false;
-    return DateTime.now().difference(at) < const Duration(seconds: 3);
+    return DateTime.now().difference(at) < const Duration(seconds: 4);
   }
 
-  /// After bounce / user returns — next /widget-copy visit goes to vault.
   static void consumeFlash() {
     _lastHandledAt = null;
+  }
+
+  /// 2nd widget tap while ClipVal is already coming to foreground — stay
+  /// on Copied (do not bounce Home) so user can exit to vault.
+  static bool get _isDoubleTapStay {
+    final at = _lastHandledAt;
+    if (at == null) return false;
+    return DateTime.now().difference(at) < const Duration(seconds: 4);
   }
 
   /// Returns true if [uri] is a ClipVal widget deep link we recognize.
@@ -53,13 +63,16 @@ abstract final class WidgetDeepLink {
     final id = uri.queryParameters['id'];
     if (id == null || id.isEmpty) return;
 
-    // Debounce double delivery (GoRouter + HomeWidget can both fire).
     final now = DateTime.now();
+    // Same URL delivered twice by GoRouter+HomeWidget (~same instant).
     if (_lastHandledId == id &&
         _lastHandledAt != null &&
-        now.difference(_lastHandledAt!) < const Duration(milliseconds: 800)) {
+        now.difference(_lastHandledAt!) < const Duration(milliseconds: 400)) {
       return;
     }
+
+    // Second widget tap within a few seconds: copy again, stay in foreground.
+    final stayInApp = _isDoubleTapStay;
     _lastHandledId = id;
     _lastHandledAt = now;
 
@@ -97,8 +110,21 @@ abstract final class WidgetDeepLink {
 
     lastFlashTitle = title;
     lastFlashChars = chars ?? value?.length;
+    flashTick.value++;
 
-    // Re-write after Flutter settle, then request bounce (native times it).
+    if (stayInApp) {
+      // User tapped widget again — ClipVal is foreground. Cancel bounce so
+      // they can leave Copied via Open vault (not trapped / not auto-home).
+      try {
+        await _channel.invokeMethod<void>('cancelBounce');
+      } catch (_) {}
+      if (value != null && value.trim().isNotEmpty) {
+        await _forceNativePasteboard(value);
+      }
+      return;
+    }
+
+    // First tap from Home: re-write then bounce.
     if (value != null && value.trim().isNotEmpty) {
       final v = value;
       await _forceNativePasteboard(v);
