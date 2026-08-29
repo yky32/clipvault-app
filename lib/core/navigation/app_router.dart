@@ -57,6 +57,11 @@ class AppRouter {
         }
         return WidgetDeepLink.copyFlashLocation;
       }
+      // Re-open after bounce: do not trap on Copied flash.
+      if (loc == WidgetDeepLink.copyFlashLocation &&
+          !WidgetDeepLink.isFreshFlash) {
+        return WidgetDeepLink.vaultLandingLocation;
+      }
       return null;
     },
     onException: (context, state, router) {
