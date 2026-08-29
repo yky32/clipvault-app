@@ -14,12 +14,25 @@ abstract final class WidgetDeepLink {
   static DateTime? _lastHandledAt;
   static const _channel = MethodChannel('com.clipval/widget');
 
-  /// Shown on [WidgetCopyFlashPage] after a widget copy.
+  /// Shown on WidgetCopyFlashPage after a widget copy.
   static String? lastFlashTitle;
   static int? lastFlashChars;
 
   /// Full-screen flash (not vault). Pasteboard already written natively.
   static const copyFlashLocation = '/widget-copy';
+
+  /// True only during the brief window after a widget copy (so resume later
+  /// does not leave the user stuck on Copied).
+  static bool get isFreshFlash {
+    final at = _lastHandledAt;
+    if (at == null) return false;
+    return DateTime.now().difference(at) < const Duration(seconds: 3);
+  }
+
+  /// After bounce / user returns — next /widget-copy visit goes to vault.
+  static void consumeFlash() {
+    _lastHandledAt = null;
+  }
 
   /// Returns true if [uri] is a ClipVal widget deep link we recognize.
   static bool isWidgetCopyUri(Uri uri) {
