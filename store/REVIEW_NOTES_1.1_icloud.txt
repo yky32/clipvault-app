@@ -1,16 +1,31 @@
-ClipVal 1.1 — App Review notes (iCloud)
+ClipVal 1.1.1 — App Review notes
 
 ClipVal is a local one-tap vault. There is no ClipVal account or ClipVal server for vault data.
 
-Optional iCloud sync (Settings → iCloud → Sync with iCloud):
-• Off by default; user must turn it on.
+HOW TO REVIEW (core)
+1. Add an item → tap to copy → paste in Notes / Messages.
+2. Optional: Home Screen widget → tap a tile → paste in another app.
+3. Optional: Settings → App lock; long-press item → Sensitive.
+
+OPTIONAL iCLOUD (Settings → iCloud → Sync with iCloud)
+• Off by default; reviewer must turn it on.
 • Uses the user’s private CloudKit database only (container iCloud.com.clipval).
 • Item values are AES-encrypted on device before any upload. ClipVal never receives plaintext.
-• Reviewer path: sign into iCloud on the device → open ClipVal → Settings → enable Sync with iCloud → Sync now → create/edit an item and sync again.
+• Path: sign into iCloud → ClipVal → Settings → enable Sync → Sync now → edit an item and sync again.
+• Without iCloud: password-encrypted .clipval export/import still works.
 
-Also available without iCloud:
-• Password-encrypted .clipval export/import for backup and phone swap.
+CLIPVAL KEYBOARD (custom keyboard)
+A snippet keyboard that inserts short vault items the user already saved. Not a general typing keyboard.
 
-Core flow to review without iCloud:
-• Add item → tap to copy → paste in another app.
-• Optional: Settings → App lock; long-press item → Sensitive / Duplicate; Home Screen widget.
+Full Access: iOS requires “Allow Full Access” for a keyboard to read an App Group shared with the containing app. ClipVal uses Full Access only to read a local JSON snapshot. The extension:
+• does not log keystrokes
+• does not access the network
+• does not upload data
+
+Sensitive items are excluded from the keyboard UI.
+
+Keyboard test:
+1. Settings → Keyboards → enable ClipVal + Allow Full Access
+2. Open ClipVal, pin an item
+3. Notes → ClipVal keyboard → tap a tile → text inserts
+4. Globe returns to the system keyboard
